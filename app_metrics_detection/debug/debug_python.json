@@ -1,0 +1,13 @@
+﻿{
+    "status":  true,
+    "exit_code":  0,
+    "image_path":  "c:\\Users\\Maxi Barrios\\Desktop\\onx_modelo\\optimizacion_uvas\\data\\images\\TIMCO_IMAGEN_74.jpg",
+    "generated_at":  "2026-03-18 13:15:08",
+    "variety":  "TIMCO",
+    "visible_count":  "106.0",
+    "count_total":  "181",
+    "residual_count":  "75.42694854736328",
+    "mean_mm":  "16.188791275024414",
+    "variety_idx":  "9",
+    "raw_output_path":  "c:\\Users\\Maxi Barrios\\Desktop\\onx_modelo\\app_metrics_detection\\debug\\python_run_output.txt"
+}

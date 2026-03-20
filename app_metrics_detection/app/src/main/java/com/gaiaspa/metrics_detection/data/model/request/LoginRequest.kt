@@ -1,0 +1,6 @@
+package com.gaiaspa.metrics_detection.data.model.request
+
+data class LoginRequest(
+    val email: String,
+    val password: String
+)

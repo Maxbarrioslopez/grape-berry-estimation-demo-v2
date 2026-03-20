@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@+id/homeFragment">
+
+    <!-- HOME SCREENS -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.home.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_homeFragment_to_step1Fragment"
+            app:destination="@id/step1Fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/step1Fragment"
+        android:name="com.gaiaspa.metrics_detection.ui.home.Step1Fragment"
+        android:label="Step 1">
+        <action
+            android:id="@+id/action_step1Fragment_to_step2Fragment"
+            app:destination="@id/step2Fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/step2Fragment"
+        android:name="com.gaiaspa.metrics_detection.ui.home.Step2Fragment"
+        android:label="Step2Fragment" >
+        <action
+            android:id="@+id/action_step2Fragment_to_fullscreenImageFragment"
+            app:destination="@id/fullscreenImageFragment" />
+    </fragment>
+
+    <!-- UTILS -->
+    <fragment
+        android:id="@+id/fullscreenImageFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.utils.FullscreenImageFragment"
+        android:label="FullscreenImageFragment">
+        <argument
+            android:name="imagePath"
+            app:argType="string"
+            android:defaultValue="" />
+    </fragment>
+
+    <!-- HISTORY SCREENS -->
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.history.HistoryFragment"
+        android:label="Historial">
+        <!-- Acción para ir al detalle del Lote -->
+        <action
+            android:id="@+id/action_historyFragment_to_loteDetailFragment"
+            app:destination="@id/historyDetailFragment">
+            <argument
+                android:name="loteId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/historyDetailFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.history.HistoryDetailFragment"
+        android:label="HistoryDetailFragment" >
+        <action
+            android:id="@+id/action_loteDetailFragment_to_fullscreenImageFragment"
+            app:destination="@id/fullscreenImageFragment" />
+    </fragment>
+
+    <!-- PROFILE SCREENS -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <!-- SUPPORT SCREENS -->
+    <fragment
+        android:id="@+id/supportFragment"
+        android:name="com.gaiaspa.metrics_detection.ui.support.SupportFragment"
+        android:label="Support" />
+
+</navigation>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24.0"
+    android:viewportHeight="24.0">
+    <!-- Icono de nube con check -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M19,17.3c1.16,0 2.1,-0.94 2.1,-2.1 0,-1.05 -0.77,-1.94 -1.8,-2.07 -0.25,-2.77 -2.54,-4.93 -5.31,-4.93 -2.49,0 -4.6,1.74 -5.15,4.07C7.13,12.42 5.5,13.97 5.5,15.9c0,2.03 1.67,3.7 3.7,3.7L19,19.6v-2.3zm-7.0,-2.45l4.59,-4.59 -1.41,-1.41 -3.18,3.17 -1.17,-1.17 -1.41,1.41 2.58,2.59z"/>
+</vector>

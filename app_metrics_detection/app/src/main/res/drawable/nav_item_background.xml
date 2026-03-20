@@ -1,0 +1,29 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Estado seleccionado: solo dibuja la franja superior -->
+    <item android:state_checked="true">
+        <layer-list>
+            <!-- Capa 0: fondo totalmente transparente -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@android:color/transparent"/>
+                </shape>
+            </item>
+            <!-- Capa 1: franja de 4dp pegada arriba -->
+            <item android:gravity="top">
+                <shape android:shape="rectangle">
+                    <size android:height="4dp"/>
+                    <solid android:color="@color/colorPrimary"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Estado no seleccionado: nada, completamente transparente -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+
+</selector>

@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Metrics Detection BETA OFFLINE</string>
+
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="predications">Predications</string>
+    <string name="interface_time">Interface Time:</string>
+    <string name="interface_time_value">%1$sms</string>
+    <string name="interface_mm_value">%.2f mm</string>
+    <string name="interface_predictions">%1$s</string>
+    <string name="interface_qty">%1$d</string>
+    <string name="interface_color">%1$s</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="pre_process_time">Pre Process Time:</string>
+    <string name="_0ms">0ms</string>
+    <string name="_0mm">0mm</string>
+    <string name="_0pred">Sin predicciones</string>
+    <string name="post_process_time">Post Process Time:</string>
+    <string name="differentiate_classes">Differentiate classes</string>
+    <string name="mask_out">Mask out</string>
+    <string name="separate_out">Separate out</string>
+    <string name="empty_string" />
+    <string name="show_label">Show Label</string>
+    <string name="patreon_message">Support me at Patreon</string>
+    <string name="settings">Settings</string>
+    <string name="smooth_edges">Smooth Edges</string>
+    <string name="mm_px">Milimetros por pixel</string>
+    <string name="predictions">Predictions</string>
+    <string name="qty">QTY</string>
+    <string name="color">Bunch Color</string>
+    <string name="sync_status">Estado sincronizacion</string>
+
+    <string-array name="filter_options">
+        <item>Todos</item>
+        <item>Sincronizados</item>
+        <item>No sincronizados</item>
+    </string-array>
+
+
+</resources>
