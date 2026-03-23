@@ -1,4 +1,12 @@
-﻿
+﻿# =========================
+# REFORZAR IGNORAR BINARIOS Y BUILDS EN TODA LA ESTRUCTURA
+# =========================
+**/build/
+**/outputs/
+**/intermediates/
+**/*.a
+**/*.zip
+
 # =========================
 # IDEs
 .vscode/
