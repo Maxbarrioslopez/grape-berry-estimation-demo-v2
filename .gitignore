@@ -45,6 +45,30 @@ env/
 # local.properties SI se sube (NO ignorar)
 
 # =========================
+# ARCHIVOS GRANDES/BINARIOS QUE NO SE SUBEN
+# =========================
+# APKs de release
+app_metrics_detection/app/release/app-release.apk
+app_metrics_detection/app/release/baselineProfiles/
+app_metrics_detection/app/release/output-metadata.json
+# Descargas de dependencias nativas
+app_metrics_detection/third_party/onnxruntime/downloads/*.zip
+app_metrics_detection/third_party/onnxruntime/downloads/*.aar
+app_metrics_detection/third_party/opencv/OpenCV-android-sdk/downloads/*.zip
+# Librerías nativas pesadas (OpenCV/ONNX)
+app_metrics_detection/third_party/opencv/OpenCV-android-sdk/sdk/native/libs/*/libopencv_java4.so
+app_metrics_detection/third_party/opencv/OpenCV-android-sdk/sdk/native/3rdparty/libs/*/*.a
+app_metrics_detection/third_party/onnxruntime/onnxruntime-android-1.24.3/jni/*/*.so
+# Salidas de debug y pruebas
+app_metrics_detection/debug/
+python_run_output.txt
+debug_kotlin.json
+debug_python.json
+# Archivos de entorno y locks
+.env
+*.lock
+
+# =========================
 # EXTRAS RECOMENDADOS
 # =========================
 # Dependencias nativas descargadas
