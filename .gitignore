@@ -32,12 +32,29 @@ __pycache__/
 .venv/
 env/
 
+
 # =========================
 # MODELOS PESADOS
 # =========================
-*.onnx
+# ¡IMPORTANTE! Los modelos .onnx SÍ se suben al repo
+# (No incluir línea *.onnx aquí)
 
 # =========================
 # NOTA IMPORTANTE
 # =========================
 # local.properties SI se sube (NO ignorar)
+
+# =========================
+# EXTRAS RECOMENDADOS
+# =========================
+# Dependencias nativas descargadas
+third_party/onnxruntime/onnxruntime-android-*/
+third_party/opencv/OpenCV-android-sdk/
+# Salidas de scripts
+app_metrics_detection/debug/
+# Archivos de entorno
+.env
+# Salidas de pruebas
+python_run_output.txt
+# Archivos de lock temporales
+*.lock
