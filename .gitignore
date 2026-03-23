@@ -1,4 +1,21 @@
-﻿# =========================
+﻿# 🚫 BUILD NATIVO (CRÍTICO)
+app_metrics_detection/app/.cxx/
+**/.cxx/
+
+# 🚫 APKs
+*.apk
+
+# 🚫 ZIPs pesados
+*.zip
+
+# 🚫 LIBS NATIVAS PESADAS
+*.so
+*.a
+
+# 🚫 THIRD PARTY COMPLETO (MEJOR PRÁCTICA)
+app_metrics_detection/third_party/opencv/
+app_metrics_detection/third_party/onnxruntime/
+# =========================
 # REFORZAR IGNORAR BINARIOS Y BUILDS EN TODA LA ESTRUCTURA
 # =========================
 **/build/
