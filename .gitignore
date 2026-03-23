@@ -163,3 +163,59 @@ app_metrics_detection/debug/
 python_run_output.txt
 # Archivos de lock temporales
 *.lock
+# ===== Android / Gradle =====
+.gradle/
+**/.gradle/
+build/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+**/.cxx/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.iml
+
+# ===== Logs / temp =====
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# ===== Python / misc =====
+venv/
+.venv/
+__pycache__/
+
+# ===== Release artifacts =====
+*.apk
+*.aab
+
+# ===== Native / model heavy files =====
+*.zip
+*.7z
+*.rar
+
+# Si NO quieres subir librerías compiladas ni modelos:
+*.so
+*.a
+*.o
+
+# Si NO quieres subir modelos:
+# *.onnx
+# *.tflite
+# *.pt
+# *.bin
+
+# ===== Third party descargado =====
+app_metrics_detection/third_party/opencv/downloads/
+app_metrics_detection/third_party/opencv/OpenCV-android-sdk/
+app_metrics_detection/third_party/onnxruntime/
+
+# ===== Generated reports =====
+allfiles.txt
+filesizes.txt
