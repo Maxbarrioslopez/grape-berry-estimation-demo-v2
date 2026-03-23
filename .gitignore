@@ -1,10 +1,23 @@
-﻿# =========================
+﻿
+# =========================
+# IDEs
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+
+# =========================
 # ANDROID / GRADLE
 # =========================
 .gradle/
 **/.gradle/
 build/
 **/build/
+intermediates/
+outputs/
+tmp/
+snapshot/
 
 # =========================
 # ANDROID STUDIO
@@ -17,6 +30,49 @@ build/
 # =========================
 *.log
 *.tmp
+*.bak
+*.swp
+*.swo
+# =========================
+# CMake
+# =========================
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+
+# =========================
+# LOCKS
+# =========================
+yarn.lock
+package-lock.json
+Pipfile.lock
+
+# =========================
+# TEST Y COVERAGE
+# =========================
+.pytest_cache/
+.coverage
+coverage.xml
+junit-*.xml
+
+# =========================
+# ROOM/WORKMANAGER
+# =========================
+*.db
+*.db-journal
+
+# =========================
+# ANDROID STUDIO BACKUP
+# =========================
+captures/
+.android/
+
+# =========================
+# PYTHON BUILD
+# =========================
+build/
+dist/
+*.egg-info/
 
 # =========================
 # OS
