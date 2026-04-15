@@ -14,8 +14,7 @@ import com.gaiaspa.metrics_detection.data.model.request.RefreshTokenRequest
 import com.gaiaspa.metrics_detection.data.model.response.DeleteBatchGrapeResponse
 import com.gaiaspa.metrics_detection.data.model.response.LoteResponse
 import com.gaiaspa.metrics_detection.data.model.request.CompanyRegisterRequest
-import com.gaiaspa.metrics_detection.data.model.request.RecoveryRequest
-import com.gaiaspa.metrics_detection.data.model.request.ResetRequest
+import com.gaiaspa.metrics_detection.data.model.request.PasswordChangeRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -30,8 +29,6 @@ interface ApiService {
 
     /** 
      * Registro corporativo por invitación.
-     * Antes: /auth/register con JSONObject manual.
-     * Ahora: /auth/company-registration con DTO CompanyRegisterRequest.
      */
     @POST("auth/company-registration")
     suspend fun registerCompany(@Body request: CompanyRegisterRequest): Response<Void>
@@ -45,12 +42,14 @@ interface ApiService {
     @POST("auth/refresh-token")
     fun refreshTokenSync(@Body refreshTokenRequest: RefreshTokenRequest): Call<LoginResponse>
 
-    /**  RECOVERY  */
-    @POST("auth/password-recovery/request")
-    suspend fun requestRecovery(@Body request: RecoveryRequest): Response<Void>
-
-    @POST("auth/password-recovery/reset")
-    suspend fun resetPassword(@Body request: ResetRequest): Response<Void>
+    /**  
+     * RECOVERY (Proceso Simplificado v2)
+     * Antes: Flujo de 2 pasos con token por correo.
+     * Ahora: Cambio de contraseña directo mediante validación de Email + RUT.
+     * Motivo: Simplificación de UX y eliminación de dependencia de envío de correos.
+     */
+    @POST("auth/password-recovery/change")
+    suspend fun changePassword(@Body request: PasswordChangeRequest): Response<Void>
 
     /**  Lote APIs  */
     @Multipart

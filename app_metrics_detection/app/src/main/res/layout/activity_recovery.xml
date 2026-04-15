@@ -13,68 +13,47 @@
         android:text="Recuperar Contraseña"
         android:textSize="24sp"
         android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ingresa tus datos para cambiar tu contraseña de forma segura."
+        android:textAlignment="center"
         android:layout_marginBottom="32dp"/>
 
-    <!-- Etapa 1: Solicitud -->
-    <LinearLayout
-        android:id="@+id/layoutRequest"
+    <!-- Campo Email -->
+    <EditText
+        android:id="@+id/etEmailRecovery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:hint="Correo electrónico"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/etEmailRecovery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Correo electrónico"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etRutRecovery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="RUT (ej: 12345678-9)"
-            android:inputType="text"
-            android:layout_marginBottom="24dp"/>
-    </LinearLayout>
-
-    <!-- Etapa 2: Reset (Oculto) -->
-    <LinearLayout
-        android:id="@+id/layoutReset"
+    <!-- Campo RUT -->
+    <EditText
+        android:id="@+id/etRutRecovery"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+        android:hint="RUT (ej: 12345678-9)"
+        android:inputType="text"
+        android:layout_marginBottom="16dp"/>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Ingresa el código enviado a tu correo"
-            android:layout_marginBottom="8dp"/>
-
-        <EditText
-            android:id="@+id/etTokenRecovery"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Código / Token"
-            android:inputType="text"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etNewPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Nueva Contraseña"
-            android:inputType="textPassword"
-            android:layout_marginBottom="16dp"/>
-    </LinearLayout>
+    <!-- Campo Nueva Contraseña -->
+    <EditText
+        android:id="@+id/etNewPasswordRecovery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nueva Contraseña"
+        android:inputType="textPassword"
+        android:layout_marginBottom="24dp"/>
 
     <Button
-        android:id="@+id/btnRecoveryAction"
+        android:id="@+id/btnChangePassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enviar Solicitud"
+        android:text="Actualizar Contraseña"
         android:layout_marginBottom="16dp"/>
 
     <TextView

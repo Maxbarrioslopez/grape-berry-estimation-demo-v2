@@ -2,20 +2,21 @@
  * RecoveryActivity.kt
  *
  * Propósito: Gestionar la recuperación de acceso para usuarios que olvidaron su contraseña.
- * Responsabilidad: Orquestar la solicitud de recuperación (Etapa 1) y el reseteo final (Etapa 2).
+ * Responsabilidad: Realizar el cambio de contraseña en un solo paso validando Email y RUT.
+ * 
+ * Flujo: Validar datos locales -> Petición Directa al Backend -> Éxito/Error -> Login.
  */
 package com.gaiaspa.metrics_detection.auth
 
 import android.os.Bundle
-import android.view.View
+import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.gaiaspa.metrics_detection.databinding.ActivityRecoveryBinding
 import com.gaiaspa.metrics_detection.network.ApiClient
 import com.gaiaspa.metrics_detection.network.ApiService
-import com.gaiaspa.metrics_detection.data.model.request.RecoveryRequest
-import com.gaiaspa.metrics_detection.data.model.request.ResetRequest
+import com.gaiaspa.metrics_detection.data.model.request.PasswordChangeRequest
 import com.gaiaspa.metrics_detection.network.TokenProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +26,6 @@ class RecoveryActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRecoveryBinding
     private lateinit var apiService: ApiService
-    private var isResetMode = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,12 +34,8 @@ class RecoveryActivity : AppCompatActivity() {
 
         apiService = ApiClient.create(applicationContext)
 
-        binding.btnRecoveryAction.setOnClickListener {
-            if (!isResetMode) {
-                performRecoveryRequest()
-            } else {
-                performPasswordReset()
-            }
+        binding.btnChangePassword.setOnClickListener {
+            performChangePassword()
         }
 
         binding.tvBackToLogin.setOnClickListener {
@@ -48,71 +44,54 @@ class RecoveryActivity : AppCompatActivity() {
     }
 
     /**
-     * Etapa 1: Solicita el inicio del flujo de recuperación enviando Email y RUT.
+     * Realiza el cambio de contraseña validando Email, RUT y la nueva clave.
+     * Envía 'newContraseña' según contrato del backend.
      */
-    private fun performRecoveryRequest() {
+    private fun performChangePassword() {
         val email = binding.etEmailRecovery.text.toString().trim().lowercase()
         val rut = binding.etRutRecovery.text.toString().trim()
+        val newPassword = binding.etNewPasswordRecovery.text.toString().trim()
 
-        if (email.isEmpty() || rut.isEmpty()) {
-            Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show()
+        // Validaciones en cliente
+        if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Ingrese un correo electrónico válido", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (rut.isEmpty()) {
+            Toast.makeText(this, "El RUT es obligatorio", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (newPassword.length < 6) {
+            Toast.makeText(this, "La nueva contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
             return
         }
 
         lifecycleScope.launch {
             try {
+                val request = PasswordChangeRequest(email, rut, newPassword)
                 val response = withContext(Dispatchers.IO) {
-                    apiService.requestRecovery(RecoveryRequest(email, rut))
-                }
-
-                // Feedback genérico por seguridad (blind feedback)
-                Toast.makeText(this@RecoveryActivity, 
-                    "Si los datos coinciden, recibirás un código en tu correo", 
-                    Toast.LENGTH_LONG).show()
-
-                // Cambiar a modo reset para que el usuario ingrese el token
-                switchToResetMode()
-            } catch (e: Exception) {
-                Toast.makeText(this@RecoveryActivity, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun switchToResetMode() {
-        binding.layoutRequest.visibility = View.GONE
-        binding.layoutReset.visibility = View.VISIBLE
-        binding.btnRecoveryAction.text = "Actualizar Contraseña"
-        isResetMode = true
-    }
-
-    /**
-     * Etapa 2: Envía el token recibido por correo y la nueva contraseña.
-     */
-    private fun performPasswordReset() {
-        val token = binding.etTokenRecovery.text.toString().trim()
-        val newPassword = binding.etNewPassword.text.toString().trim()
-
-        if (token.isEmpty() || newPassword.length < 6) {
-            Toast.makeText(this, "Ingresa un token válido y password min 6 caracteres", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        lifecycleScope.launch {
-            try {
-                val response = withContext(Dispatchers.IO) {
-                    apiService.resetPassword(ResetRequest(token, newPassword))
+                    apiService.changePassword(request)
                 }
 
                 if (response.isSuccessful) {
-                    Toast.makeText(this@RecoveryActivity, "Contraseña actualizada correctamente", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@RecoveryActivity, 
+                        "Contraseña actualizada correctamente", 
+                        Toast.LENGTH_LONG).show()
+                    
                     // Limpieza preventiva de sesión local
                     TokenProvider.clearSession()
-                    finish() // Regresa a Login
+                    finish() // Regresa a LoginActivity
                 } else {
-                    Toast.makeText(this@RecoveryActivity, "Token inválido o expirado", Toast.LENGTH_SHORT).show()
+                    val message = when(response.code()) {
+                        404 -> "Los datos ingresados no coinciden con nuestros registros"
+                        else -> "No se pudo cambiar la contraseña (${response.code()})"
+                    }
+                    Toast.makeText(this@RecoveryActivity, message, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@RecoveryActivity, "Error de red", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@RecoveryActivity, "Error de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

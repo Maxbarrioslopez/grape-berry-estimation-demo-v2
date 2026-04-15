@@ -43,7 +43,7 @@ object TokenProvider {
                 try {
                     sharedPreferences = createEncryptedPrefs(resolvedContext)
                 } catch (retryException: Exception) {
-                    throw retryException 
+                    Log.e(TAG, "Fallo critico en EncryptedSharedPreferences", retryException)
                 }
             }
         }
@@ -103,6 +103,9 @@ object TokenProvider {
     fun saveRole(role: String) = prefs().edit().putString("USER_ROLE", role).apply()
     fun getRole(): String = prefs().getString("USER_ROLE", "user") ?: "user"
 
+    fun saveCompanyId(id: String) = prefs().edit().putString("COMPANY_ID", id).apply()
+    fun getCompanyId(): String = prefs().getString("COMPANY_ID", "") ?: ""
+
     fun logout() {
         try {
             prefs().edit().clear().apply()
@@ -111,6 +114,5 @@ object TokenProvider {
         }
     }
 
-    /** Alias para limpiar sesión tras recuperación de contraseña o logout forzado. */
     fun clearSession() = logout()
 }

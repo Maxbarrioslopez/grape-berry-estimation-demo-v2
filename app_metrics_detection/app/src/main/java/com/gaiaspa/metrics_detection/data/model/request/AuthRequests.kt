@@ -1,8 +1,9 @@
 package com.gaiaspa.metrics_detection.data.model.request
 
+import com.google.gson.annotations.SerializedName
+
 /**
- * DTOs para el flujo de autenticación y recuperación de cuenta.
- * Alineados estrictamente con el contrato del backend multi-tenant.
+ * DTOs for Auth flow aligned with multi-tenant backend v1.
  */
 
 data class CompanyRegisterRequest(
@@ -12,6 +13,13 @@ data class CompanyRegisterRequest(
     val password: String,
     val rut: String,
     val inviteCode: String
+)
+
+data class PasswordChangeRequest(
+    val email: String,
+    val rut: String,
+    @SerializedName("newContraseña")
+    val newPassword: String
 )
 
 data class RecoveryRequest(

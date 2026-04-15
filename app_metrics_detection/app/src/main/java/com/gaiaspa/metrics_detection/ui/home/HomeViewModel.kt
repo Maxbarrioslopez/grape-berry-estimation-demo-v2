@@ -6,9 +6,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.*
 import com.gaiaspa.metrics_detection.data.model.CalPredict
+import com.gaiaspa.metrics_detection.data.model.Lote
+import com.gaiaspa.metrics_detection.data.repository.LoteRepository
 import com.gaiaspa.metrics_detection.ml.MetricsPipeline
 import com.gaiaspa.metrics_detection.ml.Success
 import com.gaiaspa.metrics_detection.ml.ImageUtils
+import com.gaiaspa.metrics_detection.network.TokenProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,10 +39,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val availableVarieties = MutableLiveData<List<VarietyOption>>(emptyList())
     val isSavingLote = MutableLiveData<Boolean>(false)
 
+    private val repository = LoteRepository.getInstance(application)
     private val instanceSeg = MetricsPipeline(application) { Log.d("HomeVM", it) }
 
     init {
-        // LISTA OFICIAL DE VARIEDADES (ORDEN CRITICO 0-11 PARA EL MODELO)
+        // ✅ ORDEN CRÍTICO PARA EL MODELO ONNX (No cambiar)
         availableVarieties.value = listOf(
             VarietyOption(0, "ALLISON"),
             VarietyOption(1, "AUTUMN CRISP"),
@@ -60,6 +64,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val current = imagePredictions.value.orEmpty().toMutableList()
         current.add(ImagePrediction(Uri.fromFile(File(path))))
         imagePredictions.value = current
+        processAll()
     }
 
     fun removeImageAt(index: Int) {
@@ -74,7 +79,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val list = imagePredictions.value.orEmpty()
             list.forEachIndexed { index, item ->
-                if (item.status != Status.DONE) {
+                if (item.status == Status.PENDING || item.status == Status.ERROR) {
                     processImage(index, item)
                 }
             }
@@ -85,54 +90,97 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val context = getApplication<Application>()
         try {
             updateItemStatus(index, Status.NORMALIZING)
-            val normalizedPath = try {
-                 val f = File(context.cacheDir, "temp_${System.currentTimeMillis()}.jpg")
-                 context.contentResolver.openInputStream(item.uri)?.use { input ->
-                     f.outputStream().use { output -> input.copyTo(output) }
-                 }
-                 f.absolutePath
-            } catch (e: Exception) { null }
-
-            if (normalizedPath == null) {
-                updateItemError(index, "Error al copiar imagen")
-                return
+            
+            // Directorio permanente para evitar borrados antes de la sincronización (Modo Offline)
+            val mediaDir = File(context.filesDir, "lotes_media").apply { mkdirs() }
+            val time = System.currentTimeMillis()
+            
+            val normalizedFile = File(mediaDir, "src_${time}_$index.jpg")
+            context.contentResolver.openInputStream(item.uri)?.use { input ->
+                normalizedFile.outputStream().use { output -> input.copyTo(output) }
             }
 
-            val preview = ImageUtils.decodeSampledBitmap(normalizedPath, 300, 300)
-            updateItemPreview(index, normalizedPath, preview)
+            val preview = ImageUtils.decodeSampledBitmap(normalizedFile.absolutePath, 300, 300)
+            updateItemPreview(index, normalizedFile.absolutePath, preview)
 
             updateItemStatus(index, Status.PROCESSING)
+            
             instanceSeg.invokeFromFile(
-                imagePath = normalizedPath,
+                imagePath = normalizedFile.absolutePath,
                 smoothEdges = true,
                 varietyId = selectedVariety.value?.id,
                 onSuccess = { success ->
                     viewModelScope.launch(Dispatchers.Default) {
-                        val baseBitmap = success.imageOrig ?: preview ?: return@launch
-                        val overlay = success.imagePro.second
+                        // Usar el resultado del motor JNI (con overlays)
+                        val finalImage = success.imagePro.first ?: preview ?: return@launch
                         
-                        val combined = if (overlay != null) {
-                            val res = Bitmap.createBitmap(baseBitmap.width, baseBitmap.height, baseBitmap.config)
-                            val canvas = android.graphics.Canvas(res)
-                            canvas.drawBitmap(baseBitmap, 0f, 0f, null)
-                            canvas.drawBitmap(overlay, 0f, 0f, null)
-                            res
-                        } else {
-                            baseBitmap
-                        }
-
-                        val savedPath = ImageUtils.saveBitmapToDisk(combined, context.cacheDir, "overlay")
-                        val finalPreview = Bitmap.createScaledBitmap(combined, 300, 300, true)
-                        val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "No prediction")
+                        // Guardado permanente de la evidencia visual
+                        val overlayPath = ImageUtils.saveBitmapToDisk(finalImage, mediaDir, "res_${time}_$index")
+                        val finalPreview = Bitmap.createScaledBitmap(finalImage, 300, 300, true)
                         
-                        updateItemSuccess(index, savedPath, finalPreview, calPredict)
-                        if (combined != baseBitmap && combined != overlay) combined.recycle()
+                        // Extraer predicción completa del modelo (Mean, Mode, STD, etc.)
+                        val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "No prediction data")
+                        
+                        updateItemSuccess(index, overlayPath ?: "", finalPreview, calPredict)
                     }
                 },
-                onFailure = { err -> updateItemError(index, err) }
+                onFailure = { err -> 
+                    Log.e("HomeVM", "Error JNI: $err")
+                    updateItemError(index, err) 
+                }
             )
         } catch (e: Exception) {
+            Log.e("HomeVM", "Excepción: ${e.message}")
             updateItemError(index, e.message ?: "Error desconocido")
+        }
+    }
+
+    /**
+     * Guarda el lote localmente (Modo Offline).
+     * Una vez guardado en Room, el SyncWorker se encargará de subirlo al servidor NestJS.
+     */
+    fun saveBatch(callback: (Boolean) -> Unit) {
+        val predictions = imagePredictions.value.orEmpty()
+        if (predictions.isEmpty() || predictions.any { it.status != Status.DONE }) {
+            callback(false)
+            return
+        }
+
+        isSavingLote.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Sincronizar TokenProvider antes de obtener el ID
+                TokenProvider.init(getApplication())
+                val userId = TokenProvider.getUserId()
+
+                val lote = Lote(
+                    userId = userId,
+                    company = company.value ?: "",
+                    vessel = vessel.value ?: "",
+                    block = block.value ?: "",
+                    varietyId = selectedVariety.value?.id ?: -1,
+                    varietyName = selectedVariety.value?.name ?: "UNKNOWN",
+                    sourceImages = predictions.map { it.uri.toString() },
+                    normalizedImages = predictions.mapNotNull { it.normalizedPath },
+                    overlayImages = predictions.mapNotNull { it.overlayPath },
+                    calPredicts = predictions.mapNotNull { it.prediction },
+                    synced = false // Flag para SyncWorker
+                )
+
+                repository.insertLocalLote(lote)
+                
+                viewModelScope.launch(Dispatchers.Main) {
+                    isSavingLote.value = false
+                    imagePredictions.value = emptyList() // Limpiar UI tras éxito
+                    callback(true)
+                }
+            } catch (e: Exception) {
+                Log.e("HomeVM", "Error al guardar lote offline", e)
+                viewModelScope.launch(Dispatchers.Main) {
+                    isSavingLote.value = false
+                    callback(false)
+                }
+            }
         }
     }
 
@@ -178,15 +226,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 list[index] = list[index].copy(status = Status.ERROR, errorMessage = error)
                 imagePredictions.value = list
             }
-        }
-    }
-
-    fun saveBatch(callback: (Boolean) -> Unit) {
-        isSavingLote.value = true
-        viewModelScope.launch {
-            delay(1500) // Simular guardado
-            isSavingLote.value = false
-            callback(true)
         }
     }
 
