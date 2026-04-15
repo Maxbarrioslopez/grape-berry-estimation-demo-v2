@@ -106,7 +106,7 @@ fun createLotesReportPdf(
         val date = Date(lote.predictedAt)
         val dStr = android.text.format.DateFormat.format("dd MMM yyyy  •  HH:mm", date).toString()
         canvas.drawText(dStr, right - 180f, cy + 90f, smallP)
-        canvas.drawText("${lote.images.size} img", right - 80f, cy + 90f, smallP)
+        canvas.drawText("${lote.normalizedImages.size} img", right - 80f, cy + 90f, smallP)
 
         cy += 130f
 
@@ -141,7 +141,7 @@ fun createLotesReportPdf(
             val imgTop  = rowTop  + 20f
             val imgRect = RectF(imgLeft, imgTop, imgLeft + colWImg, imgTop + colWImg)
 
-            lote.images.getOrNull(idx)?.let { path ->
+            lote.normalizedImages.getOrNull(idx)?.let { path ->
                 BitmapFactory.decodeFile(path)?.also { bmp ->
                     canvas.drawBitmap(bmp, null, imgRect, null)
                     bmp.recycle()

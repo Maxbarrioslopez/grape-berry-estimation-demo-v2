@@ -1,7 +1,7 @@
 
 # 📱 Metrics Detection - Pipeline Nativo ONNX (Android)
 
-Aplicación Android para **segmentación de instancias** y **detección de métricas** en uvas, integrando procesamiento nativo C++ (ONNX Runtime, OpenCV), modelos de deep learning y una interfaz moderna en Kotlin. El pipeline es multiplataforma y combina componentes Python, C++ y Android.
+Aplicación Android para **segmentación de instancias** y **detección de métricas** en uvas, integrando procesamiento nativo C++ (ONNX Runtime, OpenCV), modelos de deep learning y una interfaz moderna en Kotlin. El sistema está alineado con un backend multi-tenant y un motor de auditoría forense.
 
 ---
 
@@ -11,71 +11,52 @@ El sistema realiza:
 - Preprocesamiento de imágenes (OpenCV nativo)
 - Inferencia de modelos ONNX (segmentación y regresión)
 - Postprocesamiento y visualización en la app
-- Persistencia y sincronización de resultados
+- **Auditoría técnica**: Generación de máscaras binarias raw y detecciones para validación externa.
+- **Sincronización**: Gestión de lotes (Batch) con persistencia offline/online.
 
-### Componentes principales
+---
 
-- **pipeline.py**: Orquestador Python para pruebas y entrenamiento.
-- **app_metrics_detection/app/**: App Android nativa (UI, lógica, integración JNI).
-- **c_code/**: Código C++ para el pipeline nativo y lógica de inferencia.
-- **weights/**: Modelos ONNX de producción (`seg_best.onnx`, `best_model_5ch_residual.onnx`).
-- **third_party/**: Dependencias nativas (ONNX Runtime, OpenCV Android SDK).
-- **data/**: Imágenes y etiquetas para entrenamiento/pruebas.
+## 🔐 Seguridad y Autenticación (Multi-tenant)
+
+La aplicación ha sido adaptada para entornos corporativos con las siguientes reglas:
+
+- **Multi-tenant Invisible**: El `companyId` (tenant real) lo gestiona el backend mediante el JWT. El campo `company` en los lotes se mantiene solo por compatibilidad de contrato Multipart.
+- **Registro por Invitación**: El alta de usuarios finales requiere un `inviteCode` corporativo válido (`POST /auth/company-registration`).
+- **Gestión de Roles**: Soporte para roles `superadmin`, `client_admin` y `user` para el control de acceso en la UI.
+- **Recuperación de Cuenta**: Flujo estricto de recuperación mediante Email + RUT.
+- **Persistencia Segura**: Uso de `EncryptedSharedPreferences` (vía `TokenProvider`) para almacenar tokens y roles de usuario.
+
+---
+
+## 🧪 Validación y Auditoría Forense
+
+El proyecto incluye un motor de validación para asegurar la paridad de resultados entre el pipeline de investigación (Python) y el de producción (Android/JNI).
+
+### Scripts de Validación (`/app_metrics_detection/imagenesparatest/`)
+- **`run_kotlin_emulator_batch.ps1`**: Automatiza la ejecución de tests masivos en el emulador, descarga resultados y lanza la evaluación.
+- **`eval_jni_vs_gt.py`**: Genera reportes de precisión detallados (`reporte_forense_maxi.md`) comparando predicciones contra Ground Truth (CSV).
+
+### Evidencia Técnica Generada
+Por cada imagen, el sistema exporta:
+- **`.json`**: Datos técnicos, tiempos de inferencia y parámetros bimodales.
+- **`_raw.png`**: Máscara binaria pura (0/255) resultante de la segmentación.
+- **`_pro.jpg`**: Overlay con cajas de detección (BBoxes) y scores.
+- **`_seg.jpg`**: Visualización coloreada de la máscara de uvas.
 
 ---
 
 ## 🛠️ Tecnologías y Librerías Utilizadas
 
 ### Android/Kotlin
-- Kotlin (UI, lógica de app)
-- AndroidX (core, appcompat, navigation, constraintlayout, exifinterface, activity, fragment, ViewModel, Room, WorkManager)
-- Material Components
-- Glide (carga de imágenes)
-- MPAndroidChart (gráficas)
-- OkHttp3, Retrofit2 (red y APIs)
-- Gson (serialización JSON)
-- uCrop (recorte de imágenes)
-- Security Crypto (almacenamiento seguro)
+- **UI**: ViewBinding, Fragment, Navigation, MPAndroidChart.
+- **Sesión**: Security Crypto (EncryptedSharedPreferences).
+- **Red**: Retrofit2 (con DTOs seguros), OkHttp3, Gson.
+- **Background**: WorkManager (SyncWorker para subida offline).
+- **Imágenes**: Glide, uCrop, ExifInterface (Telemetría ISO/Exposure).
 
 ### Nativo (C++)
-- C++17 (STL)
-- ONNX Runtime Android (inferencia de modelos)
-- OpenCV Android SDK (procesamiento de imágenes)
-
-### Python (pipeline y pruebas)
-- Python >=3.11
-- matplotlib
-- numpy
-- onnxruntime
-- opencv-python
-- pandas
-
----
-
-## 📦 Instalación y Descarga de Dependencias
-
-### 1. Dependencias nativas (ONNX Runtime + OpenCV)
-
-Desde la raíz de `app_metrics_detection`, ejecuta:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/prepare_native_deps.ps1
-```
-
-Esto descarga y extrae automáticamente:
-- ONNX Runtime Android AAR → `third_party/onnxruntime/onnxruntime-android-1.24.3`
-- OpenCV Android SDK → `third_party/opencv/OpenCV-android-sdk`
-
-> Si usas Linux/macOS, deberás crear un script equivalente o descargar manualmente las dependencias y configurar las rutas en `gradle.properties` (`ONNXRUNTIME_ANDROID_ROOT`, `OPENCV_ANDROID_SDK`).
-
-### 2. Dependencias de la app Android
-
-Gradle gestiona todas las librerías. Para compilar:
-
-```powershell
-./gradlew.bat :app:assembleDebug
-```
-
+- **Engine**: C++17, ONNX Runtime Android (Inferencia), OpenCV Android SDK.
+- **Bridge**: JNI para comunicación eficiente entre Kotlin y el motor de procesamiento.
 
 ---
 
@@ -83,52 +64,32 @@ Gradle gestiona todas las librerías. Para compilar:
 
 ```text
 optimizacion_uvas/
-├── pipeline.py                  # Orquestador Python
-├── pyproject.toml               # Configuración Python
+├── pipeline.py                  # Orquestador Python (Entrenamiento)
 ├── app_metrics_detection/
-│   ├── app/                     # App Android
-│   │   ├── src/main/
-│   │   │   ├── cpp/             # Motor nativo C++
-│   │   │   ├── java/.../        # Lógica y UI Kotlin
-│   │   │   ├── assets/weights/  # Modelos ONNX
-│   │   │   └── res/xml/         # Configuración
-│   │   └── build.gradle.kts     # Configuración Gradle app
-│   ├── scripts/                 # Scripts automatización
-│   ├── third_party/             # ONNX/OpenCV nativos
-│   └── build.gradle.kts         # Configuración Gradle raíz
-├── c_code/                      # Código C++ standalone
-├── data/                        # Imágenes y etiquetas
-├── weights/                     # Modelos ONNX
+│   ├── app/src/main/
+│   │   ├── cpp/                 # Motor JNI y lógica C++ (main.cpp)
+│   │   ├── java/.../auth/       # Login, Registro (Invite), Recovery
+│   │   ├── java/.../network/    # ApiService (v1), TokenProvider
+│   │   ├── java/.../data/       # Repositorios y DTOs (AuthRequests)
+│   │   ├── java/.../worker/     # SyncWorker (Multi-tenant aware)
+│   │   └── assets/weights/      # Modelos ONNX (seg_best, regression)
+│   ├── imagenesparatest/        # Motor de pruebas forenses (PS1, Python)
+│   └── third_party/             # Librerías nativas (ONNX/OpenCV)
 └── README.md                    # Este archivo
 ```
 
 ---
 
-## ⚙️ Notas de Build y Compatibilidad
+## ⚙️ Notas de Build
 
-- ABI soportada: `arm64-v8a` (puedes agregar más en `ndk.abiFilters` y asegurando los .so correspondientes)
-- El build ejecuta automáticamente la descarga de dependencias nativas antes de compilar C++
-- Puedes sobreescribir rutas de dependencias nativas en `gradle.properties`
-- Para release, revisa reglas de ProGuard y activa `isMinifyEnabled = true` para optimizar el APK
-
----
-
-## 📝 Notas de Mantenimiento y Seguridad
-
-- El orden de variedades se define en `RuntimeVarietyCatalog.kt`, `pipeline.py` y `main.cpp`
-- Permisos requeridos: **Cámara** e **Internet**
-- La app permite HTTP solo en debug, usa HTTPS en producción
-- `bundle_kotlin.json` no participa en la inferencia ONNX/JNI
+- **Actualización de Motor**: Al modificar el código C++ (`main.cpp` o `jni`), es **obligatorio** realizar un `Build > Rebuild Project` en Android Studio para recompilar el binario `.so`.
+- **ABI**: Soporte optimizado para `arm64-v8a`.
+- **Preparación**: Ejecutar `scripts/prepare_native_deps.ps1` para descargar dependencias nativas.
 
 ---
 
 ## 📚 Créditos y Licencias
 
+- **Gaia Robotics Team**
 - ONNX Runtime: https://onnxruntime.ai/
 - OpenCV: https://opencv.org/
-- MPAndroidChart: https://github.com/PhilJay/MPAndroidChart
-- Glide: https://github.com/bumptech/glide
-
----
-
-Para dudas o contribuciones, contacta al responsable del proyecto.

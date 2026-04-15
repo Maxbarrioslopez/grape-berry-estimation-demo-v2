@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlinx.coroutines.sync.Semaphore
@@ -31,112 +32,71 @@ class BatchDownloadWorker(
     private val loteRepository = LoteRepository.getInstance(context)
     private val downloadSemaphore = Semaphore(4)
 
-    override suspend fun doWork(): Result {
-        return try {
-            val lotesResponse = withContext(Dispatchers.IO) {
-                loteRepository.getLoteGrapeCloud()
-            }
+    override suspend fun doWork(): Result = coroutineScope {
+        try {
+            val lotesResponse = loteRepository.getLoteGrapeCloud()
+            
             if (!lotesResponse.isSuccessful) {
                 Log.e(TAG, "Respuesta no exitosa: ${lotesResponse.code()}")
-                return Result.failure(
-                    Data.Builder().putString("progress", "Error en la respuesta del servidor").build()
-                )
+                return@coroutineScope Result.failure(createProgressData("Error en el servidor: ${lotesResponse.code()}"))
             }
+
             val lotesResponseBody = lotesResponse.body()
             if (lotesResponseBody.isNullOrEmpty()) {
-                Log.e(TAG, "No hay datos de lotes disponibles.")
-                return Result.failure(
-                    Data.Builder().putString("progress", "No hay datos de lotes disponibles.").build()
-                )
+                return@coroutineScope Result.failure(createProgressData("No hay lotes disponibles."))
             }
 
-            var count = 0
             val totalLotes = lotesResponseBody.size
+            var count = 0
 
             for ((loteIndex, loteCloud) in lotesResponseBody.withIndex()) {
-                setProgressAsync(Data.Builder().putString("progress",
-                    "Descargando lote ${loteIndex + 1} de $totalLotes").build())
-                Log.d(TAG, "Descargando lote ${loteIndex + 1} de $totalLotes")
-
+                val progressMsg = "Descargando lote ${loteIndex + 1} de $totalLotes"
+                setProgress(createProgressData(progressMsg))
+                
                 val imagePaths = loteCloud.predicts.map { it.image.imagePath }
-                val chunkSize = 10
-                val imagePathsChunks = imagePaths.chunked(chunkSize)
                 val downloadedImages = mutableListOf<String>()
 
-                for ((chunkIndex, pathsChunk) in imagePathsChunks.withIndex()) {
-                    setProgressAsync(Data.Builder().putString("progress",
-                        "Descargando lote ${loteIndex + 1} de $totalLotes | Imágenes ${chunkIndex + 1} de ${imagePathsChunks.size}").build())
-                    Log.d(TAG, "Descargando lote ${loteIndex + 1} de $totalLotes | Imágenes ${chunkIndex + 1} de ${imagePathsChunks.size}")
-
-                    val chunkResults = kotlinx.coroutines.coroutineScope {
-                        pathsChunk.map { imgUrl ->
-                            async(Dispatchers.IO) {
-                                downloadSemaphore.withPermit {
-                                    downloadImageToCache(applicationContext, imgUrl)
-                                }
-                            }
-                        }.awaitAll()
-                    }
-                    chunkResults.forEach { downloadedPath ->
-                        if (downloadedPath != null) {
-                            downloadedImages.add(downloadedPath)
-                        } else {
-                            Log.e(TAG, "Error al descargar una imagen.")
+                // Procesar imágenes en trozos para evitar saturación
+                for (chunk in imagePaths.chunked(10)) {
+                    val deferreds = chunk.map { url ->
+                        async(Dispatchers.IO) {
+                            downloadSemaphore.withPermit { downloadImage(url) }
                         }
                     }
+                    downloadedImages.addAll(deferreds.awaitAll().filterNotNull())
                     yield()
                 }
 
-                val loteToLocal = loteCloud.toLocalLote(downloadedImages)
-                withContext(Dispatchers.IO) {
-                    val isInserted = loteRepository.verifyAndInsertLoteFromCloud(loteToLocal)
-                    if (isInserted) {
-                        count++
-                        Log.d(TAG, "Lote ${loteToLocal.cloudId} insertado con éxito.")
-                    } else {
-                        Log.d(TAG, "Lote ${loteToLocal.cloudId} ya existe o fallo al insertar.")
-                    }
+                val loteLocal = loteCloud.toLocalLote(downloadedImages)
+                if (loteRepository.verifyAndInsertLoteFromCloud(loteLocal)) {
+                    count++
                 }
                 yield()
             }
-            setProgressAsync(Data.Builder().putString("progress",
-                "Descarga completa: $count lotes").build())
-            Log.d(TAG, "Descarga completa. Total lotes insertados: $count")
-            Result.success(Data.Builder().putString("progress", "Descarga completa: $count lotes").build())
+
+            Result.success(createProgressData("Descarga completa: $count lotes"))
         } catch (e: Exception) {
-            Log.e(TAG, "Error en doWork()", e)
-            Result.failure(Data.Builder().putString("progress", "Error: ${e.localizedMessage}").build())
+            Log.e(TAG, "Error en BatchDownloadWorker", e)
+            Result.failure(createProgressData("Error: ${e.localizedMessage}"))
         }
     }
 
-    private suspend fun downloadImageToCache(context: Context, imageUrl: String): String? =
-        withContext(Dispatchers.IO) {
-            try {
-                val url = URL(imageUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.doInput = true
-                connection.connect()
+    private suspend fun downloadImage(imageUrl: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val connection = URL(imageUrl).openConnection() as HttpURLConnection
+            connection.connectTimeout = 15000
+            connection.readTimeout = 15000
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) return@withContext null
 
-                if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                    Log.e(TAG, "Error: código de respuesta ${connection.responseCode} para URL $imageUrl")
-                    return@withContext null
-                }
-
-                connection.inputStream.use { inputStream ->
-                    val cacheDir = context.cacheDir
-                    val fileName = "image_${System.currentTimeMillis()}_${imageUrl.hashCode()}.png"
-                    val imageFile = File(cacheDir, fileName)
-
-                    FileOutputStream(imageFile).use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                    Log.d(TAG, "Imagen descargada en ${imageFile.absolutePath}")
-                    return@withContext imageFile.absolutePath
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception en downloadImageToCache para URL $imageUrl", e)
-                return@withContext null
+            val file = File(applicationContext.cacheDir, "img_${System.currentTimeMillis()}_${imageUrl.hashCode()}.png")
+            connection.inputStream.use { input ->
+                FileOutputStream(file).use { output -> input.copyTo(output) }
             }
+            file.absolutePath
+        } catch (e: Exception) {
+            null
         }
+    }
 
+    private fun createProgressData(message: String) = Data.Builder().putString("progress", message).build()
 }

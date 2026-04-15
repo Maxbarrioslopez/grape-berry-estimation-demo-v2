@@ -47,7 +47,7 @@ fun LoteResponse.toLocalLote(downloadedImages: List<String>): Lote {
         synced = true,
         toDelete = false,
         toUpdate = false,
-        images = downloadedImages,
+        normalizedImages = downloadedImages, // Cambiado de images a normalizedImages
         varietyId = varietyId,
         varietyName = varietyName
     )

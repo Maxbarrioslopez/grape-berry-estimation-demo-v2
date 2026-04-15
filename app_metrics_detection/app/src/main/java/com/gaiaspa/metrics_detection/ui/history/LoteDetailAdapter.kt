@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.gaiaspa.metrics_detection.R
@@ -23,7 +24,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 
 class LoteDetailAdapter(
     private val lote: Lote,
-    // NUEVO: callback para manejar el clic en la imagen
     private val onImageClick: (Bitmap) -> Unit
 ) : RecyclerView.Adapter<LoteDetailAdapter.LoteDetailViewHolder>() {
 
@@ -34,12 +34,12 @@ class LoteDetailAdapter(
     }
 
     override fun onBindViewHolder(holder: LoteDetailViewHolder, position: Int) {
-        val imagePath = lote.images[position]
+        val imagePath = lote.normalizedImages.getOrNull(position) ?: ""
         val prediction = lote.calPredicts.getOrNull(position)
         holder.bind(imagePath, prediction)
     }
 
-    override fun getItemCount(): Int = lote.images.size
+    override fun getItemCount(): Int = lote.normalizedImages.size
 
     class LoteDetailViewHolder(
         itemView: View,
@@ -51,18 +51,27 @@ class LoteDetailAdapter(
         private val barChart: BarChart = itemView.findViewById(R.id.barChart)
 
         fun bind(imagePath: String, prediction: CalPredict?) {
-            // Cargar el bitmap desde la ruta local
-            val bitmap = BitmapFactory.decodeFile(imagePath)
-            ivPhoto.setImageBitmap(bitmap)
+            // Intentar cargar el bitmap
+            val bitmap = if (imagePath.isNotEmpty()) BitmapFactory.decodeFile(imagePath) else null
+            
+            if (bitmap != null) {
+                ivPhoto.setImageBitmap(bitmap)
+                ivPhoto.setOnClickListener {
+                    onImageClick(bitmap)
+                }
+            } else {
+                // Si no hay imagen (por ejemplo, después de descargar lotes de la nube sin fotos)
+                ivPhoto.setImageResource(R.drawable.ic_gallery) // O cualquier icono de placeholder
+                ivPhoto.setOnClickListener {
+                    Toast.makeText(itemView.context, "Imagen no disponible (Solo datos)", Toast.LENGTH_SHORT).show()
+                }
+            }
 
             // Mostrar datos de predicción
             if(prediction?.status == false) {
-                // Hubo error en la predicción
                 tvPredictionInfo.text = prediction.error
                 barChart.clear()
-
             } else if (prediction?.status == true) {
-                // Predicción exitosa
                 val predInfo = """
                     Color: ${prediction.bunchColor}
                     QTY: ${prediction.qty}
@@ -71,25 +80,16 @@ class LoteDetailAdapter(
                     STD: ${prediction.std}
                 """.trimIndent()
                 tvPredictionInfo.text = predInfo
-
                 setupChart(barChart, prediction.bins, prediction.pred)
             } else {
-                // prediction == null
                 tvPredictionInfo.text = "Sin predicción"
                 barChart.clear()
-            }
-
-            // Clic en la imagen -> callback para ver en Fullscreen
-            ivPhoto.setOnClickListener {
-                onImageClick(bitmap)
             }
         }
 
         private fun setupChart(barChart: BarChart, bins: List<Float>, values: List<Int>) {
-            // 1) Datos
             val entries = values.mapIndexed { i, v -> BarEntry(i.toFloat(), v.toFloat()) }
-            val barDataSet = BarDataSet(entries, "") // Sin leyenda textual
-            // Usar tu color primario (o un array de tonos si quieres degradado)
+            val barDataSet = BarDataSet(entries, "")
             val primaryColor = ContextCompat.getColor(barChart.context, R.color.colorPrimary)
             barDataSet.color = primaryColor
             barDataSet.valueTextSize = 10f
@@ -98,13 +98,10 @@ class LoteDetailAdapter(
                 override fun getFormattedValue(value: Float) = value.toInt().toString()
             }
 
-            // 2) Configurar el BarData
             val barData = BarData(barDataSet).apply {
-                barWidth = 0.7f  // barras más delgadas
-
+                barWidth = 0.7f
             }
 
-            // 3) Ejes X
             with(barChart.xAxis) {
                 position = XAxis.XAxisPosition.BOTTOM
                 setDrawAxisLine(true)
@@ -116,7 +113,6 @@ class LoteDetailAdapter(
                 valueFormatter = IndexAxisValueFormatter(bins.map { String.format("%.1f", it) })
             }
 
-            // 4) Ejes Y
             barChart.axisLeft.apply {
                 setDrawAxisLine(false)
                 setDrawGridLines(true)
@@ -127,17 +123,11 @@ class LoteDetailAdapter(
             }
             barChart.axisRight.isEnabled = false
 
-            // 5) Desactivar  tipo de zoom/interacción de escala
             barChart.apply {
-                setPinchZoom(false)                  // pinch-zoom
-                isDoubleTapToZoomEnabled = false     // doble-tap
-                setScaleEnabled(false)               // scaling en cualquiera de los ejes
-                isDragEnabled = false                // opcional: impide drag/panning
-            }
-
-
-            // 5) Estilo general
-            barChart.apply {
+                setPinchZoom(false)
+                isDoubleTapToZoomEnabled = false
+                setScaleEnabled(false)
+                isDragEnabled = false
                 description.isEnabled = false
                 legend.isEnabled = false
                 setDrawBorders(false)

@@ -110,7 +110,7 @@ class HistoryDetailFragment : Fragment() {
         binding.tvCompany.text   = lote.company
         binding.tvVessel.text    = lote.vessel
         binding.tvBlock.text     = lote.block
-        binding.tvImagesLen.text = "${lote.images.size} imágenes"
+        binding.tvImagesLen.text = "${lote.normalizedImages.size} imágenes"
 
         // Fecha y hora por separado
         val dt = Date(lote.predictedAt)

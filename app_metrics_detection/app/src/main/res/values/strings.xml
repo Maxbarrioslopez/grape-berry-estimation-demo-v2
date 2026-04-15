@@ -27,7 +27,7 @@
     <string name="mm_px">Milimetros por pixel</string>
     <string name="predictions">Predictions</string>
     <string name="qty">QTY</string>
-    <string name="color">Bunch Color</string>
+    <string name="color">Variedad</string>
     <string name="sync_status">Estado sincronizacion</string>
 
     <string-array name="filter_options">
@@ -35,6 +35,4 @@
         <item>Sincronizados</item>
         <item>No sincronizados</item>
     </string-array>
-
-
 </resources>

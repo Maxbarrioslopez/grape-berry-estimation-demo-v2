@@ -2,202 +2,196 @@ package com.gaiaspa.metrics_detection.ui.home
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.gaiaspa.metrics_detection.data.model.CalPredict
-import com.gaiaspa.metrics_detection.data.model.Lote
-import com.gaiaspa.metrics_detection.data.repository.LoteRepository
 import com.gaiaspa.metrics_detection.ml.MetricsPipeline
-import com.gaiaspa.metrics_detection.ml.RuntimeVarietyCatalog
+import com.gaiaspa.metrics_detection.ml.Success
+import com.gaiaspa.metrics_detection.ml.ImageUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     data class ImagePrediction(
-        val image: Bitmap,
+        val uri: Uri,
+        val normalizedPath: String? = null,
+        val previewBitmap: Bitmap? = null,
+        val status: Status = Status.PENDING,
         val prediction: CalPredict? = null,
-        val isProcessing: Boolean = false
+        val overlayPath: String? = null,
+        val errorMessage: String? = null
     )
 
-    val imagePredictions = MutableLiveData<MutableList<ImagePrediction>>(mutableListOf())
+    enum class Status { PENDING, NORMALIZING, PROCESSING, DONE, ERROR }
 
-    // Step1 fields
-    val company = MutableLiveData("")
-    val vessel = MutableLiveData("")
-    val block = MutableLiveData("")
-
-    // Variety
-    val availableVarieties = MutableLiveData<List<VarietyOption>>(emptyList())
+    val imagePredictions = MutableLiveData<List<ImagePrediction>>(emptyList())
     val selectedVariety = MutableLiveData<VarietyOption?>(null)
+    val company = MutableLiveData<String>("")
+    val vessel = MutableLiveData<String>("")
+    val block = MutableLiveData<String>("")
+    val availableVarieties = MutableLiveData<List<VarietyOption>>(emptyList())
+    val isSavingLote = MutableLiveData<Boolean>(false)
 
-    private val loteRepository = LoteRepository.getInstance(application)
-    private val instanceSeg: MetricsPipeline
+    private val instanceSeg = MetricsPipeline(application) { Log.d("HomeVM", it) }
 
     init {
-        // 1) Load the live runtime variety IDs used by the native regressor.
-        val vars = RuntimeVarietyCatalog.entries()
-            .map { VarietyOption(it.id, RuntimeVarietyCatalog.toUiName(it.name)) }
-
-        availableVarieties.value = vars
-
-        // (Opcional pro) set default si existe y no hay selección
-        if (selectedVariety.value == null && vars.isNotEmpty()) {
-            selectedVariety.value = vars.first()
-        }
-
-        // 2) Initialize ML
-        instanceSeg = MetricsPipeline(
-            context = application.applicationContext,
-            providerPreference = MetricsPipeline.DEFAULT_PROVIDER
-        ) { msg -> Log.d("InstanceSeg", msg) }
-    }
-
-    fun addImage(bitmap: Bitmap) {
-        val list = imagePredictions.value ?: mutableListOf()
-        list.add(ImagePrediction(image = bitmap))
-        imagePredictions.value = list
-
-        processItemAt(list.size - 1)
-    }
-
-    fun processItemAt(index: Int) {
-        val list = imagePredictions.value ?: return
-        if (index !in list.indices) return
-
-        val oldItem = list[index]
-        list[index] = oldItem.copy(isProcessing = true)
-        imagePredictions.postValue(list)
-
-        // ✅ este es el varId correcto
-        val varId: Int? = selectedVariety.value?.id?.takeIf { it >= 0 }
-        Log.d("HomeViewModel", "processItemAt($index): varId=$varId, varietyName=${selectedVariety.value?.name}")
-
-        viewModelScope.launch(Dispatchers.Default) {
-            Log.d("HomeViewModel", "Antes de invocar instanceSeg.invoke() para index $index")
-            instanceSeg.invoke(
-                frame = oldItem.image,
-                smoothEdges = true,
-                varietyId = varId,   // ✅ ahora sí compila
-                onSuccess = { success ->
-                    Log.d("HomeViewModel", "onSuccess: predicciones=${success.predictsList.size}")
-                    val combinedBitmap = combineBitmapsOverlay(
-                        success.imagePro.first,
-                        success.imagePro.second
-                    )
-
-                    val calPredict = success.predictsList.firstOrNull()
-                    val finalPred = calPredict ?: CalPredict(
-                        bunchColor = "null",
-                        qty = 0,
-                        pred = emptyList(),
-                        bins = emptyList(),
-                        mean = 0f,
-                        mode = 0f,
-                        std = 0f,
-                        error = "No prediction",
-                        status = false
-                    )
-                    Log.d("HomeViewModel", "Actualizando item con qty=${finalPred.qty}")
-                    updateItemAfterProcessing(index, combinedBitmap, finalPred)
-                },
-                onFailure = { err ->
-                    Log.e("HomeViewModel", "onFailure: $err")
-                    updateItemAfterProcessing(
-                        index,
-                        oldItem.image,
-                        CalPredict(
-                            bunchColor = "null",
-                            qty = 0,
-                            pred = emptyList(),
-                            bins = emptyList(),
-                            mean = 0f,
-                            mode = 0f,
-                            std = 0f,
-                            error = err,
-                            status = false
-                        )
-                    )
-                }
-            )
-        }
-    }
-
-    private fun updateItemAfterProcessing(index: Int, finalBitmap: Bitmap, calPredict: CalPredict) {
-        val list = imagePredictions.value ?: return
-        if (index !in list.indices) return
-
-        val old = list[index]
-        list[index] = old.copy(
-            image = finalBitmap,
-            prediction = calPredict,
-            isProcessing = false
+        // LISTA OFICIAL DE VARIEDADES (ORDEN CRITICO 0-11 PARA EL MODELO)
+        availableVarieties.value = listOf(
+            VarietyOption(0, "ALLISON"),
+            VarietyOption(1, "AUTUMN CRISP"),
+            VarietyOption(2, "CRIMSON"),
+            VarietyOption(3, "IVORY"),
+            VarietyOption(4, "MAGENTA"),
+            VarietyOption(5, "RED GLOBE"),
+            VarietyOption(6, "SCARLOTTA"),
+            VarietyOption(7, "SUPERIOR"),
+            VarietyOption(8, "SWEET GLOBE"),
+            VarietyOption(9, "THOMPSON"),
+            VarietyOption(10, "TIMCO"),
+            VarietyOption(11, "TIMPSON")
         )
-        imagePredictions.postValue(list)
+    }
+
+    fun addImage(path: String) {
+        val current = imagePredictions.value.orEmpty().toMutableList()
+        current.add(ImagePrediction(Uri.fromFile(File(path))))
+        imagePredictions.value = current
     }
 
     fun removeImageAt(index: Int) {
-        val list = imagePredictions.value ?: return
-        if (index in list.indices) {
-            list.removeAt(index)
-            imagePredictions.value = list
+        val current = imagePredictions.value.orEmpty().toMutableList()
+        if (index in current.indices) {
+            current.removeAt(index)
+            imagePredictions.value = current
         }
     }
 
-    fun combineBitmapsOverlay(bmp1: Bitmap, bmp2: Bitmap?): Bitmap {
-        if (bmp2 == null) return bmp1
-        val finalWidth = maxOf(bmp1.width, bmp2.width)
-        val finalHeight = maxOf(bmp1.height, bmp2.height)
-        val output = Bitmap.createBitmap(finalWidth, finalHeight, Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(output)
-        canvas.drawBitmap(bmp1, 0f, 0f, null)
-        canvas.drawBitmap(bmp2, 0f, 0f, null)
-        return output
-    }
-
-    fun getLote(): Lote {
-        val context = getApplication<Application>().applicationContext
-
-        val imageUris = imagePredictions.value?.map { item ->
-            saveBitmapToLocal(context, item.image)
-        } ?: emptyList()
-
-        val allPredicts = imagePredictions.value?.mapNotNull { it.prediction } ?: emptyList()
-        val varOpt = selectedVariety.value
-
-        return Lote(
-            userId = loteRepository.getCurrentUserId(),
-            cloudId = "",
-
-            company = company.value.orEmpty(),
-            vessel = vessel.value.orEmpty(),
-            block = block.value.orEmpty(),
-
-            images = imageUris,
-            calPredicts = allPredicts,
-            synced = false,
-
-            // ✅ lo que pediste
-            varietyId = varOpt?.id ?: -1,
-            varietyName = varOpt?.name.orEmpty()
-        )
-    }
-
-    fun addLote(lote: Lote) {
+    fun processAll() {
         viewModelScope.launch(Dispatchers.IO) {
-            loteRepository.insertLocalLote(lote)
+            val list = imagePredictions.value.orEmpty()
+            list.forEachIndexed { index, item ->
+                if (item.status != Status.DONE) {
+                    processImage(index, item)
+                }
+            }
         }
     }
 
-    private fun saveBitmapToLocal(context: android.content.Context, bitmap: Bitmap): String {
-        val fileName = "img_${System.currentTimeMillis()}.png"
-        val file = java.io.File(context.filesDir, fileName)
-        file.outputStream().use { out ->
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-            out.flush()
+    private suspend fun processImage(index: Int, item: ImagePrediction) {
+        val context = getApplication<Application>()
+        try {
+            updateItemStatus(index, Status.NORMALIZING)
+            val normalizedPath = try {
+                 val f = File(context.cacheDir, "temp_${System.currentTimeMillis()}.jpg")
+                 context.contentResolver.openInputStream(item.uri)?.use { input ->
+                     f.outputStream().use { output -> input.copyTo(output) }
+                 }
+                 f.absolutePath
+            } catch (e: Exception) { null }
+
+            if (normalizedPath == null) {
+                updateItemError(index, "Error al copiar imagen")
+                return
+            }
+
+            val preview = ImageUtils.decodeSampledBitmap(normalizedPath, 300, 300)
+            updateItemPreview(index, normalizedPath, preview)
+
+            updateItemStatus(index, Status.PROCESSING)
+            instanceSeg.invokeFromFile(
+                imagePath = normalizedPath,
+                smoothEdges = true,
+                varietyId = selectedVariety.value?.id,
+                onSuccess = { success ->
+                    viewModelScope.launch(Dispatchers.Default) {
+                        val baseBitmap = success.imageOrig ?: preview ?: return@launch
+                        val overlay = success.imagePro.second
+                        
+                        val combined = if (overlay != null) {
+                            val res = Bitmap.createBitmap(baseBitmap.width, baseBitmap.height, baseBitmap.config)
+                            val canvas = android.graphics.Canvas(res)
+                            canvas.drawBitmap(baseBitmap, 0f, 0f, null)
+                            canvas.drawBitmap(overlay, 0f, 0f, null)
+                            res
+                        } else {
+                            baseBitmap
+                        }
+
+                        val savedPath = ImageUtils.saveBitmapToDisk(combined, context.cacheDir, "overlay")
+                        val finalPreview = Bitmap.createScaledBitmap(combined, 300, 300, true)
+                        val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "No prediction")
+                        
+                        updateItemSuccess(index, savedPath, finalPreview, calPredict)
+                        if (combined != baseBitmap && combined != overlay) combined.recycle()
+                    }
+                },
+                onFailure = { err -> updateItemError(index, err) }
+            )
+        } catch (e: Exception) {
+            updateItemError(index, e.message ?: "Error desconocido")
         }
-        return file.absolutePath
+    }
+
+    private fun updateItemStatus(index: Int, status: Status) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val list = imagePredictions.value.orEmpty().toMutableList()
+            if (index in list.indices) {
+                list[index] = list[index].copy(status = status)
+                imagePredictions.value = list
+            }
+        }
+    }
+
+    private fun updateItemPreview(index: Int, path: String, preview: Bitmap?) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val list = imagePredictions.value.orEmpty().toMutableList()
+            if (index in list.indices) {
+                list[index] = list[index].copy(normalizedPath = path, previewBitmap = preview)
+                imagePredictions.value = list
+            }
+        }
+    }
+
+    private fun updateItemSuccess(index: Int, overlayPath: String, preview: Bitmap, result: CalPredict) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val list = imagePredictions.value.orEmpty().toMutableList()
+            if (index in list.indices) {
+                list[index] = list[index].copy(
+                    status = Status.DONE,
+                    overlayPath = overlayPath,
+                    previewBitmap = preview,
+                    prediction = result
+                )
+                imagePredictions.value = list
+            }
+        }
+    }
+
+    private fun updateItemError(index: Int, error: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val list = imagePredictions.value.orEmpty().toMutableList()
+            if (index in list.indices) {
+                list[index] = list[index].copy(status = Status.ERROR, errorMessage = error)
+                imagePredictions.value = list
+            }
+        }
+    }
+
+    fun saveBatch(callback: (Boolean) -> Unit) {
+        isSavingLote.value = true
+        viewModelScope.launch {
+            delay(1500) // Simular guardado
+            isSavingLote.value = false
+            callback(true)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        instanceSeg.close()
     }
 }

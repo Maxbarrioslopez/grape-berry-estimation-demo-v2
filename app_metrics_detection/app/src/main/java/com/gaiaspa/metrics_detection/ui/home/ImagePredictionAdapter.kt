@@ -4,18 +4,19 @@ import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.gaiaspa.metrics_detection.R
+import com.gaiaspa.metrics_detection.databinding.ItemImagePredictionBinding
+import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
-import com.gaiaspa.metrics_detection.databinding.ItemImagePredictionBinding
-import com.github.mikephil.charting.charts.BarChart
 
 class ImagePredictionAdapter(
     private val items: MutableList<HomeViewModel.ImagePrediction>,
@@ -48,48 +49,67 @@ class ImagePredictionAdapter(
     ) : RecyclerView.ViewHolder(b.root) {
 
         fun bind(item: HomeViewModel.ImagePrediction, position: Int) {
-            // Índice
             b.tvIndex.text = "#${position + 1}"
 
-            // Imagen principal
-            b.ivPhoto.setImageBitmap(item.image)
-            b.ivPhoto.setOnClickListener {
-                onImageClick(item.image)
+            val preview = item.previewBitmap
+            if (preview != null && !preview.isRecycled) {
+                b.ivPhoto.setImageBitmap(preview)
+                b.ivPhoto.setOnClickListener { onImageClick(preview) }
+            } else {
+                b.ivPhoto.setImageResource(R.drawable.ic_gallery)
+                b.ivPhoto.setOnClickListener(null)
             }
 
-            // Información de la predicción
-            when (item.prediction?.status) {
-                false -> {
-                    b.tvPredictionInfo.text = item.prediction.error
+            when (item.status) {
+                HomeViewModel.Status.PENDING -> {
+                    b.tvPredictionInfo.text = "Pendiente..."
+                    b.tvPredictionInfo.setTextColor(Color.GRAY)
+                    b.progressItem.visibility = View.GONE
                     b.barChart.clear()
                 }
-                true -> {
+                HomeViewModel.Status.NORMALIZING -> {
+                    b.tvPredictionInfo.text = "Normalizando imagen..."
+                    b.tvPredictionInfo.setTextColor(Color.BLUE)
+                    b.progressItem.visibility = View.VISIBLE
+                    b.barChart.clear()
+                }
+                HomeViewModel.Status.PROCESSING -> {
+                    b.tvPredictionInfo.text = "Procesando..."
+                    b.tvPredictionInfo.setTextColor(ContextCompat.getColor(b.root.context, R.color.colorPrimary))
+                    b.progressItem.visibility = View.VISIBLE
+                    b.barChart.clear()
+                }
+                HomeViewModel.Status.DONE -> {
+                    b.progressItem.visibility = View.GONE
+                    b.tvPredictionInfo.setTextColor(Color.BLACK)
                     val p = item.prediction
-                    b.tvPredictionInfo.text = """
-                        Color: ${p.bunchColor}
-                        QTY: ${p.qty}
-                        Mean: ${p.mean}
-                        Mode: ${p.mode}
-                        STD: ${p.std}
-                    """.trimIndent()
-                    setupChart(b.barChart, p.bins, p.pred)
+                    if (p != null && p.status) {
+                        // ✅ RESTAURADO: Se muestran todos los datos solicitados
+                        b.tvPredictionInfo.text = """
+                            Variedad: ${p.bunchColor}
+                            QTY: ${p.qty}
+                            Mean: ${p.mean} mm
+                            Mode: ${p.mode} mm
+                            STD: ${p.std}
+                        """.trimIndent()
+                        setupChart(b.barChart, p.bins, p.pred)
+                    } else {
+                        b.tvPredictionInfo.text = p?.error ?: "No se obtuvo predicción"
+                        b.barChart.clear()
+                    }
                 }
-                else -> {
-                    b.tvPredictionInfo.text = "Sin predicción"
+                HomeViewModel.Status.ERROR -> {
+                    b.progressItem.visibility = View.GONE
+                    b.tvPredictionInfo.text = "ERROR: ${item.errorMessage}"
+                    b.tvPredictionInfo.setTextColor(Color.RED)
                     b.barChart.clear()
                 }
             }
 
-            // ProgressBar sobre el gráfico
-            b.progressItem.visibility =
-                if (item.isProcessing) android.view.View.VISIBLE
-                else android.view.View.GONE
-
-            // Botón Eliminar
             b.btnDeleteItem.setOnClickListener {
                 AlertDialog.Builder(b.root.context)
                     .setTitle("Confirmación")
-                    .setMessage("¿Eliminar esta predicción?")
+                    .setMessage("¿Eliminar esta imagen?")
                     .setPositiveButton("Sí") { _, _ -> onDelete(adapterPosition) }
                     .setNegativeButton("No", null)
                     .show()
@@ -97,68 +117,28 @@ class ImagePredictionAdapter(
         }
 
         private fun setupChart(barChart: BarChart, bins: List<Float>, values: List<Int>) {
-            // 1) Datos
+            if (bins.isEmpty() || values.isEmpty()) { barChart.clear(); return }
             val entries = values.mapIndexed { i, v -> BarEntry(i.toFloat(), v.toFloat()) }
-            val barDataSet = BarDataSet(entries, "") // Sin leyenda textual
-            // Usar tu color primario (o un array de tonos si quieres degradado)
-            val primaryColor = ContextCompat.getColor(barChart.context, R.color.colorPrimary)
-            barDataSet.color = primaryColor
-            barDataSet.valueTextSize = 10f
-            barDataSet.valueTextColor = primaryColor
-            barDataSet.valueFormatter = object : ValueFormatter() {
-                override fun getFormattedValue(value: Float) = value.toInt().toString()
+            val barDataSet = BarDataSet(entries, "").apply {
+                color = ContextCompat.getColor(barChart.context, R.color.colorPrimary)
+                valueTextSize = 10f
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float) = value.toInt().toString()
+                }
             }
-
-            // 2) Configurar el BarData
-            val barData = BarData(barDataSet).apply {
-                barWidth = 0.7f  // barras más delgadas
-
-            }
-
-            // 3) Ejes X
+            barChart.data = BarData(barDataSet).apply { barWidth = 0.7f }
             with(barChart.xAxis) {
                 position = XAxis.XAxisPosition.BOTTOM
-                setDrawAxisLine(true)
-                setDrawGridLines(false)
-                textColor = ContextCompat.getColor(barChart.context, R.color.textSecondary)
-                textSize = 10f
                 granularity = 1f
                 labelRotationAngle = -45f
                 valueFormatter = IndexAxisValueFormatter(bins.map { String.format("%.1f", it) })
+                setDrawGridLines(false)
             }
-
-            // 4) Ejes Y
-            barChart.axisLeft.apply {
-                setDrawAxisLine(false)
-                setDrawGridLines(true)
-                gridColor = ContextCompat.getColor(barChart.context, R.color.outlineGray)
-                textColor = ContextCompat.getColor(barChart.context, R.color.textSecondary)
-                textSize = 10f
-                axisMinimum = 0f
-            }
+            barChart.axisLeft.axisMinimum = 0f
             barChart.axisRight.isEnabled = false
-
-            // 5) Desactivar  tipo de zoom/interacción de escala
-            barChart.apply {
-                setPinchZoom(false)                  // pinch-zoom
-                isDoubleTapToZoomEnabled = false     // doble-tap
-                setScaleEnabled(false)               // scaling en cualquiera de los ejes
-                isDragEnabled = false                // opcional: impide drag/panning
-            }
-
-
-            // 5) Estilo general
-            barChart.apply {
-                description.isEnabled = false
-                legend.isEnabled = false
-                setDrawBorders(false)
-                setDrawGridBackground(false)
-                setExtraOffsets(4f, 4f, 4f, 4f)
-                data = barData
-                setFitBars(true)
-                animateY(500)
-                invalidate()
-            }
+            barChart.description.isEnabled = false
+            barChart.legend.isEnabled = false
+            barChart.invalidate()
         }
     }
 }

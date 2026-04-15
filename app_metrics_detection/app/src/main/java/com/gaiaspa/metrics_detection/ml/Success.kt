@@ -9,7 +9,7 @@ data class Success(
     val depthMap: Bitmap?,
     val mmPerPx: Float,
     val predictsList: List<com.gaiaspa.metrics_detection.data.model.CalPredict>,
-    val imageOrig: Bitmap,
-    val imagePro: Pair<Bitmap, Bitmap?>
-
+    val imageOrig: Bitmap?,
+    val imagePro: Pair<Bitmap?, Bitmap?>,
+    val rawJson: String? = null
 )

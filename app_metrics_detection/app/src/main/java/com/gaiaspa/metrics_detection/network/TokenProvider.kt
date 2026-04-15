@@ -1,3 +1,9 @@
+/**
+ * TokenProvider.kt
+ *
+ * Propósito: Gestionar de forma segura la persistencia de la sesión del usuario.
+ * Responsabilidad: Almacenar y recuperar tokens de acceso, refresco, ID de usuario y roles.
+ */
 package com.gaiaspa.metrics_detection.network
 
 import android.content.Context
@@ -33,17 +39,11 @@ object TokenProvider {
                 sharedPreferences = createEncryptedPrefs(resolvedContext)
             } catch (e: Exception) {
                 Log.e(TAG, "Error inicializando EncryptedSharedPreferences. Intentando recuperacion...", e)
-                
-                // Paso 1: Limpiar archivos corruptos
                 clearEncryptedPrefsFiles(resolvedContext)
-                
                 try {
-                    // Paso 2: Reintento unico
                     sharedPreferences = createEncryptedPrefs(resolvedContext)
-                    Log.i(TAG, "Recuperacion de EncryptedSharedPreferences exitosa.")
                 } catch (retryException: Exception) {
-                    Log.e(TAG, "Fallo critico en reintento de EncryptedSharedPreferences", retryException)
-                    throw retryException // Rethrow si el fallo persiste tras la limpieza
+                    throw retryException 
                 }
             }
         }
@@ -65,72 +65,43 @@ object TokenProvider {
 
     private fun clearEncryptedPrefsFiles(context: Context) {
         try {
-            // 1. Borrar SharedPreferences via API
             context.deleteSharedPreferences(PREFS_FILENAME)
-
-            // 2. Borrar archivos de Keyset de Tink manualmente (usados internamente por EncryptedSharedPreferences)
             val prefsDir = File(context.applicationInfo.dataDir, "shared_prefs")
             val keysetFiles = listOf(
                 "__androidx_security_crypto_encrypted_prefs_keyset__",
                 "__androidx_security_crypto_encrypted_prefs_value_keyset__",
                 "$PREFS_FILENAME.xml"
             )
-
             keysetFiles.forEach { fileName ->
                 val file = File(prefsDir, fileName)
-                if (file.exists()) {
-                    val deleted = file.delete()
-                    Log.w(TAG, "Archivo corrupto eliminado: $fileName ($deleted)")
-                }
+                if (file.exists()) file.delete()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error durante la limpieza de archivos de preferencias", e)
+            Log.e(TAG, "Error durante la limpieza de archivos", e)
         }
     }
 
     private fun prefs(): SharedPreferences {
         sharedPreferences?.let { return it }
-
-        val resolvedContext = appContext
-            ?: throw IllegalStateException("TokenProvider no fue inicializado")
+        val resolvedContext = appContext ?: throw IllegalStateException("TokenProvider no fue inicializado")
         init(resolvedContext)
-
-        return checkNotNull(sharedPreferences) {
-            "TokenProvider no pudo inicializar SharedPreferences"
-        }
+        return checkNotNull(sharedPreferences)
     }
 
-    fun getToken(): String {
-        return prefs().getString("ACCESS_TOKEN", "") ?: ""
-    }
+    fun getToken(): String = prefs().getString("ACCESS_TOKEN", "") ?: ""
+    fun saveToken(token: String) = prefs().edit().putString("ACCESS_TOKEN", token).apply()
 
-    fun saveToken(token: String) {
-        prefs().edit().putString("ACCESS_TOKEN", token).apply()
-    }
+    fun getRefreshToken(): String = prefs().getString("REFRESH_TOKEN", "") ?: ""
+    fun saveRefreshToken(refreshToken: String) = prefs().edit().putString("REFRESH_TOKEN", refreshToken).apply()
 
-    fun getRefreshToken(): String {
-        return prefs().getString("REFRESH_TOKEN", "") ?: ""
-    }
+    fun isLoggedIn(): Boolean = prefs().getBoolean("IS_LOGGED_IN", false)
+    fun saveIsLoggedIn(isLoggedIn: Boolean) = prefs().edit().putBoolean("IS_LOGGED_IN", isLoggedIn).apply()
 
-    fun saveRefreshToken(refreshToken: String) {
-        prefs().edit().putString("REFRESH_TOKEN", refreshToken).apply()
-    }
+    fun getUserId(): String = prefs().getString("USER_ID", "") ?: ""
+    fun saveUserId(userId: String) = prefs().edit().putString("USER_ID", userId).apply()
 
-    fun isLoggedIn(): Boolean {
-        return prefs().getBoolean("IS_LOGGED_IN", false)
-    }
-
-    fun saveIsLoggedIn(isLoggedIn: Boolean) {
-        prefs().edit().putBoolean("IS_LOGGED_IN", isLoggedIn).apply()
-    }
-
-    fun getUserId(): String {
-        return prefs().getString("USER_ID", "") ?: ""
-    }
-
-    fun saveUserId(userId: String) {
-        prefs().edit().putString("USER_ID", userId).apply()
-    }
+    fun saveRole(role: String) = prefs().edit().putString("USER_ROLE", role).apply()
+    fun getRole(): String = prefs().getString("USER_ROLE", "user") ?: "user"
 
     fun logout() {
         try {
@@ -139,4 +110,7 @@ object TokenProvider {
             e.printStackTrace()
         }
     }
+
+    /** Alias para limpiar sesión tras recuperación de contraseña o logout forzado. */
+    fun clearSession() = logout()
 }

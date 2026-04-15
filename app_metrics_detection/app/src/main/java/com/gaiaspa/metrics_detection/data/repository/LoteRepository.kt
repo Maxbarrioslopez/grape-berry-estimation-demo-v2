@@ -1,13 +1,18 @@
-// LoteRepository.kt
+/**
+ * LoteRepository.kt
+ *
+ * Propósito: Gestionar el ciclo de vida de los datos de los Lotes (Batch) de uvas.
+ * Responsabilidad: Actuar como mediador entre la base de datos local (Room) y el servidor (Retrofit).
+ * Relación: Utilizado por el SyncWorker para la sincronización offline y por los ViewModels para consulta.
+ *
+ * Flujo: Los lotes se guardan localmente primero y luego SyncWorker llama a insertLoteGrapeCloud para persistirlos.
+ */
 package com.gaiaspa.metrics_detection.data.repository
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.viewModelScope
 import com.gaiaspa.metrics_detection.data.local.DatabaseProvider
 import com.gaiaspa.metrics_detection.data.local.LoteDao
-import com.gaiaspa.metrics_detection.data.model.CalPredict
 import com.gaiaspa.metrics_detection.data.model.Lote
 import com.gaiaspa.metrics_detection.data.model.request.BatchLoteGrapeRequest
 import com.gaiaspa.metrics_detection.data.model.response.DeleteBatchGrapeResponse
@@ -23,26 +28,25 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import com.gaiaspa.metrics_detection.data.local.Converters
-import kotlinx.coroutines.launch
 import retrofit2.Response
 
 class LoteRepository private constructor(
     private val loteDao: LoteDao,
     private val apiService: ApiService,
     private val context: Context,
-
 ) {
     private val gson = Gson()
+    
     companion object {
         @Volatile
         private var INSTANCE: LoteRepository? = null
+        private const val TAG = "LoteRepository"
 
-        private  val TAG = "LoteRepository"
+        /** Patrón Singleton para asegurar una única instancia del repositorio en toda la app. */
         fun getInstance(context: Context): LoteRepository {
             return INSTANCE ?: synchronized(this) {
                 val database = DatabaseProvider.getDatabase(context)
-                val apiService = ApiClient.create(context) // Pasar tokenProvider
+                val apiService = ApiClient.create(context)
                 val instance = LoteRepository(
                     loteDao = database.loteDao(),
                     apiService = apiService,
@@ -53,255 +57,137 @@ class LoteRepository private constructor(
             }
         }
     }
-    // ========== Métodos ==========
 
-    /**
-     * Inserta un lote para el usuario actual.
-     *
-     * @param lote El lote a insertar.
-     */
-     fun insertLocalLote(lote: Lote) {
+    /** Guarda un lote en Room para su posterior procesamiento o visualización offline. */
+    fun insertLocalLote(lote: Lote) {
         val userId = getCurrentUserId()
-        val loteConUserId = lote.copy(userId = userId)
-        loteDao.insertLote(loteConUserId)
+        loteDao.insertLote(lote.copy(userId = userId, synced = false, syncError = null))
     }
 
-    /**
-     * Elimina un lote por su ID para el usuario actual.
-     *
-     * @param loteId El ID del lote.
+    /** 
+     * Borra un lote local y sus archivos de imagen asociados del almacenamiento del dispositivo.
+     * Solo borra archivos con prefijo file:// para evitar colisiones con otros procesos del sistema.
      */
     fun deleteLocalLote(loteId: Long) {
         val userId = getCurrentUserId()
-
         try {
-            val lote = loteDao.getLoteById(loteId,userId)
-            if (lote != null) {
-                lote.images.forEach { imagePath ->
-                    val file = File(Uri.parse(imagePath).path ?: "")
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                }
-                loteDao.deleteLote(loteId, userId)
+            val lote = loteDao.getLoteById(loteId, userId)
+            lote?.normalizedImages?.forEach { path ->
+                val file = File(path.replace("file://", ""))
+                if (file.exists()) file.delete()
             }
-
+            lote?.sourceImages?.forEach { path ->
+                val file = File(path.replace("file://", ""))
+                if (file.exists()) file.delete()
+            }
+            loteDao.deleteLote(loteId, userId)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error deleteLocalLote", e)
         }
-
-
     }
 
+    /** Actualiza el mensaje de error de sincronización para informar al usuario en la UI de Historial. */
+    fun updateSyncError(loteId: Long, error: String?) {
+        loteDao.updateSyncError(loteId, getCurrentUserId(), error)
+    }
+
+    /** Limpia toda la base de datos de lotes del usuario actual. */
     fun deleteAllData() {
-        val userId = getCurrentUserId()
         try {
-            loteDao.deleteAllLotes(userId= userId)
-            Log.d(TAG, "deleteAllData: Lotes eliminados con exito")
-        } catch (e:Exception) {
-            Log.d(TAG, "deleteAllData: Lotes eliminados con exito")
-            e.printStackTrace()
+            loteDao.deleteAllLotes(getCurrentUserId())
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleteAllData", e)
         }
     }
+
+    /** Borra solo los lotes que ya fueron confirmados por el servidor. */
     fun deleteAllDataSynced() {
-        val userId = getCurrentUserId()
         try {
-            loteDao.deleteAllLotesSynced(userId= userId)
-            Log.d(TAG, "deleteAllData: Lotes eliminados con exito")
-        } catch (e:Exception) {
-            Log.d(TAG, "deleteAllData: Lotes eliminados con exito")
-            e.printStackTrace()
+            loteDao.deleteAllLotesSynced(getCurrentUserId())
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleteAllDataSynced", e)
         }
     }
 
-    /**
-     * Marca un lote para borrar si no hay internet.
-     *
-     * @param lote El lote a insertar.
-     */
-    fun markLoteAsNotSyncedAndToDelete(loteId: Long){
-
-        val userId = getCurrentUserId()
-        Log.d(TAG, "markLoteAsNotSyncedAndToDelete: Lote ${loteId} marcado para borrar con exito")
-        loteDao.markLoteAsNotSyncedAndToDelete(loteId,userId)
-
+    /** Marca un lote como pendiente de eliminación sincronizada (soft-delete local). */
+    fun markLoteAsNotSyncedAndToDelete(loteId: Long) {
+        loteDao.markLoteAsNotSyncedAndToDelete(loteId, getCurrentUserId())
     }
 
-    /**
-     * Inserta un lote para el usuario actual.
-     *
-     * @param lote El lote a insertar.}
-     * @return Flag, true si lo inserto con exito, false si fallo o ya existe
-     */
+    /** Inserta un lote descargado desde la nube, evitando duplicados por cloudId. */
     fun verifyAndInsertLoteFromCloud(lote: Lote): Boolean {
-        val exist = loteDao.doesLoteExist(cloudId = lote.cloudId)
-        return if (!exist) {
-            loteDao.insertLote(lote)
-            Log.d(TAG, "insertLoteAndVerify: Lote ${lote.cloudId} insertado con éxito")
-            true // Indica que el lote fue insertado
-        } else {
-            Log.d(TAG, "insertLoteAndVerify: Lote ${lote.cloudId} ya existe")
-            false // Indica que el lote ya existía
-        }
+        return if (!loteDao.doesLoteExist(lote.cloudId)) {
+            loteDao.insertLote(lote.copy(synced = true))
+            true
+        } else false
     }
 
+    /** Obtiene el historial completo ordenado por fecha de creación. */
+    fun getAllLotes(): List<Lote> = loteDao.getAllLotes(getCurrentUserId()).sortedByDescending { it.predictedAt }
+
+    /** Filtra los lotes que aún no residen en el servidor. */
+    fun getNotSynced(): List<Lote> = loteDao.getNotSyncedLotes(getCurrentUserId())
+
+    fun getLoteCount(): Int = loteDao.getLoteCount(getCurrentUserId())
+
     /**
-     * Obtiene todos los lotes para el usuario actual.
+     * Sincroniza un lote con el servidor mediante una petición Multipart.
      *
-     * @return Lista de lotes del usuario.
+     * Antes: El cliente enviaba 'company' y eso definía la pertenencia del lote.
+     * Ahora: El tenant real lo decide el backend mediante el token del usuario (req.user.companyId).
+     * Motivo: Implementación multi-tenant centralizada para evitar manipulación desde el cliente.
+     * Compatibilidad: El campo 'company' se mantiene con valor por contrato actual obligatorio en el backend.
+     * Riesgo: El valor enviado aquí no debe interpretarse como fuente de autorización tenant.
      */
-     fun getAllLotes(): List<Lote> {
-        val userId = getCurrentUserId()
-        return loteDao.getAllLotes(userId).sortedByDescending { it.predictedAt }
-        }
-
-
-    /**
-     * Obtiene el conteo de lotes para el usuario actual.
-     *
-     * @return Número de lotes del usuario.
-     */
-     fun getLoteCount(): Int {
-        val userId = getCurrentUserId()
-        return loteDao.getLoteCount(userId)
-    }
-
-    /**
-     * Obtiene lotes dentro de un rango específico para el usuario actual.
-     *
-     * @param startIndex El índice inicial.
-     * @param pageSize El tamaño de la página.
-     * @return Lista de lotes dentro del rango.
-     */
-    suspend fun getLotesByRange(startIndex: Int, pageSize: Int): List<Lote> {
-        val userId = getCurrentUserId()
-        return loteDao.getLotesByRange(userId, startIndex, pageSize)
-    }
-
-    /**
-     * CLOUD STRATEGY
-     */
-
     suspend fun insertLoteGrapeCloud(
         loteRequest: BatchLoteGrapeRequest,
         imagePaths: List<String>
-    ): Response<LoteResponse> {
-        return withContext(Dispatchers.IO) {
-            if (loteRequest.variety.isBlank()) {
-                Log.e(TAG, "insertLoteGrapeCloud: variety is required and was blank for userId=${loteRequest.userId}")
-                throw IllegalArgumentException("Batch upload requires non-blank variety")
-            }
+    ): Response<LoteResponse> = withContext(Dispatchers.IO) {
+        val calPredictsJson = gson.toJson(loteRequest.calPredicts)
+        
+        apiService.insertBatchDetection(
+            userId = loteRequest.userId.toRequestBody("text/plain".toMediaTypeOrNull()),
+            company = loteRequest.company.toRequestBody("text/plain".toMediaTypeOrNull()),
+            vessel = loteRequest.vessel.toRequestBody("text/plain".toMediaTypeOrNull()),
+            block = loteRequest.block.toRequestBody("text/plain".toMediaTypeOrNull()),
+            variety = loteRequest.variety.toRequestBody("text/plain".toMediaTypeOrNull()),
+            predictedAt = loteRequest.predictedAt.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
+            calPredictsJson = calPredictsJson.toRequestBody("application/json".toMediaTypeOrNull()),
+            files = prepareImageParts(imagePaths)
+        )
+    }
 
-            val gson = Gson()
-            // Convertir el arreglo calPredicts a JSON
-            val calPredictsJson = gson.toJson(loteRequest.calPredicts)
+    /** Obtiene los lotes del servidor para reconstruir el historial. */
+    suspend fun getLoteGrapeCloud(): Response<List<LoteResponse>> = withContext(Dispatchers.IO) {
+        apiService.getBatchsDetections()
+    }
 
-            // Preparar los RequestBody para los campos de texto
-            // Para userId, company, vessel, block y variety se usa "text/plain"
-            val userIdBody = loteRequest.userId.toRequestBody("text/plain".toMediaTypeOrNull())
-            val companyBody = loteRequest.company.toRequestBody("text/plain".toMediaTypeOrNull())
-            val vesselBody = loteRequest.vessel.toRequestBody("text/plain".toMediaTypeOrNull())
-            val blockBody = loteRequest.block.toRequestBody("text/plain".toMediaTypeOrNull())
-            val varietyBody = loteRequest.variety.toRequestBody("text/plain".toMediaTypeOrNull())
-            val predictedAtBody = loteRequest.predictedAt.toString()
-                .toRequestBody("text/plain".toMediaTypeOrNull())
+    /** Elimina un lote en la nube. */
+    suspend fun deleteLoteGrapeCloud(cloudID: String): Response<DeleteBatchGrapeResponse> = withContext(Dispatchers.IO) {
+        apiService.deleteBatchDetection(cloudID)
+    }
 
-            // Para el JSON se envía con media type "application/json"
-            val calPredictsBody = calPredictsJson.toRequestBody("application/json".toMediaTypeOrNull())
+    /** Transforma rutas de archivos en partes MultipartBody para subida de imágenes binarias. */
+    fun prepareImageParts(imagePaths: List<String>): List<MultipartBody.Part> {
+        return imagePaths.filter { !it.startsWith("http") }.mapNotNull { path ->
+            val file = File(path.replace("file://", ""))
+            if (file.exists()) {
+                val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("files", file.name, requestFile)
+            } else null
+        }
+    }
 
-            // Preparar las imágenes como MultipartBody.Part
-            val imageParts = prepareImageParts(imagePaths)
-
-            apiService.insertBatchDetection(
-                userId = userIdBody,
-                company = companyBody,
-                vessel = vesselBody,
-                block = blockBody,
-                variety = varietyBody,
-                calPredictsJson = calPredictsBody,
-                files = imageParts,
-                predictedAt = predictedAtBody
-
+    /** Actualiza el lote local con los IDs y rutas finales tras una subida exitosa. */
+    suspend fun updateLoteAfterSync(localLoteId: Long, cloudId: String, cloudImages: List<String>) {
+        withContext(Dispatchers.IO) {
+            loteDao.updateCloudIdImagePathsAndSyncStatus(
+                localLoteId, cloudId, gson.toJson(cloudImages), getCurrentUserId()
             )
         }
     }
 
-    suspend fun getLoteGrapeCloud( ): Response<List<LoteResponse>> {
-        return withContext(Dispatchers.IO) {
-            apiService.getBatchsDetections()
+    fun getLoteById(loteId: Long): Lote? = loteDao.getLoteById(loteId, getCurrentUserId())
 
-        } }
-
-    suspend fun deleteLoteGrapeCloud(cloudID: String): Response<DeleteBatchGrapeResponse> {
-        return withContext(Dispatchers.IO) {
-            // Primero, eliminar del servidor
-            val response = apiService.deleteBatchDetection(cloudID)
-            response
-        }
-    }
-
-    fun prepareImageParts(imagePaths: List<String>): List<MultipartBody.Part> {
-        val parts = mutableListOf<MultipartBody.Part>()
-        imagePaths.forEach { path ->
-            // Crea un File a partir de la ruta proporcionada
-            val file = File(path)
-            // Crea un RequestBody para el archivo, asumiendo que las imágenes son png (puedes ajustar el mediaType según corresponda)
-            val requestFile = file.asRequestBody("image/png".toMediaTypeOrNull())
-            // Crea el MultipartBody.Part, usando "files" como nombre
-            val bodyPart = MultipartBody.Part.createFormData("files", file.name, requestFile)
-            parts.add(bodyPart)
-        }
-        return parts
-    }
-
-    /**
-     * Obtiene lotes que aún no han sido sincronizados para el usuario actual.
-     *
-     * @return Lista de lotes no sincronizados.
-     */
-     fun getNotSynced(): List<Lote> {
-        val userId = getCurrentUserId()
-        return loteDao.getNotSyncedLotes(userId)
-    }
-
-    /**
-     * Actualiza el lote local después de una sincronización exitosa.
-     *
-     * @param localLoteId ID local del lote.
-     * @param cloudId ID del lote en la nube.
-     * @param newImagePaths Nuevas rutas de imágenes proporcionadas por la nube.
-     */
-    suspend fun updateLoteAfterSync(localLoteId: Long, cloudId: String, cloudImages: List<String>) {
-        withContext(Dispatchers.IO) {
-            loteDao.updateCloudIdImagePathsAndSyncStatus(localLoteId, cloudId, gson.toJson(cloudImages), getCurrentUserId())
-        }
-    }
-
-
-
-
-    /**
-     * Obtiene un lote por su ID para el usuario actual.
-     *
-     * @param loteId El ID del lote.
-     * @return El lote correspondiente o null si no existe.
-     */
-     fun getLoteById(loteId: Long): Lote? {
-        val userId = getCurrentUserId()
-        return try {
-            loteDao.getLoteById(loteId, userId)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    /**
-     * Obtiene el userId actual desde el TokenProvider.
-     *
-     * @return El userId del usuario actual.
-     */
-    fun getCurrentUserId(): String {
-        return TokenProvider.getUserId()
-    }
+    fun getCurrentUserId(): String = TokenProvider.getUserId()
 }

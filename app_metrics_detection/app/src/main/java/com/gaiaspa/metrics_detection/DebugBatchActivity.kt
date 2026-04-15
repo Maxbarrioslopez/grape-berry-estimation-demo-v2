@@ -55,7 +55,6 @@ class DebugBatchActivity : AppCompatActivity() {
                 val message = "Missing shared-storage access for debug batch."
                 Log.e(BatchProcessor.TAG, message)
                 statusView.text = message
-                finish()
                 return@launch
             }
 
@@ -69,18 +68,17 @@ class DebugBatchActivity : AppCompatActivity() {
                         outputDirPath = outputDir
                     )
                 }
-                statusView.text = "Batch finished.\nrunId=${summary.runId}\nok=${summary.processedOk}\nerror=${summary.processedError}"
+                statusView.text = "Batch finished SUCCESSFULLY.\n\nRunId: ${summary.runId}\nImages: ${summary.totalImagesFound}\nOK: ${summary.processedOk}\nError: ${summary.processedError}\n\nCheck results on your desktop."
                 Log.d(
                     BatchProcessor.TAG,
                     "DebugBatchActivity end runId=${summary.runId} ok=${summary.processedOk} error=${summary.processedError} manifest=${summary.manifestPath}"
                 )
             } catch (t: Throwable) {
                 val message = t.message ?: "Debug batch failed"
-                statusView.text = "Batch failed.\n$message"
+                statusView.text = "Batch FAILED.\n\nError: $message"
                 Log.e(BatchProcessor.TAG, "DebugBatchActivity failure", t)
-            } finally {
-                finish()
             }
+            // Eliminado finish() para que el usuario pueda ver el resultado en pantalla
         }
     }
 

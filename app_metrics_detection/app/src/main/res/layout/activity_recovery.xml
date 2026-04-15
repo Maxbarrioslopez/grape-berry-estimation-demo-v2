@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recuperar Contraseña"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp"/>
+
+    <!-- Etapa 1: Solicitud -->
+    <LinearLayout
+        android:id="@+id/layoutRequest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/etEmailRecovery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Correo electrónico"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etRutRecovery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="RUT (ej: 12345678-9)"
+            android:inputType="text"
+            android:layout_marginBottom="24dp"/>
+    </LinearLayout>
+
+    <!-- Etapa 2: Reset (Oculto) -->
+    <LinearLayout
+        android:id="@+id/layoutReset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ingresa el código enviado a tu correo"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/etTokenRecovery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Código / Token"
+            android:inputType="text"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etNewPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nueva Contraseña"
+            android:inputType="textPassword"
+            android:layout_marginBottom="16dp"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnRecoveryAction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enviar Solicitud"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tvBackToLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Volver al inicio de sesión"
+        android:textColor="@android:color/holo_blue_dark"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

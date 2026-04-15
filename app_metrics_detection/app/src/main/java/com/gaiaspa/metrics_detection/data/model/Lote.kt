@@ -2,6 +2,7 @@ package com.gaiaspa.metrics_detection.data.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "lote")
@@ -10,13 +11,12 @@ data class Lote(
     val id: Long = 0L,
 
     val userId: String,
-    val cloudId: String,
+    val cloudId: String = "",
 
     val company: String,
     val vessel: String,
     val block: String,
 
-    // ✅ NUEVO (PRO)
     val varietyId: Int = -1,
     val varietyName: String = "",
 
@@ -24,8 +24,14 @@ data class Lote(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 
-    @ColumnInfo(name = "images")
-    val images: List<String> = emptyList(),
+    @ColumnInfo(name = "source_images")
+    val sourceImages: List<String> = emptyList(),
+
+    @ColumnInfo(name = "normalized_images")
+    val normalizedImages: List<String> = emptyList(),
+
+    @ColumnInfo(name = "overlay_images") // ✅ NUEVO: Para guardar la visualización con contornos
+    val overlayImages: List<String> = emptyList(),
 
     @ColumnInfo(name = "cloudImages")
     val cloudImages: List<String> = emptyList(),
@@ -41,4 +47,11 @@ data class Lote(
 
     @ColumnInfo(name = "synced")
     val synced: Boolean = false,
-)
+
+    @ColumnInfo(name = "syncError")
+    val syncError: String? = null
+) {
+    @get:Ignore
+    val images: List<String>
+        get() = overlayImages.ifEmpty { normalizedImages.ifEmpty { sourceImages } }
+}

@@ -7,7 +7,6 @@
     android:gravity="center"
     android:padding="24dp">
 
-    <!-- Título o encabezado -->
     <TextView
         android:id="@+id/tvRegisterTitle"
         android:layout_width="wrap_content"
@@ -17,51 +16,87 @@
         android:textStyle="bold"
         android:layout_marginBottom="32dp"/>
 
-    <!-- Campo de Nombre (opcional) -->
-    <EditText
-        android:id="@+id/etNameRegister"
+    <!-- Etapa 1: Validación de Invitación -->
+    <LinearLayout
+        android:id="@+id/layoutStage1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre"
-        android:inputType="textPersonName"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="vertical"
+        android:visibility="visible">
 
-    <!-- Campo de Correo -->
-    <EditText
-        android:id="@+id/etEmailRegister"
+        <EditText
+            android:id="@+id/etEmailRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Correo electrónico"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etInviteCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Código de invitación"
+            android:inputType="text"
+            android:layout_marginBottom="16dp"/>
+    </LinearLayout>
+
+    <!-- Etapa 2: Datos Personales -->
+    <LinearLayout
+        android:id="@+id/layoutStage2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Correo electrónico"
-        android:inputType="textEmailAddress"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="vertical"
+        android:visibility="gone">
 
-    <!-- Campo de Contraseña -->
-    <EditText
-        android:id="@+id/etPasswordRegister"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Contraseña"
-        android:inputType="textPassword"
-        android:layout_marginBottom="16dp"/>
+        <EditText
+            android:id="@+id/etNameRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="16dp"/>
 
-    <!-- (Opcional) Campo de Confirmar Contraseña -->
-    <EditText
-        android:id="@+id/etConfirmPasswordRegister"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Confirmar Contraseña"
-        android:inputType="textPassword"
-        android:layout_marginBottom="24dp"/>
+        <EditText
+            android:id="@+id/etLastnameRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Apellido"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="16dp"/>
 
-    <!-- Botón de Registro -->
+        <EditText
+            android:id="@+id/etRutRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="RUT (ej: 12345678-9)"
+            android:inputType="text"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etPasswordRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:layout_marginBottom="16dp"/>
+
+        <EditText
+            android:id="@+id/etConfirmPasswordRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Confirmar Contraseña"
+            android:inputType="textPassword"
+            android:layout_marginBottom="24dp"/>
+    </LinearLayout>
+
     <Button
         android:id="@+id/btnRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Crear Cuenta"
+        android:text="Continuar"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Texto para ir a Login -->
     <TextView
         android:id="@+id/tvLogin"
         android:layout_width="wrap_content"

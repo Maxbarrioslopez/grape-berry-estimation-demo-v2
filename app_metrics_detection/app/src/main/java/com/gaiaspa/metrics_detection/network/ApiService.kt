@@ -1,4 +1,9 @@
-// ApiService.kt
+/**
+ * ApiService.kt
+ *
+ * Propósito: Definir los contratos de comunicación con el Backend.
+ * Responsabilidad: Declarar los endpoints de autenticación y gestión de lotes (Batch).
+ */
 package com.gaiaspa.metrics_detection.network
 
 import com.gaiaspa.metrics_detection.data.model.response.LoginResponse
@@ -8,6 +13,9 @@ import com.gaiaspa.metrics_detection.data.model.response.LogoutResponse
 import com.gaiaspa.metrics_detection.data.model.request.RefreshTokenRequest
 import com.gaiaspa.metrics_detection.data.model.response.DeleteBatchGrapeResponse
 import com.gaiaspa.metrics_detection.data.model.response.LoteResponse
+import com.gaiaspa.metrics_detection.data.model.request.CompanyRegisterRequest
+import com.gaiaspa.metrics_detection.data.model.request.RecoveryRequest
+import com.gaiaspa.metrics_detection.data.model.request.ResetRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Call
@@ -16,9 +24,17 @@ import retrofit2.http.*
 
 interface ApiService {
 
-     /**  AUTH  */
+    /**  AUTH  */
     @POST("auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
+
+    /** 
+     * Registro corporativo por invitación.
+     * Antes: /auth/register con JSONObject manual.
+     * Ahora: /auth/company-registration con DTO CompanyRegisterRequest.
+     */
+    @POST("auth/company-registration")
+    suspend fun registerCompany(@Body request: CompanyRegisterRequest): Response<Void>
 
     @GET("auth/profile")
     suspend fun getProfile(): Response<ProfileResponse>
@@ -29,8 +45,14 @@ interface ApiService {
     @POST("auth/refresh-token")
     fun refreshTokenSync(@Body refreshTokenRequest: RefreshTokenRequest): Call<LoginResponse>
 
+    /**  RECOVERY  */
+    @POST("auth/password-recovery/request")
+    suspend fun requestRecovery(@Body request: RecoveryRequest): Response<Void>
+
+    @POST("auth/password-recovery/reset")
+    suspend fun resetPassword(@Body request: ResetRequest): Response<Void>
+
     /**  Lote APIs  */
-    // Nueva función para insertar un Lote con imágenes como archivos
     @Multipart
     @POST("batch-predictions-grape")
     suspend fun insertBatchDetection(
@@ -40,7 +62,7 @@ interface ApiService {
         @Part("block") block: RequestBody,
         @Part("variety") variety: RequestBody,
         @Part("predictedAt") predictedAt: RequestBody,
-        @Part("calPredicts") calPredictsJson: RequestBody, // JSON serializado
+        @Part("calPredicts") calPredictsJson: RequestBody,
         @Part files: List<MultipartBody.Part>
         ): Response<LoteResponse>
 
