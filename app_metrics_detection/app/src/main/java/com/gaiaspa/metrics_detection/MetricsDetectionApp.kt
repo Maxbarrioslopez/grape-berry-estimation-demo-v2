@@ -15,7 +15,7 @@ class MetricsDetectionApp : Application() {
         super.onCreate()
         TokenProvider.init(this)
         
-        // Extraer modelos en segundo plano al iniciar para evitar bloqueos en el flujo de test
+        // Extraer modelos en segundo plano de forma atómica para evitar archivos corruptos
         CoroutineScope(Dispatchers.IO).launch {
             prepareModels()
         }
@@ -23,32 +23,40 @@ class MetricsDetectionApp : Application() {
 
     private fun prepareModels() {
         val models = listOf(
-            "weights/seg_best.onnx",
-            "weights/unified_runtime.onnx"
+            "weights/modelos/legacy/seg_best.onnx",
+            "weights/modelos/qty_model_rgbdt.onnx",
+            "weights/modelos/hist_rgbdt_bimodal.onnx"
         )
         
         models.forEach { assetPath ->
-            try {
-                extractAsset(assetPath)
-                // Intentar extraer el sidecar .data si existe (importante para modelos pesados)
-                extractAsset("$assetPath.data")
-            } catch (e: Exception) {
-                // Silencioso para el sidecar si no existe
-            }
+            extractAssetAtomic(assetPath)
+            // Extraer pesos externos .data si existen
+            extractAssetAtomic("$assetPath.data")
         }
     }
 
-    private fun extractAsset(assetPath: String) {
-        val outFile = File(filesDir, assetPath)
-        // Solo copiamos si no existe o está corrupto (0 bytes)
-        if (!outFile.exists() || outFile.length() == 0L) {
-            outFile.parentFile?.mkdirs()
+    private fun extractAssetAtomic(assetPath: String) {
+        val fileName = File(assetPath).name
+        val weightsDir = File(filesDir, "weights").apply { mkdirs() }
+        val targetFile = File(weightsDir, fileName)
+        
+        // Solo copiamos si no existe. Si está corrupto, el usuario debe reinstalar.
+        if (targetFile.exists() && targetFile.length() > 0) return
+
+        val tempFile = File(weightsDir, "$fileName.tmp")
+        try {
             assets.open(assetPath).use { input ->
-                FileOutputStream(outFile).use { output ->
+                FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
                 }
             }
-            Log.d("App", "Modelo extraído: $assetPath (${outFile.length()} bytes)")
+            // Renombrado atómico: si esto sucede, el archivo está completo.
+            if (tempFile.renameTo(targetFile)) {
+                Log.d("App", "✅ Modelo listo: $fileName")
+            }
+        } catch (e: Exception) {
+            // Es normal fallar para archivos .data opcionales
+            if (tempFile.exists()) tempFile.delete()
         }
     }
 }

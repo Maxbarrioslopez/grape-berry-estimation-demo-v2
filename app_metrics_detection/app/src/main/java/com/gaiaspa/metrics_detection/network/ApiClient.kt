@@ -1,4 +1,3 @@
-// ApiClient.kt
 package com.gaiaspa.metrics_detection.network
 
 import android.content.Context
@@ -18,8 +17,10 @@ object ApiClient {
         val okHttpClient = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor())
             .authenticator(TokenAuthenticator(context))
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
+            // ✅ AUMENTADO: De 30s a 300s para soportar subida de lotes grandes (296 imágenes)
+            .connectTimeout(300, TimeUnit.SECONDS)
+            .readTimeout(300, TimeUnit.SECONDS)
+            .writeTimeout(300, TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()
@@ -30,4 +31,3 @@ object ApiClient {
             .create(ApiService::class.java)
     }
 }
-

@@ -43,20 +43,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val instanceSeg = MetricsPipeline(application) { Log.d("HomeVM", it) }
 
     init {
-        // ✅ ORDEN CRÍTICO PARA EL MODELO ONNX (No cambiar)
         availableVarieties.value = listOf(
-            VarietyOption(0, "ALLISON"),
-            VarietyOption(1, "AUTUMN CRISP"),
-            VarietyOption(2, "CRIMSON"),
-            VarietyOption(3, "IVORY"),
-            VarietyOption(4, "MAGENTA"),
-            VarietyOption(5, "RED GLOBE"),
-            VarietyOption(6, "SCARLOTTA"),
-            VarietyOption(7, "SUPERIOR"),
-            VarietyOption(8, "SWEET GLOBE"),
-            VarietyOption(9, "THOMPSON"),
-            VarietyOption(10, "TIMCO"),
-            VarietyOption(11, "TIMPSON")
+            VarietyOption(0, "ALLISON"), VarietyOption(1, "AUTUMN CRISP"),
+            VarietyOption(2, "CRIMSON"), VarietyOption(3, "IVORY"),
+            VarietyOption(4, "MAGENTA"), VarietyOption(5, "RED GLOBE"),
+            VarietyOption(6, "SCARLOTTA"), VarietyOption(7, "SUPERIOR"),
+            VarietyOption(8, "SWEET GLOBE"), VarietyOption(9, "THOMPSON"),
+            VarietyOption(10, "TIMCO"), VarietyOption(11, "TIMPSON")
         )
     }
 
@@ -90,17 +83,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val context = getApplication<Application>()
         try {
             updateItemStatus(index, Status.NORMALIZING)
-            
-            // Directorio permanente para evitar borrados antes de la sincronización (Modo Offline)
-            val mediaDir = File(context.filesDir, "lotes_media").apply { mkdirs() }
+            val lotesDir = File(context.filesDir, "lotes_media").apply { mkdirs() }
             val time = System.currentTimeMillis()
             
-            val normalizedFile = File(mediaDir, "src_${time}_$index.jpg")
+            val normalizedFile = File(lotesDir, "src_${time}_$index.jpg")
             context.contentResolver.openInputStream(item.uri)?.use { input ->
                 normalizedFile.outputStream().use { output -> input.copyTo(output) }
             }
 
-            val preview = ImageUtils.decodeSampledBitmap(normalizedFile.absolutePath, 300, 300)
+            val preview = ImageUtils.decodeSampledBitmap(normalizedFile.absolutePath, 512, 512)
             updateItemPreview(index, normalizedFile.absolutePath, preview)
 
             updateItemStatus(index, Status.PROCESSING)
@@ -111,37 +102,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 varietyId = selectedVariety.value?.id,
                 onSuccess = { success ->
                     viewModelScope.launch(Dispatchers.Default) {
-                        // Usar el resultado del motor JNI (con overlays)
-                        val finalImage = success.imagePro.first ?: preview ?: return@launch
+                        // ✅ SOLUCIÓN: Usar la imagen procesada por JNI (tiene el dibujo exacto)
+                        // Si falla, caemos al dibujo manual de Kotlin
+                        val baseBitmap = preview ?: return@launch
+                        val resultImage = success.imagePro.first 
+                            ?: ImageUtils.drawDetectionsOverlay(baseBitmap, success.results)
                         
-                        // Guardado permanente de la evidencia visual
-                        val overlayPath = ImageUtils.saveBitmapToDisk(finalImage, mediaDir, "res_${time}_$index")
-                        val finalPreview = Bitmap.createScaledBitmap(finalImage, 300, 300, true)
+                        val savedPath = ImageUtils.saveBitmapToDisk(resultImage, lotesDir, "res_${time}_$index")
+                        val finalPreview = Bitmap.createScaledBitmap(resultImage, 300, 300, true)
+                        val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "Fallo")
                         
-                        // Extraer predicción completa del modelo (Mean, Mode, STD, etc.)
-                        val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "No prediction data")
-                        
-                        updateItemSuccess(index, overlayPath ?: "", finalPreview, calPredict)
+                        updateItemSuccess(index, savedPath ?: "", finalPreview, calPredict)
                     }
                 },
-                onFailure = { err -> 
-                    Log.e("HomeVM", "Error JNI: $err")
-                    updateItemError(index, err) 
-                }
+                onFailure = { err -> updateItemError(index, err) }
             )
         } catch (e: Exception) {
-            Log.e("HomeVM", "Excepción: ${e.message}")
             updateItemError(index, e.message ?: "Error desconocido")
         }
     }
 
-    /**
-     * Guarda el lote localmente (Modo Offline).
-     * Una vez guardado en Room, el SyncWorker se encargará de subirlo al servidor NestJS.
-     */
     fun saveBatch(callback: (Boolean) -> Unit) {
-        val predictions = imagePredictions.value.orEmpty()
-        if (predictions.isEmpty() || predictions.any { it.status != Status.DONE }) {
+        val currentPredictions = imagePredictions.value.orEmpty()
+        if (currentPredictions.isEmpty() || currentPredictions.any { it.status != Status.DONE }) {
             callback(false)
             return
         }
@@ -149,33 +132,27 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         isSavingLote.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Sincronizar TokenProvider antes de obtener el ID
                 TokenProvider.init(getApplication())
-                val userId = TokenProvider.getUserId()
-
                 val lote = Lote(
-                    userId = userId,
-                    company = company.value ?: "",
-                    vessel = vessel.value ?: "",
-                    block = block.value ?: "",
+                    userId = repository.getCurrentUserId(),
+                    company = company.value ?: "Sin Empresa",
+                    vessel = vessel.value ?: "Sin Nave",
+                    block = block.value ?: "Sin Cuartel",
                     varietyId = selectedVariety.value?.id ?: -1,
                     varietyName = selectedVariety.value?.name ?: "UNKNOWN",
-                    sourceImages = predictions.map { it.uri.toString() },
-                    normalizedImages = predictions.mapNotNull { it.normalizedPath },
-                    overlayImages = predictions.mapNotNull { it.overlayPath },
-                    calPredicts = predictions.mapNotNull { it.prediction },
-                    synced = false // Flag para SyncWorker
+                    sourceImages = currentPredictions.map { it.uri.toString() },
+                    normalizedImages = currentPredictions.mapNotNull { it.normalizedPath },
+                    overlayImages = currentPredictions.mapNotNull { it.overlayPath },
+                    calPredicts = currentPredictions.mapNotNull { it.prediction },
+                    synced = false
                 )
-
                 repository.insertLocalLote(lote)
-                
                 viewModelScope.launch(Dispatchers.Main) {
                     isSavingLote.value = false
-                    imagePredictions.value = emptyList() // Limpiar UI tras éxito
+                    imagePredictions.value = emptyList()
                     callback(true)
                 }
             } catch (e: Exception) {
-                Log.e("HomeVM", "Error al guardar lote offline", e)
                 viewModelScope.launch(Dispatchers.Main) {
                     isSavingLote.value = false
                     callback(false)

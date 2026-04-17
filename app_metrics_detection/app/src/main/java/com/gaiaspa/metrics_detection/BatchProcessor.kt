@@ -62,7 +62,7 @@ class BatchProcessor(
 
     private val appContext = context.applicationContext
     private val powerManager = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
-    private val pipelineVersion = "4.8/Forense-Final"
+    private val pipelineVersion = "4.9/Forense-SoloDatos"
     private var gtMap: Map<String, Double> = emptyMap()
 
     suspend fun run(
@@ -110,17 +110,8 @@ class BatchProcessor(
                 val outputJsonFile = File(runRoot, toJsonRelativePath(relativePath))
                 ensureDirectory(outputJsonFile.parentFile)
 
-                // --- ROBUSTO: RESCATAR EVIDENCIAS TÉCNICAS ---
-                val native = pipelineOutcome.nativeJson
-                if (native != null && native.has("jni_paths")) {
-                    val jniPaths = native.getJSONObject("jni_paths")
-                    val baseName = imageFile.nameWithoutExtension
-                    
-                    // Rescatar archivos generados por JNI (Copiar + Borrar)
-                    rescuFile(jniPaths.optString("raw_mask"), File(outputJsonFile.parentFile, "${baseName}_raw.png"))
-                    rescuFile(jniPaths.optString("pro"), File(outputJsonFile.parentFile, "${baseName}_pro.jpg"))
-                    rescuFile(jniPaths.optString("seg"), File(outputJsonFile.parentFile, "${baseName}_seg.jpg"))
-                }
+                // --- ELIMINADO: RESCATE DE EVIDENCIAS VISUALES (SOLO DATOS) ---
+                // No llamamos a rescuFile para imágenes jpg/png
 
                 val fileJson = buildFileJson(
                     runId = runId,
@@ -159,22 +150,6 @@ class BatchProcessor(
 
         val manifestPath = writeManifest(runId, Instant.now().toString(), inputRoot.absolutePath, outputRoot.absolutePath, runRoot, manifestEntries, processedOk, processedError, imageFiles.size, SystemClock.elapsedRealtime() - runStartedAt)
         return BatchRunSummary(runId, manifestPath, imageFiles.size, processedOk, processedError, SystemClock.elapsedRealtime() - runStartedAt)
-    }
-
-    private fun rescuFile(srcPath: String, dest: File) {
-        if (srcPath.isBlank()) return
-        val src = File(srcPath)
-        if (!src.exists()) return
-        try {
-            FileInputStream(src).use { input ->
-                FileOutputStream(dest).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            src.delete()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error rescuing file ${src.name}: ${e.message}")
-        }
     }
 
     private fun loadGroundTruth(root: File) {
@@ -225,14 +200,16 @@ class BatchProcessor(
         json.put("source", JSONObject().apply {
             put("filename", imageFile.name)
             put("relative_path", relativePath)
-            put("evidence_raw", "${imageFile.nameWithoutExtension}_raw.png")
-            put("evidence_pro", "${imageFile.nameWithoutExtension}_pro.jpg")
-            put("evidence_seg", "${imageFile.nameWithoutExtension}_seg.jpg")
+            // Ya no vinculamos nombres de evidencia visual
         })
 
         json.put("result", JSONObject().apply {
             put("qty_total", native?.optDouble("count_total", 0.0))
             put("variety_name", native?.optString("variety", "UNK"))
+            // Se añaden mean, mode y std al JSON de salida
+            put("mean", native?.optDouble("mean", 0.0))
+            put("mode", native?.optDouble("mode", 0.0))
+            put("std", native?.optDouble("std", 0.0))
         })
 
         json.put("detections", native?.optJSONArray("detections") ?: JSONArray())
@@ -249,11 +226,13 @@ class BatchProcessor(
             exifObj.put("exposure", exif.getAttribute(ExifInterface.TAG_EXPOSURE_TIME))
         } catch (e: Exception) {}
         json.put("exif", exifObj)
-        json.put("inference_ms", native?.optLong("infer_ms", 0))
+        json.put("inference_ms", native?.optLong("inf_ms", 0))
         json.put("throttling_warning", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) powerManager.currentThermalStatus >= PowerManager.THERMAL_STATUS_MODERATE else false)
 
         json.put("histogram", JSONObject().apply {
             put("hist_prob", native?.optJSONArray("hist_prob") ?: JSONArray())
+            put("pred", native?.optJSONArray("pred") ?: JSONArray())
+            put("bins", native?.optJSONArray("bins") ?: JSONArray())
         })
 
         json.put("error", outcome.errorMessage ?: JSONObject.NULL)

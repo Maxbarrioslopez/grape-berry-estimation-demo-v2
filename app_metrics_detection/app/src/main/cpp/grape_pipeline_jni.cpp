@@ -1,8 +1,7 @@
 /**
- * grape_pipeline_jni.cpp - v6.0 DEFINITIVA
- * Motor de inferencia con Caché de Modelos y Exportación Forense Sincronizada.
- * Sincronizado con BatchProcessor.kt para guardado de evidencia técnica.
- * Maneja valores NaN/Inf para evitar errores de parseo en Android.
+ * grape_pipeline_jni.cpp - v6.5 DEFINITIVA
+ * Motor con Caché y Exportación Forense Sincronizada.
+ * Fix: Generación obligatoria de overlay y sincronización de llaves con Kotlin.
  */
 #include <jni.h>
 #include <algorithm>
@@ -38,10 +37,10 @@ namespace {
     }
 
     std::string jstring_to_std(JNIEnv* env, jstring s) {
-        if (s == nullptr) return std::string();
+        if (s == nullptr) return "";
         const char* c = env->GetStringUTFChars(s, nullptr);
-        std::string out = (c == nullptr) ? std::string() : std::string(c);
-        if (c != nullptr) env->ReleaseStringUTFChars(s, c);
+        std::string out(c);
+        env->ReleaseStringUTFChars(s, c);
         return out;
     }
 
@@ -70,11 +69,12 @@ namespace {
         const auto& seg_out = result.pipe.seg_out;
         if (seg_out.orig_rgb.empty()) return;
 
-        // 1. PRO OVERLAY (Detecciones con bordes)
+        // 1. GENERAR OVERLAY (Detecciones)
         cv::Mat pro_img;
         cv::cvtColor(seg_out.orig_rgb, pro_img, cv::COLOR_RGB2BGR);
         for (size_t i = 0; i < seg_out.masks.size(); ++i) {
             int cid = seg_out.cls_ids[i];
+            // Verde para uvas (3,4,5), Rojo para otros
             cv::Scalar color = (cid >= 3 && cid <= 5) ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255);
             std::vector<std::vector<cv::Point>> contours;
             cv::findContours(seg_out.masks[i], contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
@@ -82,23 +82,11 @@ namespace {
         }
         if (!pro_p.empty()) cv::imwrite(pro_p, pro_img);
 
-        // 2. SEG VISUAL (Máscara coloreada verde)
-        if (!seg_p.empty()) {
-            cv::Mat seg_vis;
-            cv::cvtColor(result.pipe.global_masks.grapes, seg_vis, cv::COLOR_GRAY2BGR);
-            for(int r=0; r<seg_vis.rows; ++r) {
-                for(int c=0; c<seg_vis.cols; ++c) {
-                    if(seg_vis.at<cv::Vec3b>(r,c)[0] > 0) seg_vis.at<cv::Vec3b>(r,c) = cv::Vec3b(40, 200, 40);
-                }
-            }
-            cv::imwrite(seg_p, seg_vis);
-        }
-
-        // 3. RAW MASK (Binaria pura para validación técnica)
+        // 2. GENERAR MÁSCARA TÉCNICA (Raw)
         if (!raw_p.empty()) cv::imwrite(raw_p, result.pipe.global_masks.grapes);
     }
 
-    std::string build_success_json(const PipelineResult& result, const std::string& pro_p, const std::string& seg_p, const std::string& raw_p, long long inf, long long post) {
+    std::string build_success_json(const PipelineResult& result, const std::string& pro_p, const std::string& raw_p, long long inf) {
         std::ostringstream oss;
         auto safe_f = [](float f) { return std::isfinite(f) ? f : 0.0f; };
 
@@ -108,24 +96,23 @@ namespace {
         oss << "\"mean\":" << safe_f(result.reg_out.mean) << ",";
         oss << "\"mode\":" << safe_f(result.reg_out.mode) << ",";
         oss << "\"std\":" << safe_f(result.reg_out.std) << ",";
-        oss << "\"seg_count_base\":" << result.pipe.seg_count_base << ",";
+        oss << "\"seg_count_base\":" << (int)result.pipe.seg_count_base << ",";
 
+        // Sincronización de llaves con MetricsPipeline.kt
         oss << "\"jni_paths\":{";
         oss << "\"pro\":\"" << json_escape(pro_p) << "\",";
-        oss << "\"seg\":\"" << json_escape(seg_p) << "\",";
-        oss << "\"raw_mask\":\"" << json_escape(raw_p) << "\"";
+        oss << "\"raw\":\"" << json_escape(raw_p) << "\"";
         oss << "},";
 
         oss << "\"detections\":[";
         const auto& seg_out = result.pipe.seg_out;
         for (size_t i = 0; i < seg_out.boxes.size(); ++i) {
             if (i > 0) oss << ",";
-            oss << "{\"cls\":" << seg_out.cls_ids[i] << ",\"score\":" << safe_f(seg_out.scores[i]);
-            oss << ",\"box\":[" << seg_out.boxes[i].x << "," << seg_out.boxes[i].y << "," << seg_out.boxes[i].width << "," << seg_out.boxes[i].height << "]}";
+            oss << "{\"cls\":" << seg_out.cls_ids[i] << ",\"score\":" << safe_f(seg_out.scores[i]) << "}";
         }
         oss << "],";
 
-        oss << "\"inf_ms\":" << inf << ",\"post_ms\":" << post << ",";
+        oss << "\"inf_ms\":" << inf << ",";
 
         auto append_arr = [&](const std::string& name, const auto& vec) {
             oss << "\"" << name << "\":[";
@@ -165,14 +152,12 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
         auto t2 = Clock::now();
 
         std::string pro_p = build_jni_path(img_p, "pro", "jpg");
-        std::string seg_p_img = build_jni_path(img_p, "seg", "jpg");
         std::string raw_p = build_jni_path(img_p, "raw", "png");
-        save_jni_evidences(res, pro_p, seg_p_img, raw_p);
+        save_jni_evidences(res, pro_p, "", raw_p);
         auto t3 = Clock::now();
 
-        return env->NewStringUTF(build_success_json(res, pro_p, seg_p_img, raw_p,
-            std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count(),
-            std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()).c_str());
+        return env->NewStringUTF(build_success_json(res, pro_p, raw_p,
+            std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()).c_str());
     } catch (const std::exception& e) {
         return env->NewStringUTF((std::string("{\"status\":false,\"error\":\"") + json_escape(e.what()) + "\"}").c_str());
     }
