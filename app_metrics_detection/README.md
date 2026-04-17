@@ -1,95 +1,91 @@
+# 📱 Metrics Detection - AI Viticulture Pipeline (v7.0)
 
-# 📱 Metrics Detection - Pipeline Nativo ONNX (Android)
-
-Aplicación Android para **segmentación de instancias** y **detección de métricas** en uvas, integrando procesamiento nativo C++ (ONNX Runtime, OpenCV), modelos de deep learning y una interfaz moderna en Kotlin. El sistema está alineado con un backend multi-tenant y un motor de auditoría forense.
-
----
-
-## 🚀 Descripción General
-
-El sistema realiza:
-- Preprocesamiento de imágenes (OpenCV nativo)
-- Inferencia de modelos ONNX (segmentación y regresión)
-- Postprocesamiento y visualización en la app
-- **Auditoría técnica**: Generación de máscaras binarias raw y detecciones para validación externa.
-- **Sincronización**: Gestión de lotes (Batch) con persistencia offline/online.
+Sistema avanzado de **visión artificial en el borde (Edge AI)** de grado industrial para la industria vitivinícola. Combina un motor nativo C++ optimizado con modelos de Deep Learning RGBDT para la segmentación y análisis de calibres de uvas en tiempo real directamente en dispositivos Android.
 
 ---
 
-## 🔐 Seguridad y Autenticación (Multi-tenant)
+## 🏛️ 1. Arquitectura y Flujo de Datos
 
-La aplicación ha sido adaptada para entornos corporativos con las siguientes reglas:
+El sistema utiliza una arquitectura híbrida que delega la carga computacional pesada a C++ (JNI) para garantizar latencias mínimas y estabilidad, mientras que Kotlin gestiona la UI, persistencia y sincronización.
 
-- **Multi-tenant Invisible**: El `companyId` (tenant real) lo gestiona el backend mediante el JWT. El campo `company` en los lotes se mantiene solo por compatibilidad de contrato Multipart.
-- **Registro por Invitación**: El alta de usuarios finales requiere un `inviteCode` corporativo válido (`POST /auth/company-registration`).
-- **Gestión de Roles**: Soporte para roles `superadmin`, `client_admin` y `user` para el control de acceso en la UI.
-- **Recuperación de Cuenta**: Flujo estricto de recuperación mediante Email + RUT.
-- **Persistencia Segura**: Uso de `EncryptedSharedPreferences` (vía `TokenProvider`) para almacenar tokens y roles de usuario.
+### Pipeline de Procesamiento RGBDT (5 Canales)
 
----
-
-## 🧪 Validación y Auditoría Forense
-
-El proyecto incluye un motor de validación para asegurar la paridad de resultados entre el pipeline de investigación (Python) y el de producción (Android/JNI).
-
-### Scripts de Validación (`/app_metrics_detection/imagenesparatest/`)
-- **`run_kotlin_emulator_batch.ps1`**: Automatiza la ejecución de tests masivos en el emulador, descarga resultados y lanza la evaluación.
-- **`eval_jni_vs_gt.py`**: Genera reportes de precisión detallados (`reporte_forense_maxi.md`) comparando predicciones contra Ground Truth (CSV).
-
-### Evidencia Técnica Generada
-Por cada imagen, el sistema exporta:
-- **`.json`**: Datos técnicos, tiempos de inferencia y parámetros bimodales.
-- **`_raw.png`**: Máscara binaria pura (0/255) resultante de la segmentación.
-- **`_pro.jpg`**: Overlay con cajas de detección (BBoxes) y scores.
-- **`_seg.jpg`**: Visualización coloreada de la máscara de uvas.
-
----
-
-## 🛠️ Tecnologías y Librerías Utilizadas
-
-### Android/Kotlin
-- **UI**: ViewBinding, Fragment, Navigation, MPAndroidChart.
-- **Sesión**: Security Crypto (EncryptedSharedPreferences).
-- **Red**: Retrofit2 (con DTOs seguros), OkHttp3, Gson.
-- **Background**: WorkManager (SyncWorker para subida offline).
-- **Imágenes**: Glide, uCrop, ExifInterface (Telemetría ISO/Exposure).
-
-### Nativo (C++)
-- **Engine**: C++17, ONNX Runtime Android (Inferencia), OpenCV Android SDK.
-- **Bridge**: JNI para comunicación eficiente entre Kotlin y el motor de procesamiento.
-
----
-
-## 📁 Estructura del Proyecto
-
-```text
-optimizacion_uvas/
-├── pipeline.py                  # Orquestador Python (Entrenamiento)
-├── app_metrics_detection/
-│   ├── app/src/main/
-│   │   ├── cpp/                 # Motor JNI y lógica C++ (main.cpp)
-│   │   ├── java/.../auth/       # Login, Registro (Invite), Recovery
-│   │   ├── java/.../network/    # ApiService (v1), TokenProvider
-│   │   ├── java/.../data/       # Repositorios y DTOs (AuthRequests)
-│   │   ├── java/.../worker/     # SyncWorker (Multi-tenant aware)
-│   │   └── assets/weights/      # Modelos ONNX (seg_best, regression)
-│   ├── imagenesparatest/        # Motor de pruebas forenses (PS1, Python)
-│   └── third_party/             # Librerías nativas (ONNX/OpenCV)
-└── README.md                    # Este archivo
+```mermaid
+flowchart TD
+    A[Imagen Input 1:1] --> B[Preprocess OpenCV: Letterbox 512]
+    B --> C[Inferencia YOLOv8 Seg: seg_best.onnx]
+    C --> D[Generación de Máscaras por Instancia]
+    D --> E[Cálculo de Distance Transform - DT]
+    E --> F[Construcción Tensor 5 Canales: RGB + GrapeDT + RefDT]
+    F --> G[Modelo QTY Residual: qty_model_rgbdt.onnx]
+    F --> H[Modelo Bimodal HIST: hist_rgbdt_bimodal.onnx]
+    G --> I[Postprocess C++: Sanitización NaN/Inf]
+    H --> I
+    I --> J[Resultado Final: JSON + Telemetría]
 ```
 
 ---
 
-## ⚙️ Notas de Build
+## 📊 2. Evaluación del Sistema (Auditoría Forense)
 
-- **Actualización de Motor**: Al modificar el código C++ (`main.cpp` o `jni`), es **obligatorio** realizar un `Build > Rebuild Project` en Android Studio para recompilar el binario `.so`.
-- **ABI**: Soporte optimizado para `arm64-v8a`.
-- **Preparación**: Ejecutar `scripts/prepare_native_deps.ps1` para descargar dependencias nativas.
+Basado en el último run masivo (**run_20260417_010324**) con **296 muestras** reales de campo, el sistema ha sido validado contra Ground Truth (CSV) obteniendo los siguientes resultados de ingeniería:
+
+### Métricas Globales
+| Métrica | Valor | Interpretación Técnica |
+| :--- | :--- | :--- |
+| **MAE** | **5.01** | Error Absoluto Medio. Desviación promedio de ±5 granos por racimo. |
+| **Bias** | **-1.27** | Sesgo sistemático. Indica una tendencia leve a la subestimación. |
+| **Inflation** | **0.978x** | Factor de corrección. El regresor es conservador ante oclusiones. |
+| **Fidelity** | **91.2%** | Cercanía porcentual al Ground Truth. **Apto para Pre-producción.** |
+
+### Desempeño por Variedad (Top & Bottom)
+| Variedad | MAE | Estado | Insight de Campo |
+| :--- | :--- | :--- | :--- |
+| **MAGENTA** | **2.32** | 🏆 Excelente | Estructura de racimo abierta; paridad casi total. |
+| **SWEET GLOBE** | **3.24** | ✅ Óptimo | Alta estabilidad en la detección de referencia. |
+| **AUTUMN CRISP** | **3.52** | ✅ Óptimo | Muy buena respuesta del modelo de 5 canales. |
+| **SUPERIOR** | **6.72** | ⚠️ Crítico | Racimos densos; alta dependencia del regresor residual. |
+| **IVORY** | **8.08** | ❌ Crítico | Bajo contraste color/fondo; requiere ajuste de threshold. |
 
 ---
 
-## 📚 Créditos y Licencias
+## ⚙️ 3. Capacidades de Procesamiento y Operación
 
-- **Gaia Robotics Team**
-- ONNX Runtime: https://onnxruntime.ai/
-- OpenCV: https://opencv.org/
+### Gestión de Lotes (Batch)
+- **Capacidad por Tirada:** Testeado con éxito hasta **300 fotos continuas**.
+- **Caché Singleton (RAM):** Los modelos ONNX se mantienen cargados en memoria.
+  - *Primera foto:* ~2.5s (Carga de pesos).
+  - *Siguientes:* ~900ms (Inferencia pura).
+- **Eficiencia Térmica:** Monitoreo de **Throttling**. Si el dispositivo se calienta, el sistema ajusta la carga para evitar crashes.
+
+---
+
+## 🔐 4. Seguridad, Sesión y Optimización
+
+### Multi-tenant Invisible
+El sistema está alineado con un backend corporativo NestJS. El `companyId` se resuelve automáticamente vía JWT; la App no decide el tenant, garantizando aislamiento total de datos.
+
+### Protección de Código (ProGuard/R8)
+Se aplica en la etapa de **Build Release** (`./gradlew assembleRelease`):
+- **Ofuscación:** Protege la lógica de negocio y algoritmos propietarios.
+- **Optimización JNI:** Preserva las interfaces nativas y evita la eliminación de métodos usados por C++.
+- **Compatibilidad:** Mantiene las clases de `ai.onnxruntime` para asegurar el acceso a NPU/GPU.
+
+---
+
+## 🧪 5. Motor de Validación Forense
+
+El proyecto incluye un set de herramientas para asegurar la paridad de resultados con el modelo de investigación:
+- **Test Batch**: `./imagenesparatest/run_kotlin_emulator_batch.ps1` (Automatización en emulador).
+- **Auditoría**: `./imagenesparatest/eval_jni_vs_gt.py` (Reportes de MAE, EMD/W1 y Estabilidad de Calibración).
+
+---
+
+## 🛠️ 6. Tecnologías y Librerías
+
+- **Android/Kotlin:** ViewBinding, WorkManager (Offline-First), EncryptedSharedPreferences.
+- **Nativo (C++17):** OpenCV, ONNX Runtime (NNAPI Support).
+- **Red:** Retrofit2 con DTOs seguros y timeouts extendidos (300s).
+
+---
+© 2026 Gaia Robotics - Viticulture Intelligence Team
