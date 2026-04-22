@@ -1,8 +1,8 @@
 package com.gaiaspa.metrics_detection.ui.history
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.CalPredict
 import com.gaiaspa.metrics_detection.data.model.Lote
+import com.gaiaspa.metrics_detection.ml.ImageUtils
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -21,10 +22,17 @@ import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
+import java.io.File
 
+/**
+ * LoteDetailAdapter - v9.0 ARCHITECTURAL FIX
+ * 1. Usa upload_512 como fuente persistente y liviana.
+ * 2. Manejo defensivo de errores para evitar crashes.
+ * 3. Paso de rutas (String) en lugar de Bitmaps pesados.
+ */
 class LoteDetailAdapter(
     private val lote: Lote,
-    private val onImageClick: (Bitmap) -> Unit
+    private val onImageClick: (String) -> Unit // ✅ Cambiado a String para evitar pasar Bitmaps pesados
 ) : RecyclerView.Adapter<LoteDetailAdapter.LoteDetailViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LoteDetailViewHolder {
@@ -34,16 +42,17 @@ class LoteDetailAdapter(
     }
 
     override fun onBindViewHolder(holder: LoteDetailViewHolder, position: Int) {
-        val imagePath = lote.normalizedImages.getOrNull(position) ?: ""
+        // lote.images ahora prioriza uploadImages (512px) gracias al fix en Lote.kt
+        val imagePath = lote.images.getOrNull(position) ?: ""
         val prediction = lote.calPredicts.getOrNull(position)
         holder.bind(imagePath, prediction)
     }
 
-    override fun getItemCount(): Int = lote.normalizedImages.size
+    override fun getItemCount(): Int = lote.images.size
 
     class LoteDetailViewHolder(
         itemView: View,
-        private val onImageClick: (Bitmap) -> Unit
+        private val onImageClick: (String) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val ivPhoto: ImageView = itemView.findViewById(R.id.ivPhoto)
@@ -51,20 +60,32 @@ class LoteDetailAdapter(
         private val barChart: BarChart = itemView.findViewById(R.id.barChart)
 
         fun bind(imagePath: String, prediction: CalPredict?) {
-            // Intentar cargar el bitmap
-            val bitmap = if (imagePath.isNotEmpty()) BitmapFactory.decodeFile(imagePath) else null
+            val cleanPath = imagePath.replace("file://", "")
+            val file = File(cleanPath)
             
-            if (bitmap != null) {
-                ivPhoto.setImageBitmap(bitmap)
-                ivPhoto.setOnClickListener {
-                    onImageClick(bitmap)
+            try {
+                if (file.exists()) {
+                    Log.d("History_SAFE", "Cargando imagen persistente (512px): $cleanPath")
+                    // Decode con sampleo para seguridad absoluta en la lista
+                    val bitmap = ImageUtils.decodeSampledBitmap(cleanPath, 512, 512)
+                    
+                    if (bitmap != null) {
+                        ivPhoto.setImageBitmap(bitmap)
+                        ivPhoto.setOnClickListener { onImageClick(imagePath) }
+                    } else {
+                        Log.e("History_SAFE", "Fallo decode (Bitmap null): $cleanPath")
+                        ivPhoto.setImageResource(R.drawable.ic_gallery)
+                    }
+                } else {
+                    Log.w("History_SAFE", "Archivo no encontrado: $cleanPath")
+                    ivPhoto.setImageResource(R.drawable.ic_gallery)
+                    ivPhoto.setOnClickListener {
+                        Toast.makeText(itemView.context, "Archivo no encontrado", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            } else {
-                // Si no hay imagen (por ejemplo, después de descargar lotes de la nube sin fotos)
-                ivPhoto.setImageResource(R.drawable.ic_gallery) // O cualquier icono de placeholder
-                ivPhoto.setOnClickListener {
-                    Toast.makeText(itemView.context, "Imagen no disponible (Solo datos)", Toast.LENGTH_SHORT).show()
-                }
+            } catch (e: Exception) {
+                Log.e("History_SAFE", "Error en bind: ${e.message}")
+                ivPhoto.setImageResource(R.drawable.ic_gallery)
             }
 
             // Mostrar datos de predicción
@@ -75,8 +96,8 @@ class LoteDetailAdapter(
                 val predInfo = """
                     Color: ${prediction.bunchColor}
                     QTY: ${prediction.qty}
-                    Mean: ${prediction.mean}
-                    Mode: ${prediction.mode}
+                    Mean: ${prediction.mean} mm
+                    Mode: ${prediction.mode} mm
                     STD: ${prediction.std}
                 """.trimIndent()
                 tvPredictionInfo.text = predInfo
@@ -88,6 +109,7 @@ class LoteDetailAdapter(
         }
 
         private fun setupChart(barChart: BarChart, bins: List<Float>, values: List<Int>) {
+            if (bins.isEmpty() || values.isEmpty()) { barChart.clear(); return }
             val entries = values.mapIndexed { i, v -> BarEntry(i.toFloat(), v.toFloat()) }
             val barDataSet = BarDataSet(entries, "")
             val primaryColor = ContextCompat.getColor(barChart.context, R.color.colorPrimary)

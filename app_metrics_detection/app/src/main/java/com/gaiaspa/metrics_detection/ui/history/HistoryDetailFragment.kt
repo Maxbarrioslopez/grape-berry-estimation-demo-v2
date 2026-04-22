@@ -1,14 +1,11 @@
 package com.gaiaspa.metrics_detection.ui.history
 
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
@@ -19,18 +16,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.Lote
 import com.gaiaspa.metrics_detection.databinding.FragmentLoteDetailBinding
-import com.gaiaspa.metrics_detection.formatTimestampToDateTime
 import com.gaiaspa.metrics_detection.pdf_utils.createLotesReportPdf
-import com.gaiaspa.metrics_detection.pdf_utils.drawModernHistogram
 import com.gaiaspa.metrics_detection.utils.NetworkUtils
 import com.gaiaspa.metrics_detection.worker.SyncManager
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.max
-import kotlin.math.min
 
+/**
+ * HistoryDetailFragment - v9.1 FIXED
+ * Corregido para manejar rutas de imagen (String) en lugar de Bitmaps pesados.
+ */
 class HistoryDetailFragment : Fragment() {
 
     private var _binding: FragmentLoteDetailBinding? = null
@@ -51,8 +48,6 @@ class HistoryDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ─── Toolbar ───────────────────────────────────────────────
-        // Flecha “back”
         binding.toolbarDetail.setNavigationOnClickListener {
             findNavController().navigateUp()
         }
@@ -60,9 +55,7 @@ class HistoryDetailFragment : Fragment() {
         binding.toolbarDetail.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_share -> {
-                    // 1) Obtengo la view del botón compartir
                     val shareView = binding.toolbarDetail.findViewById<View>(R.id.action_share)
-                    // 2) Le hago un pequeño «pop» escalandolo
                     shareView?.animate()
                         ?.scaleX(1.2f)?.scaleY(1.2f)
                         ?.setDuration(150)
@@ -71,7 +64,6 @@ class HistoryDetailFragment : Fragment() {
                                 .scaleX(1f)?.scaleY(1f)
                                 ?.setDuration(150)
                                 ?.start()
-                            // 3) Llamo a tu función de compartir
                             shareLote()
                         }
                         ?.start()
@@ -81,18 +73,19 @@ class HistoryDetailFragment : Fragment() {
             }
         }
 
-
-        // ─── Borrado de imagenes en caché desde fullscreen ──────────
         parentFragmentManager.setFragmentResultListener(
             "deleteCacheRequest", viewLifecycleOwner
         ) { _, bundle ->
-            bundle.getString("imagePath")?.let { File(it).delete() }
+            bundle.getString("imagePath")?.let { path ->
+                val file = File(path.replace("file://", ""))
+                if (file.exists() && file.parentFile?.name == "cache") {
+                    file.delete()
+                }
+            }
         }
 
-        // ─── Mostrar datos del lote ─────────────────────────────────
         viewModel.selectedLote.value?.let { setupLoteDetails(it) }
 
-        // ─── Eliminar lote ──────────────────────────────────────────
         binding.btnDeleteLote.setOnClickListener {
             viewModel.selectedLote.value?.let { lote ->
                 confirmDeleteLote(lote)
@@ -101,7 +94,6 @@ class HistoryDetailFragment : Fragment() {
     }
 
     private fun setupLoteDetails(lote: Lote) {
-        // ID y datos
         if(lote.synced) {
             binding.tvLoteId.text = "ID ${lote.cloudId}"
         }else{
@@ -112,41 +104,33 @@ class HistoryDetailFragment : Fragment() {
         binding.tvBlock.text     = lote.block
         binding.tvImagesLen.text = "${lote.normalizedImages.size} imágenes"
 
-        // Fecha y hora por separado
         val dt = Date(lote.predictedAt)
         val fmtTime = SimpleDateFormat("hh:mm a", Locale.getDefault())
         val fmtDate = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
         binding.tvTime.text = fmtTime.format(dt)
         binding.tvDate.text = fmtDate.format(dt)
 
-        // Estado nube (tint)
         val tintColor = if (lote.synced)
             R.color.dark_green else R.color.dark_red
         binding.ivCloudStatus.setColorFilter(
             ContextCompat.getColor(requireContext(), tintColor)
         )
 
-        // RecyclerView de imágenes/predicciones
         adapter = LoteDetailAdapter(
             lote = lote,
-            onImageClick = { bmp -> showFullscreenImage(bmp) }
+            onImageClick = { path -> showFullscreenImage(path) } // ✅ FIXED: bmp -> path (String)
         )
         binding.recyclerDetail.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@HistoryDetailFragment.adapter
-            // como está dentro de ScrollView:
             isNestedScrollingEnabled = false
         }
     }
 
-    private fun showFullscreenImage(bitmap: Bitmap) {
-        // Guarda y navega
-        val file = File(requireContext().cacheDir, "temp_${System.currentTimeMillis()}.png")
-        file.outputStream().use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
-            it.flush()
-        }
-        val uri = "file://${file.absolutePath}"
+    private fun showFullscreenImage(imagePath: String) {
+        // ✅ FIXED: Ya no comprimimos un bitmap, pasamos la ruta directa
+        Log.d("Fullscreen_SAFE", "Navegando a fullscreen con ruta: $imagePath")
+        val uri = if (imagePath.startsWith("file://")) imagePath else "file://$imagePath"
         val action = HistoryDetailFragmentDirections
             .actionLoteDetailFragmentToFullscreenImageFragment(uri)
         findNavController().navigate(action)
@@ -193,7 +177,7 @@ class HistoryDetailFragment : Fragment() {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             })
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("History_DETAIL", "Error shareLote: ${e.message}")
             Toast.makeText(requireContext(), "Error al compartir detalle", Toast.LENGTH_LONG).show()
         }
     }

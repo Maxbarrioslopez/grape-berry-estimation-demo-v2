@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.gaiaspa.metrics_detection.data.model.Lote
 
 @Dao
@@ -11,6 +12,9 @@ interface LoteDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertLote(lote: Lote): Long
+
+    @Update
+    fun updateLote(lote: Lote): Int
 
     @Query("SELECT * FROM lote WHERE userId = :userId ORDER BY id DESC")
     fun getAllLotes(userId: String): List<Lote>

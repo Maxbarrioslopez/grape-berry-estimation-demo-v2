@@ -6,9 +6,14 @@ import androidx.room.TypeConverters
 import com.gaiaspa.metrics_detection.data.model.Lote
 import com.gaiaspa.metrics_detection.data.model.Profile
 
+/**
+ * AppDatabase - v12 FIXED
+ * Versión 12: Sincronizada con Profile (rut nullable) y Lote (upload_images).
+ * Utiliza fallbackToDestructiveMigration en DatabaseProvider para resolver conflictos de esquema.
+ */
 @Database(
     entities = [Profile::class, Lote::class],
-    version = 10, // Incrementado de 9 a 10 para resolver el error de integridad
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

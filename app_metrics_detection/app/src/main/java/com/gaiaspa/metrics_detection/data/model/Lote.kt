@@ -5,6 +5,11 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
+/**
+ * Lote - v8.9 ARCHITECTURAL FIX
+ * Se redefine la propiedad 'images' para priorizar assets persistentes (upload_512)
+ * sobre assets visuales/transitorios (res_), evitando crashes en el historial.
+ */
 @Entity(tableName = "lote")
 data class Lote(
     @PrimaryKey(autoGenerate = true)
@@ -12,7 +17,6 @@ data class Lote(
 
     val userId: String,
     val cloudId: String = "",
-
     val company: String,
     val vessel: String,
     val block: String,
@@ -27,10 +31,13 @@ data class Lote(
     @ColumnInfo(name = "source_images")
     val sourceImages: List<String> = emptyList(),
 
-    @ColumnInfo(name = "normalized_images")
+    @ColumnInfo(name = "normalized_images") 
     val normalizedImages: List<String> = emptyList(),
 
-    @ColumnInfo(name = "overlay_images") // ✅ NUEVO: Para guardar la visualización con contornos
+    @ColumnInfo(name = "upload_images") 
+    val uploadImages: List<String> = emptyList(), 
+
+    @ColumnInfo(name = "overlay_images")
     val overlayImages: List<String> = emptyList(),
 
     @ColumnInfo(name = "cloudImages")
@@ -51,7 +58,12 @@ data class Lote(
     @ColumnInfo(name = "syncError")
     val syncError: String? = null
 ) {
+    /**
+     * Propiedad dinámica para UI.
+     * ✅ FIXED: Prioriza uploadImages (512px limpios y persistentes)
+     * para asegurar la estabilidad del Historial y Fullscreen.
+     */
     @get:Ignore
     val images: List<String>
-        get() = overlayImages.ifEmpty { normalizedImages.ifEmpty { sourceImages } }
+        get() = uploadImages.ifEmpty { normalizedImages.ifEmpty { sourceImages } }
 }
