@@ -25,7 +25,8 @@ public:
         const std::string& image_path,
         int variety_id,
         bool save_debug_artifacts,
-        bool allow_synthetic_rgbdt) const;
+        bool allow_synthetic_rgbdt,
+        const std::string& visual_overlay_path = "") const;
 
 private:
     Ort::Session* segmentation_session_;

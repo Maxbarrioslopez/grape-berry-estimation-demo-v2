@@ -9,6 +9,7 @@
 #include "grape_pipeline_core.hpp"
 #include "grape_pipeline_onnx.hpp"
 #include "grape_pipeline_postprocess.hpp"
+#include "grape_pipeline_preprocess.hpp"
 
 namespace {
 
@@ -146,17 +147,15 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
     jint varietyId,
     jstring providerPreference,
     jboolean saveDebugArtifacts,
-    jboolean allowSyntheticRgbdt) {
+    jboolean allowSyntheticRgbdt,
+    jstring visualOverlayPath) {
     auto& context = GetContext();
     std::lock_guard<std::mutex> lock(context.mutex);
 
     try {
         const std::string image_path = JStringToStd(env, imagePath);
+        const std::string visual_p = JStringToStd(env, visualOverlayPath);
         const std::string segmentation_model_path = JStringToStd(env, segModelPath);
-
-        // JNI compatibility with the old bridge:
-        // regModelPath is now treated as the official model bundle path.
-        // It can point to the bundle directory or to one of the official ONNX files.
         const std::string model_spec_path = JStringToStd(env, regModelPath);
         const std::string provider_raw = JStringToStd(env, providerPreference);
         const grape::ProviderPreference provider = grape::ParseProviderPreference(provider_raw);
@@ -166,7 +165,6 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
         const grape::BundleResolution bundle = grape::ResolveBundle(
             segmentation_model_path,
             model_spec_path);
-        GP_LOGI("Bundle note: %s", bundle.note.c_str());
 
         EnsureSessionsLoaded(context, bundle, provider, allow_synthetic);
 
@@ -181,11 +179,13 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
             context.hist_provider);
 
         const auto run_t0 = Clock::now();
+        // ✅ EJECUCIÓN INTEGRADA: Se incluye visual_p para activar el overlay nativo
         grape::PipelineResult result = core.Run(
             image_path,
             static_cast<int>(varietyId),
             save_debug,
-            allow_synthetic);
+            allow_synthetic,
+            visual_p);
         const auto run_t1 = Clock::now();
 
         if (result.timing.total_ms <= 0.0) {

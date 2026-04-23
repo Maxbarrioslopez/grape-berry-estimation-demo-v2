@@ -6,9 +6,9 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 /**
- * Lote - v8.9 ARCHITECTURAL FIX
- * Se redefine la propiedad 'images' para priorizar assets persistentes (upload_512)
- * sobre assets visuales/transitorios (res_), evitando crashes en el historial.
+ * Lote - v11.0 ARCHITECTURAL FIX
+ * Se redefine la propiedad 'images' para priorizar el overlay visual (res_)
+ * generado por C++ sobre la imagen limpia de subida.
  */
 @Entity(tableName = "lote")
 data class Lote(
@@ -60,10 +60,10 @@ data class Lote(
 ) {
     /**
      * Propiedad dinámica para UI.
-     * ✅ FIXED: Prioriza uploadImages (512px limpios y persistentes)
-     * para asegurar la estabilidad del Historial y Fullscreen.
+     * ✅ FIXED: Prioriza overlayImages (res_ con óvalos nativos)
+     * para que el usuario siempre vea las detecciones en el historial.
      */
     @get:Ignore
     val images: List<String>
-        get() = uploadImages.ifEmpty { normalizedImages.ifEmpty { sourceImages } }
+        get() = overlayImages.ifEmpty { uploadImages.ifEmpty { normalizedImages.ifEmpty { sourceImages } } }
 }

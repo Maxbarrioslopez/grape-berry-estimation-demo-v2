@@ -1,7 +1,7 @@
 #include "grape_pipeline_postprocess.hpp"
 
 #include "grape_pipeline_config.hpp"
-
+#include <android/log.h>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -17,6 +17,9 @@ namespace grape {
 namespace {
 
 namespace fs = std::filesystem;
+
+#define GP_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, "NATIVE_OVERLAY", __VA_ARGS__)
+#define GP_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "NATIVE_OVERLAY", __VA_ARGS__)
 
 double SafeNumber(double value) {
     return std::isfinite(value) ? value : 0.0;
@@ -322,6 +325,151 @@ void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result) {
         }
     }
 }
+
+    void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, const PipelineResult& result) {
+        if (path.empty() || !fs::exists(path)) return;
+
+        cv::Mat canvas = cv::imread(path);
+        if (canvas.empty()) return;
+
+        const int orig_w = inputs.seg.orig_bgr.cols;
+        const int orig_h = inputs.seg.orig_bgr.rows;
+        if (orig_w <= 0 || orig_h <= 0) return;
+
+        const float scaleX = static_cast<float>(canvas.cols) / static_cast<float>(orig_w);
+        const float scaleY = static_cast<float>(canvas.rows) / static_cast<float>(orig_h);
+
+        // Máscara global de ocupación: define dónde "ya hay uva"
+        cv::Mat global_occ = cv::Mat::zeros(canvas.size(), CV_8UC1);
+
+        struct DrawItem {
+            cv::Point2f center;
+            cv::Size2f visual_axes;  // tamaño del contorno visible
+            cv::Size2f occ_axes;     // tamaño usado para oclusión / corte
+            cv::Scalar color;
+        };
+
+        std::vector<DrawItem> items;
+        items.reserve(result.detections.size());
+
+        // Estilo cliente final
+        const cv::Scalar kClientGreen(76, 175, 80);  // uvas
+        const cv::Scalar kTechBlue(255, 180, 50);    // ping pong
+
+        // 1) Preparar items y construir máscara global de ocupación
+        for (const auto& det : result.detections) {
+            if (det.class_name.find("bunch") != std::string::npos) {
+                continue;
+            }
+
+            if (det.score < 0.50f) {
+                continue;
+            }
+            const bool is_ping = (det.class_name.find("ping") != std::string::npos);
+            const cv::Scalar color = is_ping ? kTechBlue : kClientGreen;
+
+            const cv::Point2f center(
+                    (det.x + det.w / 2.0f) * scaleX,
+                    (det.y + det.h / 2.0f) * scaleY
+            );
+
+            // visual_axes: lo que el usuario ve
+            const cv::Size2f visual_axes(
+                    (det.w * 0.43f) * scaleX,
+                    (det.h * 0.43f) * scaleY
+            );
+
+            // occ_axes: lo que usa el sistema para cortar contornos
+            const cv::Size2f occ_axes(
+                    (det.w * 0.40f) * scaleX,
+                    (det.h * 0.40f) * scaleY
+            );
+
+            items.push_back({center, visual_axes, occ_axes, color});
+
+            // La ocupación global debe usar occ_axes, no visual_axes
+            cv::ellipse(
+                    global_occ,
+                    center,
+                    occ_axes,
+                    0.0,
+                    0.0,
+                    360.0,
+                    cv::Scalar(255),
+                    cv::FILLED
+            );
+        }
+
+        GP_LOGD("NATIVE_OVERLAY_STYLE: FINAL_CLIENT_GREEN_BLUE_OCCLUSION | Detections: %zu", items.size());
+
+        // 2) Renderizado local por ROI con corte de contornos
+        for (const auto& item : items) {
+            const int pad = 2;
+
+            // El ROI debe cubrir completamente el contorno visible
+            cv::Rect roi_rect(
+                    static_cast<int>(std::floor(item.center.x - item.visual_axes.width - pad)),
+                    static_cast<int>(std::floor(item.center.y - item.visual_axes.height - pad)),
+                    static_cast<int>(std::ceil(item.visual_axes.width * 2.0f + pad * 2.0f)),
+                    static_cast<int>(std::ceil(item.visual_axes.height * 2.0f + pad * 2.0f))
+            );
+
+            roi_rect &= cv::Rect(0, 0, canvas.cols, canvas.rows);
+            if (roi_rect.width <= 0 || roi_rect.height <= 0) {
+                continue;
+            }
+
+            cv::Mat local_stroke = cv::Mat::zeros(roi_rect.size(), CV_8UC1);
+            cv::Mat self_fill    = cv::Mat::zeros(roi_rect.size(), CV_8UC1);
+
+            const cv::Point2f local_center(
+                    item.center.x - static_cast<float>(roi_rect.x),
+                    item.center.y - static_cast<float>(roi_rect.y)
+            );
+
+            // Contorno visible: usa visual_axes
+            cv::ellipse(
+                    local_stroke,
+                    local_center,
+                    item.visual_axes,
+                    0.0,
+                    0.0,
+                    360.0,
+                    cv::Scalar(255),
+                    1,
+                    cv::LINE_AA
+            );
+
+            // Relleno propio para restarse de la ocupación: usa occ_axes
+            cv::ellipse(
+                    self_fill,
+                    local_center,
+                    item.occ_axes,
+                    0.0,
+                    0.0,
+                    360.0,
+                    cv::Scalar(255),
+                    cv::FILLED
+            );
+
+            // Otras uvas = ocupación global menos mi propio cuerpo
+            cv::Mat others_occ = global_occ(roi_rect).clone();
+            cv::subtract(others_occ, self_fill, others_occ);
+
+            // Invertimos para quedarnos solo con zonas libres
+            cv::Mat others_inv;
+            cv::bitwise_not(others_occ, others_inv);
+
+            // El contorno visible solo puede pintarse donde no invade otra uva
+            cv::Mat visible_stroke;
+            cv::bitwise_and(local_stroke, others_inv, visible_stroke);
+
+            // Pintado final
+            canvas(roi_rect).setTo(item.color, visible_stroke);
+        }
+
+        cv::imwrite(path, canvas);
+    }
 
 std::string PipelineResultToJson(const PipelineResult& result) {
     std::ostringstream oss;

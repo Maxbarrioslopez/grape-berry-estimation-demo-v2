@@ -7,12 +7,13 @@ import java.io.FileOutputStream
 import kotlin.math.*
 
 /**
- * ImageUtils.kt - v8.8 MEMORY OPTIMIZED
+ * ImageUtils.kt - v10.1 QUALITY UPLOAD
  * Gestión unificada de imágenes con protección contra OOM.
+ * Actualizado para subir imágenes de 1024px manteniendo proporción.
  */
 object ImageUtils {
 
-    private const val TAG = "ImageUtils_MEM"
+    private const val TAG = "ImageUtils_ARCH"
 
     /**
      * Motor de dibujo unificado.
@@ -26,41 +27,47 @@ object ImageUtils {
     }
 
     /**
-     * Genera la imagen para el backend (512x512, sin overlay, letterbox).
-     * ✅ OPTIMIZADO: Usa decodeSampledBitmap para no cargar la imagen original completa.
+     * Genera la imagen para el backend (Lado mayor 1024px, JPEG 85%).
+     * ✅ OPTIMIZADO: Usa lado mayor 1024px, manteniendo proporción (NO letterbox).
      */
     fun generateUpload512(srcPath: String, outputDir: File): String? {
-        Log.d(TAG, "Generando upload_512 optimizado...")
+        Log.d(TAG, "Generando imagen de subida de alta calidad (1024px)...")
         var scaled: Bitmap? = null
-        var outBitmap: Bitmap? = null
         return try {
-            // Decodificamos directamente a un tamaño cercano a 512 para ahorrar RAM
-            val rotated = decodeSampledBitmap(srcPath, 512, 512) ?: return null
+            // 1. Decodificamos con sampleo a un tamaño cercano a 1024 para ahorrar RAM
+            val rotated = decodeSampledBitmap(srcPath, 1024, 1024) ?: return null
             
-            outBitmap = Bitmap.createBitmap(512, 512, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(outBitmap)
-            canvas.drawColor(Color.BLACK) 
+            // 2. Calculamos nuevas dimensiones manteniendo proporción (Lado mayor = 1024)
+            val width = rotated.width
+            val height = rotated.height
+            val newWidth: Int
+            val newHeight: Int
             
-            val scale = 512f / max(rotated.width, rotated.height)
-            val w = (rotated.width * scale).toInt()
-            val h = (rotated.height * scale).toInt()
-            
-            scaled = Bitmap.createScaledBitmap(rotated, w, h, true)
-            canvas.drawBitmap(scaled, (512 - w) / 2f, (512 - h) / 2f, null)
-            
-            val outFile = File(outputDir, "upload_512_${System.currentTimeMillis()}.jpg")
-            FileOutputStream(outFile).use { out ->
-                outBitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
+            if (width >= height) {
+                newWidth = 1024
+                newHeight = (height * 1024) / width
+            } else {
+                newHeight = 1024
+                newWidth = (width * 1024) / height
             }
             
-            rotated.recycle()
+            // 3. Escalado final
+            scaled = Bitmap.createScaledBitmap(rotated, newWidth, newHeight, true)
+            if (scaled != rotated) rotated.recycle()
+            
+            // 4. Compresión y guardado (Mantenemos prefijo upload_512 por compatibilidad de sistema)
+            val outFile = File(outputDir, "upload_512_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(outFile).use { out ->
+                scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
+            }
+            
+            Log.d(TAG, "Imagen de subida generada: ${newWidth}x${newHeight} px en ${outFile.absolutePath}")
             outFile.absolutePath
         } catch (e: Exception) {
-            Log.e(TAG, "Error generando upload_512: ${e.message}")
+            Log.e(TAG, "Error generando imagen de subida: ${e.message}")
             null
         } finally {
             scaled?.recycle()
-            outBitmap?.recycle()
         }
     }
 
@@ -76,7 +83,6 @@ object ImageUtils {
             
             options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight)
             options.inJustDecodeBounds = false
-            // Opcional: Usar RGB_565 si la memoria es crítica, pero ARGB_8888 es mejor para overlays
             options.inPreferredConfig = Bitmap.Config.ARGB_8888 
             
             BitmapFactory.decodeFile(path, options)?.let { rotateImageIfRequired(it, path) }
@@ -133,5 +139,12 @@ object ImageUtils {
             Log.e(TAG, "Error guardando: ${e.message}")
             null 
         }
+    }
+
+    /**
+     * Generador de nombre único y determinista para imágenes descargadas de la nube.
+     */
+    fun getCloudImageName(cloudId: String, index: Int): String {
+        return "upload_512_cloud_${cloudId}_${index}.jpg"
     }
 }

@@ -17,6 +17,14 @@ std::vector<int> HistogramToIntegers(const std::vector<float>& count_pred_by_bin
 DebugArtifacts BuildDefaultDebugArtifacts(const std::string& image_path, bool enabled);
 void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result);
 
+/**
+ * Genera el overlay visual final del usuario sobre una imagen base.
+ * @param path Ruta del archivo base (se sobreescribirá con el overlay).
+ * @param inputs Entradas del pipeline (contiene máscaras y originales).
+ * @param result Resultados del pipeline (contiene detecciones).
+ */
+void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, const PipelineResult& result);
+
 std::string PipelineResultToJson(const PipelineResult& result);
 std::string ErrorToJson(const std::string& error_message);
 

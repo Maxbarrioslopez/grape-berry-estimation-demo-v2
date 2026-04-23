@@ -17,11 +17,8 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 /**
- * HomeViewModel - v8.6 FIXED (Unresolved Reference & Sync Trace)
- * Arquitectura de imágenes:
- * 1. src_...: Original local.
- * 2. res_...: Imagen visual con overlay Kotlin (Alta Res).
- * 3. upload_512_...: Imagen limpia 512x512 para Backend.
+ * HomeViewModel - v11.0 FINAL OVERLAY FIX
+ * Sincroniza la UI con el overlay nativo de C++.
  */
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -99,54 +96,40 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     srcFile.outputStream().use { output -> input.copyTo(output) }
                 }
 
-                val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeFile(srcFile.absolutePath, opts)
-                val realW = opts.outWidth
-                val realH = opts.outHeight
+                // 1. GENERAR UPLOAD (Base limpia 1024px)
+                val uploadPath = ImageUtils.generateUpload512(srcFile.absolutePath, lotesDir) ?: ""
+                
+                // 2. PREPARAR RES (Copia para C++)
+                val resFile = File(lotesDir, "res_${time}_$index.jpg")
+                if (uploadPath.isNotEmpty()) {
+                    File(uploadPath).copyTo(resFile, overwrite = true)
+                }
 
-                val tempPreview = ImageUtils.decodeSampledBitmap(srcFile.absolutePath, 512, 512)
+                // Preview temporal rápido mientras procesa
+                val tempPreview = ImageUtils.decodeSampledBitmap(srcFile.absolutePath, 300, 300)
                 updateItemPreview(index, srcFile.absolutePath, tempPreview)
 
                 updateItemStatus(index, Status.PROCESSING)
                 
+                // 3. LLAMAR A PIPELINE
                 instanceSeg.invokeFromFile(
                     imagePath = srcFile.absolutePath,
                     smoothEdges = true,
                     varietyId = selectedVariety.value?.id,
+                    visualOverlayBase = resFile.absolutePath,
                     onSuccess = { success ->
                         viewModelScope.launch(Dispatchers.Default) {
                             
-                            // 🚀 VALIDACIÓN DEFENSIVA POST-MODELO (POST-INFERENCE)
-                            // Se corrige referencia a 'box' en lugar de 'output0' según SegmentationResult.kt
-                            val detections = success.results
-                            val grapeCount = detections.count { it.box.clsName.contains("grape") }
-                            val totalDetections = detections.size
+                            Log.d("OVERLAY_UI_FLOW", "[1] Pipeline SUCCESS. resFile: ${resFile.absolutePath} | Size: ${resFile.length()}")
                             
-                            // REGLAS: 
-                            // 1. Debe haber al menos dos uvas para ser considerado válido.
-                            if (grapeCount < 2) {
-                                 val msg = if (totalDetections == 0) "No se detectó nada" else "Imagen inválida: No se detectan suficientes uvas"
-                                 Log.w("HomeVM_VAL", "Validación fallida: grapes=$grapeCount, total=$totalDetections")
-                                 updateItemError(index, msg)
-                                 return@launch
-                            }
-
-                            // 2. GENERAR RES (Overlay Kotlin en alta resolución)
-                            val visualBitmap = ImageUtils.decodeSampledBitmap(srcFile.absolutePath, 1600, 1600) 
-                                ?: return@launch
+                            // ✅ FORZADO: Regeneramos el bitmap desde el ARCHIVO después de que C++ dibujó
+                            Log.d("OVERLAY_UI_FLOW", "[2] Generating final preview from C++ render...")
+                            val finalPreview = ImageUtils.decodeSampledBitmap(resFile.absolutePath, 512, 512)
                             
-                            val resultImage = ImageUtils.drawDetectionsOverlay(visualBitmap, success.results, realW, realH)
-                            val resPath = ImageUtils.saveBitmapToDisk(resultImage, lotesDir, "res_${time}_$index")
-                            
-                            // 3. GENERAR UPLOAD_512
-                            val uploadPath = ImageUtils.generateUpload512(srcFile.absolutePath, lotesDir)
-                            
-                            val finalPreview = Bitmap.createScaledBitmap(resultImage, 300, 300, true)
                             val calPredict = success.predictsList.firstOrNull() ?: CalPredict(status = false, error = "Fallo")
                             
-                            updateItemSuccess(index, resPath ?: "", uploadPath ?: "", finalPreview, calPredict)
-                            
-                            if (visualBitmap != resultImage) visualBitmap.recycle()
+                            // Actualizamos el estado con la ruta del overlay REAL
+                            updateItemSuccess(index, resFile.absolutePath, uploadPath, finalPreview ?: tempPreview!!, calPredict)
                         }
                     },
                     onFailure = { err -> updateItemError(index, err) }
@@ -179,14 +162,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     sourceImages = currentPredictions.map { it.uri.toString() },
                     normalizedImages = currentPredictions.mapNotNull { it.normalizedPath },
                     uploadImages = currentPredictions.mapNotNull { it.uploadPath },
-                    overlayImages = currentPredictions.mapNotNull { it.overlayPath },
+                    overlayImages = currentPredictions.mapNotNull { it.overlayPath }, // ✅ PERSISTIMOS EL RES_ NATIVO
                     calPredicts = currentPredictions.mapNotNull { it.prediction },
                     synced = false
                 )
                 repository.insertLocalLote(lote)
                 
-                // 🚀 LANZAR SYNC INMEDIATO (Validación de traza)
-                Log.d("SyncWorker_TRACE", "Enqueuing manual sync tras guardar lote local")
                 com.gaiaspa.metrics_detection.worker.SyncManager.enqueueManualSync(getApplication())
 
                 viewModelScope.launch(Dispatchers.Main) {
@@ -225,6 +206,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun updateItemSuccess(index: Int, overlayPath: String, uploadPath: String, preview: Bitmap, result: CalPredict) {
         viewModelScope.launch(Dispatchers.Main) {
+            Log.d("OVERLAY_UI_FLOW", "[3] UI State Update. finalPath: $overlayPath")
             val list = imagePredictions.value.orEmpty().toMutableList()
             if (index in list.indices) {
                 list[index] = list[index].copy(
