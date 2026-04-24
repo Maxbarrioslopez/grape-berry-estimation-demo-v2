@@ -62,8 +62,8 @@ interface ApiService {
         @Part("variety") variety: RequestBody,
         @Part("predictedAt") predictedAt: RequestBody,
         @Part("calPredicts") calPredictsJson: RequestBody,
-        @Part files: List<MultipartBody.Part>
-        ): Response<LoteResponse>
+        @Part files: Array<MultipartBody.Part>
+    ): Response<LoteResponse>
 
     @DELETE("batch-predictions-grape/{id}")
     suspend fun deleteBatchDetection(@Path("id") loteId: String): Response<DeleteBatchGrapeResponse>

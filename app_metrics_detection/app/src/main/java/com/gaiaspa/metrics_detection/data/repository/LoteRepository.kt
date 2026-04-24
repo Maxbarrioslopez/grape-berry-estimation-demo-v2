@@ -115,7 +115,7 @@ class LoteRepository private constructor(
             variety = loteRequest.variety.toRequestBody("text/plain".toMediaTypeOrNull()),
             predictedAt = loteRequest.predictedAt.toString().toRequestBody("text/plain".toMediaTypeOrNull()),
             calPredictsJson = calPredictsJson.toRequestBody("application/json".toMediaTypeOrNull()),
-            files = prepareImageParts(imagePaths)
+            files = prepareImageParts(imagePaths).toTypedArray()
         )
     }
 

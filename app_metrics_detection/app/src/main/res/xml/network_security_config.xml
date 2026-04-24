@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Configuración conservadora: permitimos cleartext SOLO para el dominio de la app -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">metricsapp.online</domain>
     </domain-config>
+
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

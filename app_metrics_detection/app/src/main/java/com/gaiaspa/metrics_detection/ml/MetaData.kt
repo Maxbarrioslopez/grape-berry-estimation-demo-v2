@@ -1,3 +1,4 @@
+/*
 package com.gaiaspa.metrics_detection.ml
 
 import android.content.Context
@@ -53,4 +54,4 @@ object MetaData {
 
 
     val TEMP_CLASSES = List(1000) { "class${it + 1}" }
-}
+}*/

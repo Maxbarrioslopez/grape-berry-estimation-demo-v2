@@ -9,12 +9,14 @@ if(NOT ANDROID)
     message(FATAL_ERROR "Este modulo CMake esta pensado para Android Studio.")
 endif()
 
-if(NOT ANDROID_ABI STREQUAL "arm64-v8a")
-    message(FATAL_ERROR "ABI no soportada: ${ANDROID_ABI}. Se requiere arm64-v8a.")
+if(NOT ANDROID_ABI STREQUAL "arm64-v8a" AND
+   NOT ANDROID_ABI STREQUAL "armeabi-v7a" AND
+   NOT ANDROID_ABI STREQUAL "x86_64")
+    message(FATAL_ERROR "ABI no soportada: ${ANDROID_ABI}. Permitidas: arm64-v8a, armeabi-v7a, x86_64.")
 endif()
 
 get_filename_component(MODULE_ROOT "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
-get_filename_component(REPO_ROOT "${MODULE_ROOT}/../.." ABSOLUTE)
+get_filename_component(REPO_ROOT "${MODULE_ROOT}/../../../.." ABSOLUTE)
 
 set(ONNXRUNTIME_ANDROID_ROOT
     "${REPO_ROOT}/third_party/onnxruntime/onnxruntime-android-1.24.3"

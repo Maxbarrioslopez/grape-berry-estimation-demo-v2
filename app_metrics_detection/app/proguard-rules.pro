@@ -26,3 +26,67 @@
 
 # 6. ONNX Runtime (específico para evitar stripping de métodos nativos)
 -keep class ai.onnxruntime.** { *; }
+# 7. Retrofit / OkHttp / Gson - preservar genéricos y anotaciones
+# Crítico: evita ClassCastException Class -> ParameterizedType
+-keepattributes Signature
+-keepattributes *Annotation*
+
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+
+-keep class okio.** { *; }
+-dontwarn okio.**
+
+-keep class com.google.gson.** { *; }
+-dontwarn com.google.gson.**
+
+# Preservar modelos reales del proyecto
+-keep class com.gaiaspa.metrics_detection.data.model.** { *; }
+-keep class com.gaiaspa.metrics_detection.data.remote.** { *; }
+-keep interface com.gaiaspa.metrics_detection.data.remote.** { *; }
+-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,AnnotationDefault,Signature,InnerClasses,EnclosingMethod
+-keep interface com.gaiaspa.metrics_detection.network.ApiService { *; }
+-keep class com.gaiaspa.metrics_detection.network.ApiService { *; }
+# Retrofit generic signatures
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes AnnotationDefault
+
+# Retrofit interfaces
+-keep interface retrofit2.** { *; }
+-keep class retrofit2.** { *; }
+
+# Tu API
+-keep interface com.gaiaspa.metrics_detection.network.ApiService { *; }
+
+# Kotlin coroutines metadata
+-keep class kotlin.coroutines.** { *; }
+
+# Response models
+-keep class com.gaiaspa.metrics_detection.data.model.response.** { *; }
+-keep class com.gaiaspa.metrics_detection.data.model.request.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# 8. Gson TypeToken / Room local history
+# Evita crash "Missing type parameter" al abrir historial en release
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes InnerClasses,EnclosingMethod
+
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# Preservar entidades, converters y modelos locales usados por Room/Gson
+-keep class com.gaiaspa.metrics_detection.data.local.** { *; }
+-keep class com.gaiaspa.metrics_detection.data.database.** { *; }
+-keep class com.gaiaspa.metrics_detection.data.entity.** { *; }
+-keep class com.gaiaspa.metrics_detection.data.dao.** { *; }

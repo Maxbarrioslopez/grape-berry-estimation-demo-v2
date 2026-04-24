@@ -1,4 +1,5 @@
-package com.gaiaspa.metrics_detection.depth_estimation
+
+/*package com.gaiaspa.metrics_detection.depth_estimation
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -118,4 +119,4 @@ class MiDASModel( context: Context ) {
 
 
 
-}
+}*/

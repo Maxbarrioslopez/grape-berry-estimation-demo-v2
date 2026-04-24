@@ -46,12 +46,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            abiFilters += listOf("arm64-v8a")
+            // MEJORA: Se expande el soporte de ABIs para mayor compatibilidad en Google Play.
+            // Nota: Asegúrate de que las librerías en third_party tengan los .so correspondientes.
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
 
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
+                // MEJORA: Soporte para Android 15 (16 KB page size)
                 arguments += "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
 
                 val ortRoot = (project.findProperty("ONNXRUNTIME_ANDROID_ROOT") as String?)
@@ -81,8 +84,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // MEJORA: Se activa R8 para ofuscación y reducción de tamaño del AAB.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -90,10 +94,8 @@ android {
         }
     }
 
-    // AJUSTE: Solución para 16 KB Alignment y errores de instalación
     packaging {
         jniLibs {
-            // Asegura que las librerías se extraigan y se alineen correctamente
             useLegacyPackaging = false 
         }
     }
@@ -148,9 +150,8 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    implementation("org.tensorflow:tensorflow-lite:2.16.1")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
+    // LIMPIEZA: Se han eliminado las dependencias de TensorFlow Lite por ser código legacy.
+
     implementation("com.github.haifengl:smile-core:2.6.0")
     implementation("org.boofcv:boofcv-android:0.40")
     implementation ("com.google.code.gson:gson:2.9.0")
@@ -160,7 +161,7 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation (libs.mpandroidchart)
     implementation ("com.github.bumptech.glide:glide:4.15.1")
-    kapt ("com.github.bumptech.glide:compiler:4.15.1") // Cambiado a kapt como sugería el log
+    kapt ("com.github.bumptech.glide:compiler:4.15.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
