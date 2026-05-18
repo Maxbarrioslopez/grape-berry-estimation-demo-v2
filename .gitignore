@@ -153,3 +153,10 @@ __pycache__/
 venv/
 .env
 .env.*
+
+# =========================================================
+# Release APK folders / zip backups
+# =========================================================
+app/release/
+app_metrics_detection/app/release/
+*.zip
