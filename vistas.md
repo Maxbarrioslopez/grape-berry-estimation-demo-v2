@@ -2,22 +2,7 @@
 
 ## Objetivo
 
-Este documento registra las principales vistas de la aplicación Android Metrics Detection, capturadas desde emulador, siguiendo el flujo funcional actual de la app con usuario administrador.
-
-## Entorno de captura
-
-- Sistema: Linux
-- Ruta base: `/home/maxi/Escritorio/modelo_nuevo/optimizacion_uvas`
-- Proyecto Android detectado: `/home/maxi/Escritorio/modelo_nuevo/optimizacion_uvas/app_metrics_detection`
-- Dispositivo: Emulador Android `emulator-5554`
-- Modelo del emulador: `sdk_gphone16k_x86_64`
-- Version Android del emulador: `17`
-- Metodo de captura: `adb exec-out screencap -p`
-- Fecha de captura: `2026-05-18 15:09:38 -04`
-- Fecha de captura adicional en modo claro: `2026-05-18 15:23:38 -0400`
-- Package name: `com.gaiaspa.metrics_detection`
-- Launcher: `com.gaiaspa.metrics_detection/.LauncherActivity`
-- Usuario de prueba: `admin@metrics.com`
+Este documento registra las principales vistas de la aplicación Android Metrics Detection.
 
 ## Flujo general capturado
 
