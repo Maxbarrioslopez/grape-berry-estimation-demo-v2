@@ -174,3 +174,11 @@ app_metrics_detection/app/release/
 app/release/
 app_metrics_detection/app/release/
 *.zip
+
+# =========================================================
+# Gradle user home / wrapper download cache
+# =========================================================
+.gradle-user-home/
+**/.gradle-user-home/
+*.zip.lck
+*.zip.part
