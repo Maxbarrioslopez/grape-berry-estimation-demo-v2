@@ -13,6 +13,7 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.ActivityRecoveryBinding
 import com.gaiaspa.metrics_detection.network.ApiClient
 import com.gaiaspa.metrics_detection.network.ApiService
@@ -54,17 +55,17 @@ class RecoveryActivity : AppCompatActivity() {
 
         // Validaciones en cliente
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Ingrese un correo electrónico válido", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.invalid_email), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (rut.isEmpty()) {
-            Toast.makeText(this, "El RUT es obligatorio", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.rut_required), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (newPassword.length < 6) {
-            Toast.makeText(this, "La nueva contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.password_min_length), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -91,7 +92,7 @@ class RecoveryActivity : AppCompatActivity() {
                     Toast.makeText(this@RecoveryActivity, message, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@RecoveryActivity, "Error de conexión: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@RecoveryActivity, "${getString(R.string.connection_error_recovery)}: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

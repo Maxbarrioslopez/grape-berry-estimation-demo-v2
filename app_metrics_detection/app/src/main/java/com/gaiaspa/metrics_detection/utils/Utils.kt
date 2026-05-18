@@ -39,7 +39,7 @@ object Utils {
             val inputStream = assetManager.open(fileName)
             BitmapFactory.decodeStream(inputStream)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("Utils", "Failed to load asset bitmap: $fileName", e)
             null
         }
     }

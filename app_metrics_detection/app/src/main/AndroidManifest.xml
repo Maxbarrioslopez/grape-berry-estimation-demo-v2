@@ -1,57 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="NotificationPermission">
 
+    <!-- Permisos de red: necesarios para sincronización con backend y detección de conectividad -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Permiso de cámara: necesario para capturar imágenes de racimos -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <!-- Permisos legacy: se mantienen solo para compatibilidad con Android antiguos -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
 
+    <!--
+        Configuración principal de la aplicación.
+
+        Mejoras aplicadas:
+        - allowBackup=false:
+          evita backup automático de base local, imágenes, preferencias y credenciales.
+        - networkSecurityConfig:
+          usa política de red definida en res/xml/network_security_config.xml.
+        - dataExtractionRules/fullBackupContent eliminados:
+          ya no son necesarios porque allowBackup está desactivado.
+
+        Nota legacy:
+        - READ_EXTERNAL_STORAGE se mantiene por compatibilidad (maxSdk=32).
+        - WRITE_EXTERNAL_STORAGE eliminado: cámara usa FileProvider + cache, galería usa GetContent.
+    -->
     <application
         android:name=".MetricsDetectionApp"
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.YOLOv8InstanceSegmentation"
-        tools:targetApi="31"
         android:networkSecurityConfig="@xml/network_security_config"
-        >
+        tools:targetApi="31">
 
+        <!--
+            FileProvider:
+            permite compartir archivos internos de forma controlada con cámara,
+            visor PDF u otros componentes autorizados.
+
+            Seguridad:
+            - exported=false evita exposición externa directa.
+            - grantUriPermissions=true permite entregar permisos temporales por URI.
+        -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
-            android:exported="true"
+            android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".LauncherActivity"
+        <!-- Launcher principal de la app -->
+        <activity
+            android:name=".LauncherActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
+        <!-- Flujo de autenticación -->
         <activity android:name=".auth.LoginActivity" />
-        <activity android:name=".MainActivity" />
         <activity android:name=".auth.RegisterActivity" />
         <activity android:name=".auth.RecoveryActivity" />
 
-        <!-- MEJORA: exported=false para evitar ataques de acceso a debug en produccion -->
+        <!-- Actividad principal -->
+        <activity android:name=".MainActivity" />
+
+        <!--
+            Actividad de debug/batch.
+
+            Se conserva por compatibilidad con herramientas internas/forenses,
+            pero queda protegida con exported=false para impedir apertura desde otras apps.
+
+            No borrar sin revisar:
+            - BatchProcessor
+            - flujos de pruebas internas
+            - generación de reportes o procesamiento masivo
+        -->
         <activity
             android:name=".DebugBatchActivity"
             android:excludeFromRecents="true"

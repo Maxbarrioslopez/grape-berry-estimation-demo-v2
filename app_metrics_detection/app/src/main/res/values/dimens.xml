@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_gutter">16dp</dimen>
+    <dimen name="screen_gutter_small">12dp</dimen>
+    <dimen name="card_radius_premium">16dp</dimen>
+    <dimen name="card_padding_premium">12dp</dimen>
+    <dimen name="section_gap">12dp</dimen>
+    <dimen name="section_gap_small">8dp</dimen>
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_radius">14dp</dimen>
+    <dimen name="photo_preview_size">104dp</dimen>
+    <dimen name="photo_preview_height">132dp</dimen>
+    <dimen name="histogram_height">160dp</dimen>
+    <dimen name="chip_radius">24dp</dimen>
+</resources>

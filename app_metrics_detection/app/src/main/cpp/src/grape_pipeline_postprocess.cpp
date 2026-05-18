@@ -362,7 +362,7 @@ void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result) {
                 continue;
             }
 
-            if (det.score < 0.50f) {
+            if (det.score < 0.35f) {
                 continue;
             }
             const bool is_ping = (det.class_name.find("ping") != std::string::npos);
@@ -379,10 +379,10 @@ void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result) {
                     (det.h * 0.43f) * scaleY
             );
 
-            // occ_axes: lo que usa el sistema para cortar contornos
+            // occ_axes: lo que usa el sistema para cortar contornos (misma escala que visual para evitar clipping)
             const cv::Size2f occ_axes(
-                    (det.w * 0.40f) * scaleX,
-                    (det.h * 0.40f) * scaleY
+                    (det.w * 0.43f) * scaleX,
+                    (det.h * 0.43f) * scaleY
             );
 
             items.push_back({center, visual_axes, occ_axes, color});

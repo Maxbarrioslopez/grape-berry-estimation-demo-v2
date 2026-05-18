@@ -1,0 +1,17 @@
+# ============================================================
+# LOCAL PROPERTIES — TEMPLATE DE EJEMPLO
+# ============================================================
+# Copiar este archivo como local.properties solo si Android
+# Studio no lo genera automáticamente al abrir el proyecto.
+#
+# local.properties NO está versionado (ver .gitignore).
+# ============================================================
+
+# Linux:
+# sdk.dir=/home/USER/Android/Sdk
+#
+# Windows (escapar barras invertidas):
+# sdk.dir=C\:\\Users\\USER\\AppData\\Local\\Android\\Sdk
+#
+# macOS:
+# sdk.dir=/Users/USER/Library/Android/sdk

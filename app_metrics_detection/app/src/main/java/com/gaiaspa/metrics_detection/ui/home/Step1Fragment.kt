@@ -10,9 +10,18 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.gaiaspa.metrics_detection.FeatureFlags
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.FragmentStep1Binding
+import com.gaiaspa.metrics_detection.i18n.LanguagePreferenceManager
 
+/**
+ * Step 1 of the capture flow: batch metadata.
+ *
+ * Collects company, vessel, block and variety selection before advancing
+ * to the image capture screen (Step2Fragment). All values are stored in
+ * the shared HomeViewModel.
+ */
 class Step1Fragment : Fragment() {
 
     private var _binding: FragmentStep1Binding? = null
@@ -31,12 +40,14 @@ class Step1Fragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Restaurar inputs
+        setupLanguageButton()
+
+        // Restore inputs from ViewModel (survives rotation)
         homeViewModel.company.observe(viewLifecycleOwner) { binding.etCompany.setText(it) }
         homeViewModel.vessel.observe(viewLifecycleOwner) { binding.etVessel.setText(it) }
         homeViewModel.block.observe(viewLifecycleOwner) { binding.etBlock.setText(it) }
 
-        // Varieties -> adapter
+        // Populate variety autocomplete adapter
         homeViewModel.availableVarieties.observe(viewLifecycleOwner) { vars ->
             val adapter = android.widget.ArrayAdapter(
                 requireContext(),
@@ -45,7 +56,7 @@ class Step1Fragment : Fragment() {
             )
             binding.etVariety.setAdapter(adapter)
 
-            // restaurar selección previa
+            // Restore previous selection from ViewModel
             homeViewModel.selectedVariety.value?.let { sel ->
                 binding.etVariety.setText(sel.name, false)
             }
@@ -53,14 +64,14 @@ class Step1Fragment : Fragment() {
             updateButtonState()
         }
 
-        // Al seleccionar variedad, guardarla
+        // Save variety selection
         binding.etVariety.setOnItemClickListener { parent, _, position, _ ->
             val sel = parent.getItemAtPosition(position) as VarietyOption
             homeViewModel.selectedVariety.value = sel
             updateButtonState()
         }
 
-        // Si se cambia la seleccion por LiveData (ej. restore), reflejarla en UI
+        // Reflect ViewModel selection changes (e.g. restore) in the UI
         homeViewModel.selectedVariety.observe(viewLifecycleOwner) { sel ->
             if (sel != null && binding.etVariety.text.toString() != sel.name) {
                 binding.etVariety.setText(sel.name, false)
@@ -68,7 +79,7 @@ class Step1Fragment : Fragment() {
             updateButtonState()
         }
 
-        // TextWatcher para habilitar boton
+        // Enable the button only when all required fields have values
         val textWatcher = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -81,6 +92,7 @@ class Step1Fragment : Fragment() {
         binding.etBlock.addTextChangedListener(textWatcher)
 
         binding.btnNext.setOnClickListener {
+            // Truncate to 15 chars to prevent overly long metadata
             val c = binding.etCompany.text.toString().take(15)
             val v = binding.etVessel.text.toString().take(15)
             val b = binding.etBlock.text.toString().take(15)
@@ -89,11 +101,27 @@ class Step1Fragment : Fragment() {
             homeViewModel.vessel.value = v
             homeViewModel.block.value = b
 
-            // La variedad ya quedó en selectedVariety
+            // Variety is already stored in selectedVariety LiveData
             findNavController().navigate(R.id.action_step1Fragment_to_step2Fragment)
         }
 
         updateButtonState()
+    }
+
+    private fun setupLanguageButton() {
+        if (FeatureFlags.FEATURE_LANGUAGE_SWITCH) {
+            binding.btnLanguage.visibility = View.VISIBLE
+            binding.btnNext.setText(R.string.create_batch)
+        } else {
+            binding.btnLanguage.visibility = View.GONE
+        }
+        binding.btnLanguage.setOnClickListener {
+            if (!FeatureFlags.FEATURE_LANGUAGE_SWITCH) return@setOnClickListener
+            LanguagePreferenceManager.showSelector(
+                activity = requireActivity() as androidx.appcompat.app.AppCompatActivity,
+                cancelable = true
+            )
+        }
     }
 
     private fun updateButtonState() {

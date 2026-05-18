@@ -3,6 +3,7 @@ package com.gaiaspa.metrics_detection.ui.profile
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
+import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.Profile
 import com.gaiaspa.metrics_detection.data.model.toLocalLote
 import com.gaiaspa.metrics_detection.data.repository.LoteRepository
@@ -17,7 +18,8 @@ import java.net.URL
 
 class ProfileViewModel(
     private val repository: ProfileRepository,
-    private val loteRepository: LoteRepository
+    private val loteRepository: LoteRepository,
+    private val context: Context
 ) : ViewModel() {
 
     private val _profile = MutableLiveData<Profile?>()
@@ -58,10 +60,10 @@ class ProfileViewModel(
                 val fetchedProfile = withContext(Dispatchers.IO) { repository.getProfile() }
                 _profile.value = fetchedProfile
                 if (fetchedProfile == null) {
-                    _error.value = "No hay datos de perfil disponibles."
+                    _error.value = context.getString(R.string.no_profile_data)
                 }
             } catch (e: Exception) {
-                _error.value = "Error al cargar el perfil: ${e.localizedMessage}"
+                _error.value = context.getString(R.string.error_loading_profile)
                 Log.e(TAG, "Error en loadProfile", e)
             } finally {
                 _isLoading.value = false
@@ -89,7 +91,7 @@ class ProfileViewModel(
                 if (lotesResponse.isSuccessful) {
                     val lotesResponseBody = lotesResponse.body()
                     if (lotesResponseBody.isNullOrEmpty()) {
-                        _errorDownload.value = "No hay datos de lotes disponibles."
+                        _errorDownload.value = context.getString(R.string.no_lotes_data)
                     } else {
                         var count = 0
                         val totalLotes = lotesResponseBody.size
@@ -137,7 +139,7 @@ class ProfileViewModel(
                     _errorDownload.value = "Error: ${lotesResponse.code()}"
                 }
             } catch (e: Exception) {
-                _errorDownload.value = "Error: ${e.localizedMessage}"
+                _errorDownload.value = context.getString(R.string.error_downloading)
                 Log.e(TAG, "Error en downloadBatchs", e)
             } finally {
                 _isDownloading.value = false
@@ -191,12 +193,13 @@ class ProfileViewModel(
 
 class ProfileViewModelFactory(
     private val repository: ProfileRepository,
-    private val loteRepository: LoteRepository
+    private val loteRepository: LoteRepository,
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(repository, loteRepository) as T
+            return ProfileViewModel(repository, loteRepository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

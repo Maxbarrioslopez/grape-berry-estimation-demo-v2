@@ -6,14 +6,33 @@ import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.RectF
 /**
- * Función utilitaria para dibujar un histograma estilizado en el Canvas del PDF.
+ * Dibuja un histograma estilizado sobre un [Canvas] de PDF dentro del area delimitada
+ * por ([left], [top]) y dimensiones [width]×[height].
+ *
+ * ## Rol en la arquitectura
+ * Llamado exclusivamente desde [createLotesReportPdf] para renderizar la distribucion
+ * de calibres de cada [CalPredict] en la columna derecha de la fila de prediccion.
+ *
+ * ## Parametros
+ * @param canvas Lienzo del PDF sobre el que se pinta.
+ * @param left   Coordenada X del borde izquierdo del area de dibujo.
+ * @param top    Coordenada Y del borde superior del area de dibujo.
+ * @param width  Ancho disponible para el histograma completo.
+ * @param height Alto disponible para el histograma completo.
+ * @param bins   Etiquetas del eje X (valores de calibre).
+ * @param pred   Frecuencias correspondientes a cada bin (altura de barra).
+ * @param paint  [Paint] base reutilizado del llamador; su estado se restaura al final
+ *               para no afectar dibujos posteriores.
+ *
+ * ## Comportamiento
+ * - Si [bins] o [pred] estan vacios, o sus tamanos no coinciden, la funcion retorna
+ *   inmediatamente sin dibujar nada.
+ * - Si todos los valores de [pred] son ≤ 0, se usa 1 como maximo para evitar division
+ *   por cero.
+ * - Las etiquetas del eje X se rotan −45° para evitar solapamiento.
+ * - El [Paint] recibido se modifica temporalmente; su estado original se guarda al
+ *   inicio y se restaura al final del metodo.
  */
-/**
- * Función que dibuja un histograma usando:
- *  - bins: Lista de etiquetas para el eje X (Floats)
- *  - pred: Lista de valores para las barras (Ints)
- */
-
 fun drawModernHistogram(
     canvas: Canvas,
     left:  Float,
@@ -27,10 +46,10 @@ fun drawModernHistogram(
     if (bins.isEmpty() || pred.isEmpty() || bins.size != pred.size) return
 
     /* ─── Colores de la paleta ───────────────────────────── */
-    val cPrimary        = Color.parseColor("#3F51B5")
-    val cPrimaryLight   = Color.parseColor("#f7f8fc")
-    val cTextSecondary  = Color.parseColor("#757575")
-    val cOutline        = Color.parseColor("#D1D5DB")
+    val cPrimary        = Color.parseColor("#2E7D32")
+    val cPrimaryLight   = Color.parseColor("#F3F8F3")
+    val cTextSecondary  = Color.parseColor("#5F6B5F")
+    val cOutline        = Color.parseColor("#DDE5DD")
 
     /* ─── Guardar estado original del Paint ──────────────── */
     val oColor  = paint.color
@@ -42,7 +61,7 @@ fun drawModernHistogram(
     /* ─── Fondo ──────────────────────────────────────────── */
     paint.style = Paint.Style.FILL
     paint.color = cPrimaryLight
-    canvas.drawRect(left, top, left + width, top + height, paint)
+    canvas.drawRoundRect(RectF(left, top, left + width, top + height), 10f, 10f, paint)
 
     /* ─── Preparar área de gráfico ───────────────────────── */
     val mX        = 8f
@@ -83,7 +102,7 @@ fun drawModernHistogram(
         val bLeft  = gLeft + i * barWidth + 2f
         val bRight = bLeft + barWidth - 4f
         val bTop   = gBottom - barH
-        canvas.drawRect(bLeft, bTop, bRight, gBottom, paint)
+        canvas.drawRoundRect(RectF(bLeft, bTop, bRight, gBottom), 4f, 4f, paint)
     }
 
     /* ─── Etiquetas eje Y (valores) ─────────────────────── */

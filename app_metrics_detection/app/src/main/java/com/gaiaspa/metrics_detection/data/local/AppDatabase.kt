@@ -18,6 +18,13 @@ import com.gaiaspa.metrics_detection.data.model.Profile
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
+    /**
+     * DAO para operaciones CRUD y de sincronización sobre la entidad [Lote].
+     */
     abstract fun loteDao(): LoteDao
+
+    /**
+     * DAO para operaciones sobre la entidad [Profile] (datos del usuario).
+     */
     abstract fun profileDao(): ProfileDao
 }

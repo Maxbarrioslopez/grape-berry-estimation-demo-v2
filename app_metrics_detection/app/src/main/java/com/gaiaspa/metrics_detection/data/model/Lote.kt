@@ -6,9 +6,46 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 
 /**
- * Lote - v11.0 ARCHITECTURAL FIX
- * Se redefine la propiedad 'images' para priorizar el overlay visual (res_)
- * generado por C++ sobre la imagen limpia de subida.
+ * Entidad Room que representa un lote de análisis de calibre de uvas.
+ *
+ * Almacena tanto las imágenes en sus distintas etapas del pipeline (fuente,
+ * normalizada, subida, overlay) como los resultados de predicción ([CalPredict])
+ * y las banderas de sincronización con el backend.
+ *
+ * ## Ciclo de vida de imágenes
+ * 1. `sourceImages` — captura cruda del dispositivo.
+ * 2. `normalizedImages` — preprocesadas para inferencia.
+ * 3. `uploadImages` — versiones limpias subidas al backend.
+ * 4. `overlayImages` — overlay visual generado por C++ con óvalos de detección.
+ * 5. `cloudImages` — URLs/imágenes devueltas por el backend tras sincronización.
+ *
+ * ## Propiedad dinámica `images`
+ * La propiedad computada [images] resuelve en cascada qué conjunto mostrar
+ * en la UI: prioriza `overlayImages` > `uploadImages` > `normalizedImages` >
+ * `sourceImages`. De esta forma el usuario siempre ve las detecciones en el
+ * historial incluso si el overlay aún no se ha generado.
+ *
+ * @property id Clave primaria autogenerada localmente.
+ * @property userId Identificador del usuario propietario del lote.
+ * @property cloudId Identificador asignado por el backend tras sincronización exitosa.
+ * @property company Compañía a la que pertenece el lote.
+ * @property vessel Nave/embarcación asociada al lote.
+ * @property block Bloque de producción dentro de la nave.
+ * @property varietyId Identificador canónico de la variedad según [RuntimeVarietyCatalog].
+ * @property varietyName Nombre de la variedad para presentación en UI.
+ * @property predictedAt Timestamp de la predicción (epoch millis).
+ * @property createdAt Timestamp de creación local (epoch millis).
+ * @property updatedAt Timestamp de última modificación local (epoch millis).
+ * @property sourceImages Lista de rutas de imágenes fuente capturadas.
+ * @property normalizedImages Lista de rutas de imágenes normalizadas para ML.
+ * @property uploadImages Lista de rutas de imágenes limpias listas para subir al backend.
+ * @property overlayImages Lista de rutas de imágenes con overlay de detección C++.
+ * @property cloudImages Lista de rutas/URLs de imágenes provenientes del backend.
+ * @property calPredicts Lista de predicciones de calibre asociadas al lote.
+ * @property toDelete Bandera de eliminación lógica pendiente de sincronizar.
+ * @property toUpdate Bandera de actualización pendiente de sincronizar.
+ * @property synced `true` si el lote fue sincronizado exitosamente con el backend.
+ * @property syncError Mensaje del último error de sincronización, o `null` si fue exitosa.
  */
 @Entity(tableName = "lote")
 data class Lote(
@@ -62,6 +99,10 @@ data class Lote(
      * Propiedad dinámica para UI.
      * ✅ FIXED: Prioriza overlayImages (res_ con óvalos nativos)
      * para que el usuario siempre vea las detecciones en el historial.
+     *
+     * La resolución en cascada garantiza que siempre se devuelva un conjunto
+     * de imágenes, descendiendo desde la más informativa (overlay) hasta la
+     * cruda de captura.
      */
     @get:Ignore
     val images: List<String>

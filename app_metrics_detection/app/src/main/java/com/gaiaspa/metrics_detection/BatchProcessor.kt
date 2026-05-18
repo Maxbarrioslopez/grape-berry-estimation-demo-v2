@@ -23,11 +23,31 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.coroutines.resume
 
+/**
+ * Forensic batch processor for offline data-only analysis.
+ *
+ * Walks an input directory of images, runs each through MetricsPipeline,
+ * and writes structured JSON output (qty, calibre, histogram) without
+ * saving visual overlay evidence. Used for internal benchmarking and
+ * ground-truth comparison (CSV manifest).
+ *
+ * Not exposed to external apps (exported=false in manifest).
+ */
 class BatchProcessor(
     private val context: Context,
     private val providerPreference: String = MetricsPipeline.DEFAULT_PROVIDER
 ) {
 
+    /**
+     * Summary statistics produced at the end of a batch run.
+     *
+     * @property runId Unique run identifier (timestamp-based).
+     * @property manifestPath Absolute path to the JSON manifest file.
+     * @property totalImagesFound Total image files discovered in the input tree.
+     * @property processedOk Number of files that completed without error.
+     * @property processedError Number of files that failed during processing.
+     * @property totalElapsedMs Wall-clock time for the entire batch run.
+     */
     data class BatchRunSummary(
         val runId: String,
         val manifestPath: String,
@@ -65,6 +85,23 @@ class BatchProcessor(
     private val pipelineVersion = "4.9/Forense-SoloDatos"
     private var gtMap: Map<String, Double> = emptyMap()
 
+    /**
+     * Executes a full forensic batch run.
+     *
+     * Walks the input directory recursively, processes every supported image file
+     * through [MetricsPipeline.invokeFromFile], and writes per-file JSON results
+     * plus a run-level manifest to the output directory.
+     *
+     * Ground-truth comparison is performed if a `manifest_subsample.csv` file is
+     * present in the parent of the input root (column: `grape_count_total`).
+     *
+     * Bitmap resources are explicitly recycled after each file and the GC is
+     * triggered every 10 files to keep memory pressure low on large batches.
+     *
+     * @param inputDirPath Root directory containing input images (recursive).
+     * @param outputDirPath Root directory where a `run_<timestamp>/` folder will be created.
+     * @return A [BatchRunSummary] with counts, paths, and elapsed time.
+     */
     suspend fun run(
         inputDirPath: String = DEFAULT_INPUT_DIR,
         outputDirPath: String = DEFAULT_OUTPUT_DIR
@@ -239,9 +276,12 @@ class BatchProcessor(
         return json
     }
 
+    /** Extracts the variety ID from the first path segment (folder name convention). */
     private fun inferVarietyId(path: String): Int? = RuntimeVarietyCatalog.idOrNull(path.substringBefore('/', ""))
+    /** If the root contains an `images/` subdirectory, use it as the scan root. */
     private fun resolveInputRoot(root: File): File = if (File(root, "images").exists()) File(root, "images") else root
     private fun ensureDirectory(dir: File?) { if (dir != null && !dir.exists()) dir.mkdirs() }
+    /** Replaces the file extension with `.json` for output file naming. */
     private fun toJsonRelativePath(path: String): String = "${path.substringBeforeLast('.')}.json"
 
     private fun writeManifest(runId: String, ts: String, input: String, output: String, runRoot: File, files: List<ManifestEntry>, ok: Int, err: Int, total: Int, ms: Long): String {

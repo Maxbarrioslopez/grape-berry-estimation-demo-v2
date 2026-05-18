@@ -1,0 +1,24 @@
+{
+  "search.followSymlinks": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "files.associations": {
+    "*.prompt": "markdown",
+    "*.skill": "markdown",
+    "*.md": "markdown",
+    "*.mdc": "markdown",
+    "*.rules": "markdown"
+  }
+}

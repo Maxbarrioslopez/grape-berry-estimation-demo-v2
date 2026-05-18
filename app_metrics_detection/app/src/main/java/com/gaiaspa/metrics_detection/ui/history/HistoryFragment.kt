@@ -5,10 +5,8 @@ import android.graphics.*
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.view.*
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.ImageButton
-import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -21,10 +19,18 @@ import com.gaiaspa.metrics_detection.formatTimestampToDateTime
 import com.gaiaspa.metrics_detection.pdf_utils.createLotesReportPdf
 import com.gaiaspa.metrics_detection.utils.NetworkUtils
 import com.gaiaspa.metrics_detection.worker.SyncManager
+import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import kotlin.math.max
-import kotlin.math.min
 
+/**
+ * History tab fragment displaying the list of saved Lotes.
+ *
+ * Shows paginated Lote cards with sync status, multi-page selection,
+ * and per-Lote delete options. Supports filtering by sync state (all,
+ * synced, not synced), PDF report generation for selected batches,
+ * and manual WorkManager sync trigger via the toolbar reload action.
+ */
 class HistoryFragment : Fragment() {
 
     private var _binding: FragmentHistoryBinding? = null
@@ -37,6 +43,7 @@ class HistoryFragment : Fragment() {
     enum class FilterOption { ALL, SYNCED, NOT_SYNCED }
     private var selectedFilter: FilterOption = FilterOption.ALL
     private lateinit var filterLabels: Array<String>
+    private enum class MessageTone { SUCCESS, WARNING, ERROR, INFO }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -47,11 +54,12 @@ class HistoryFragment : Fragment() {
     }
 
     private fun refreshCurrentPage() {
-        viewModel.lotes.value?.let { lotes ->
-            val startIndex = (viewModel.currentPage - 1) * viewModel.pageSize
-            adapter.updateData(filterLotes(lotes), startIndex)
-            updatePaginationButtons()
-        }
+        val filtered = filterLotes(viewModel.allLotes)
+        val startIndex = (viewModel.currentPage - 1) * viewModel.pageSize
+        val pageItems = filtered.drop(startIndex).take(viewModel.pageSize)
+        adapter.updateData(pageItems, startIndex)
+        binding.btnPreviousPage.isEnabled = viewModel.currentPage > 1
+        binding.btnNextPage.isEnabled = (viewModel.currentPage * viewModel.pageSize) < filtered.size
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         // ─── Toolbar ───────────────────────────────────────────────
@@ -70,9 +78,9 @@ class HistoryFragment : Fragment() {
                     // 3) Aquí va tu lógica de sincronización
                     if (NetworkUtils.isNetworkAvailable(requireContext())) {
                         SyncManager.enqueueManualSync(requireContext())
-                        Toast.makeText(requireContext(), "Sincronización iniciada", Toast.LENGTH_SHORT).show()
+                        showHistoryMessage(getString(R.string.sync_started), MessageTone.SUCCESS)
                     } else {
-                        Toast.makeText(requireContext(), "Sin conexión a Internet", Toast.LENGTH_SHORT).show()
+                        showHistoryMessage(getString(R.string.no_internet_connection), MessageTone.WARNING)
                     }
                     viewModel.resetPagination()
                     refreshCurrentPage()
@@ -161,14 +169,6 @@ class HistoryFragment : Fragment() {
     }
 
     /**
-     * Actualiza la activación de los botones Anterior y Siguiente según la página.
-     */
-    private fun updatePaginationButtons() {
-        binding.btnPreviousPage.isEnabled = viewModel.hasPreviousPage()
-        binding.btnNextPage.isEnabled = viewModel.hasNextPage()
-    }
-
-    /**
      * Toma TODOS los lotes que el usuario marcó (en varias páginas),
      * genera y comparte el PDF con esos lotes.
      */
@@ -177,14 +177,14 @@ class HistoryFragment : Fragment() {
         val selectedLotes = viewModel.getSelectedLotes()
 
         if (selectedLotes.isEmpty()) {
-            Toast.makeText(requireContext(), "No hay lotes seleccionados", Toast.LENGTH_SHORT).show()
+            showHistoryMessage(getString(R.string.no_lotes_selected), MessageTone.WARNING)
             return
         }
 
         try {
             val pdfFile = createLotesReportPdf(selectedLotes, requireContext())
             if (pdfFile == null) {
-                Toast.makeText(requireContext(), "Error al generar el PDF", Toast.LENGTH_SHORT).show()
+                showHistoryMessage(getString(R.string.error_generating_pdf), MessageTone.ERROR)
                 return
             }
 
@@ -200,10 +200,9 @@ class HistoryFragment : Fragment() {
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(shareIntent, "Compartir Lotes Seleccionados (PDF)"))
+            startActivity(Intent.createChooser(shareIntent, getString(R.string.share_lotes_pdf)))
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(requireContext(), "Error al compartir el PDF", Toast.LENGTH_LONG).show()
+            showHistoryMessage(getString(R.string.error_sharing_pdf), MessageTone.ERROR)
         }
     }
 
@@ -333,11 +332,32 @@ class HistoryFragment : Fragment() {
             }
             pdfFile
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         } finally {
             pdfDocument.close()
         }
+    }
+
+    private fun showHistoryMessage(message: String, tone: MessageTone = MessageTone.INFO) {
+        val root = _binding?.root ?: return
+        val background = when (tone) {
+            MessageTone.SUCCESS -> R.color.success_soft
+            MessageTone.WARNING -> R.color.warning_soft
+            MessageTone.ERROR -> R.color.error_soft
+            MessageTone.INFO -> R.color.info_soft
+        }
+        val action = when (tone) {
+            MessageTone.SUCCESS -> R.color.colorPrimaryDark
+            MessageTone.WARNING -> R.color.chip_incomplete_text
+            MessageTone.ERROR -> R.color.error
+            MessageTone.INFO -> R.color.info
+        }
+        Snackbar.make(root, message, Snackbar.LENGTH_LONG)
+            .setBackgroundTint(ContextCompat.getColor(root.context, background))
+            .setTextColor(ContextCompat.getColor(root.context, R.color.textPrimary))
+            .setActionTextColor(ContextCompat.getColor(root.context, action))
+            .setAction(getString(R.string.close)) { }
+            .show()
     }
 
     /**
@@ -448,11 +468,11 @@ class HistoryFragment : Fragment() {
         paint.textAlign = Paint.Align.LEFT
         canvas.drawText(title, legendX + 15f, legendY + 10f, paint)
 
-        // Restaurar Paint
         paint.color = originalColor
         paint.style = originalStyle
         paint.textSize = originalTextSize
         paint.textAlign = originalTextAlign
+        paint.pathEffect = null
     }
 
     override fun onResume() {

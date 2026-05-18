@@ -20,6 +20,20 @@ import java.net.URL
 import com.gaiaspa.metrics_detection.data.model.toLocalLote
 import com.gaiaspa.metrics_detection.data.repository.LoteRepository
 
+/**
+ * [CoroutineWorker] que descarga lotes desde la API remota y los persiste localmente.
+ *
+ * ## Rol en la arquitectura
+ * Complemento de [SyncWorker] para la dirección servidor → dispositivo. Obtiene la
+ * lista completa de lotes disponibles en el backend mediante [LoteRepository.getLoteGrapeCloud],
+ * descarga las imágenes de cada predicción en paralelo con un semáforo de 4 permisos,
+ * y las inserta localmente a través de [LoteRepository.verifyAndInsertLoteFromCloud].
+ *
+ * ## Concurrencia
+ * Las imágenes se procesan en chunks de 10 para evitar saturar la conexión.
+ * Un [Semaphore](4) limita las descargas simultáneas a 4 hilos de IO, y se intercalan
+ * llamadas a [yield] para mantener la equidad entre corrutinas.
+ */
 class BatchDownloadWorker(
     context: Context,
     workerParams: WorkerParameters
@@ -32,6 +46,15 @@ class BatchDownloadWorker(
     private val loteRepository = LoteRepository.getInstance(context)
     private val downloadSemaphore = Semaphore(4)
 
+    /**
+     * Obtiene la lista de lotes del backend, descarga sus imágenes y los persiste.
+     *
+     * Emite progreso mediante [setProgress] con una clave `"progress"` en el [Data]
+     * de salida, permitiendo a la UI mostrar el avance de la descarga.
+     *
+     * @return [Result.success] con el conteo de lotes descargados,
+     *         [Result.failure] si la respuesta del servidor no es exitosa o está vacía.
+     */
     override suspend fun doWork(): Result = coroutineScope {
         try {
             val lotesResponse = loteRepository.getLoteGrapeCloud()
@@ -81,6 +104,14 @@ class BatchDownloadWorker(
         }
     }
 
+    /**
+     * Descarga una imagen desde [imageUrl] al directorio de caché de la aplicación.
+     *
+     * Los timeouts de conexión y lectura están fijados a 15 s. Si la respuesta no es
+     * 200 OK o cualquier etapa falla, se devuelve `null` y la imagen simplemente se omite.
+     *
+     * @return Ruta absoluta del archivo descargado, o `null` en caso de error.
+     */
     private suspend fun downloadImage(imageUrl: String): String? = withContext(Dispatchers.IO) {
         try {
             val connection = URL(imageUrl).openConnection() as HttpURLConnection
@@ -98,5 +129,8 @@ class BatchDownloadWorker(
         }
     }
 
+    /**
+     * Construye un [Data] con la clave `"progress"` para alimentar [setProgress].
+     */
     private fun createProgressData(message: String) = Data.Builder().putString("progress", message).build()
 }

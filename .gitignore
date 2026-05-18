@@ -1,221 +1,155 @@
-﻿# 🚫 BUILD NATIVO (CRÍTICO)
-app_metrics_detection/app/.cxx/
-**/.cxx/
-
-# 🚫 APKs
-*.apk
-
-# 🚫 ZIPs pesados
-*.zip
-
-# 🚫 LIBS NATIVAS PESADAS
-*.so
-*.a
-
-# 🚫 THIRD PARTY COMPLETO (MEJOR PRÁCTICA)
-app_metrics_detection/third_party/opencv/
-app_metrics_detection/third_party/onnxruntime/
-# =========================
-# REFORZAR IGNORAR BINARIOS Y BUILDS EN TODA LA ESTRUCTURA
-# =========================
-**/build/
-**/outputs/
-**/intermediates/
-**/*.a
-**/*.zip
-
-# =========================
-# IDEs
-.vscode/
-.idea/
-*.iml
-.classpath
-.project
-
-# =========================
-# ANDROID / GRADLE
-# =========================
+# =========================================================
+# Android / Gradle / Build outputs
+# =========================================================
 .gradle/
-**/.gradle/
 build/
+*/build/
 **/build/
-intermediates/
-outputs/
-tmp/
-snapshot/
-
-# =========================
-# ANDROID STUDIO
-# =========================
-.idea/
-*.iml
-
-# =========================
-# LOGS / TEMP
-# =========================
-*.log
-*.tmp
-*.bak
-*.swp
-*.swo
-# =========================
-# CMake
-# =========================
-CMakeFiles/
-CMakeCache.txt
-cmake-build-*/
-
-# =========================
-# LOCKS
-# =========================
-yarn.lock
-package-lock.json
-Pipfile.lock
-
-# =========================
-# TEST Y COVERAGE
-# =========================
-.pytest_cache/
-.coverage
-coverage.xml
-junit-*.xml
-
-# =========================
-# ROOM/WORKMANAGER
-# =========================
-*.db
-*.db-journal
-
-# =========================
-# ANDROID STUDIO BACKUP
-# =========================
-captures/
-.android/
-
-# =========================
-# PYTHON BUILD
-# =========================
-build/
-dist/
-*.egg-info/
-
-# =========================
-# OS
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# PYTHON
-# =========================
-__pycache__/
-*.pyc
-.venv/
-env/
-
-
-# =========================
-# MODELOS PESADOS
-# =========================
-# ¡IMPORTANTE! Los modelos .onnx SÍ se suben al repo
-# (No incluir línea *.onnx aquí)
-
-# =========================
-# NOTA IMPORTANTE
-# =========================
-# local.properties SI se sube (NO ignorar)
-
-# =========================
-# ARCHIVOS GRANDES/BINARIOS QUE NO SE SUBEN
-# =========================
-# APKs de release
-app_metrics_detection/app/release/app-release.apk
-app_metrics_detection/app/release/baselineProfiles/
-app_metrics_detection/app/release/output-metadata.json
-# Descargas de dependencias nativas
-app_metrics_detection/third_party/onnxruntime/downloads/*.zip
-app_metrics_detection/third_party/onnxruntime/downloads/*.aar
-app_metrics_detection/third_party/opencv/OpenCV-android-sdk/downloads/*.zip
-# Librerías nativas pesadas (OpenCV/ONNX)
-app_metrics_detection/third_party/opencv/OpenCV-android-sdk/sdk/native/libs/*/libopencv_java4.so
-app_metrics_detection/third_party/opencv/OpenCV-android-sdk/sdk/native/3rdparty/libs/*/*.a
-app_metrics_detection/third_party/onnxruntime/onnxruntime-android-1.24.3/jni/*/*.so
-# Salidas de debug y pruebas
-app_metrics_detection/debug/
-python_run_output.txt
-debug_kotlin.json
-debug_python.json
-# Archivos de entorno y locks
-.env
-*.lock
-
-# =========================
-# EXTRAS RECOMENDADOS
-# =========================
-# Dependencias nativas descargadas
-third_party/onnxruntime/onnxruntime-android-*/
-third_party/opencv/OpenCV-android-sdk/
-# Salidas de scripts
-app_metrics_detection/debug/
-# Archivos de entorno
-.env
-# Salidas de pruebas
-python_run_output.txt
-# Archivos de lock temporales
-*.lock
-# ===== Android / Gradle =====
-.gradle/
-**/.gradle/
-build/
-**/build/
-local.properties
 captures/
 .externalNativeBuild/
 .cxx/
-**/.cxx/
+local.properties
 
-# ===== IDE =====
+# Android generated outputs
+*.apk
+*.aab
+*.ap_
+*.aar
+**/outputs/
+**/intermediates/
+**/generated/
+**/tmp/
+**/kotlin/
+**/incremental/
+
+# Release folders / backups
+app/release/
+app_metrics_detection/app/release/
+*.zip
+
+# =========================================================
+# Android Studio / IntelliJ
+# =========================================================
 .idea/
-.vscode/
 *.iml
+.DS_Store
 
-# ===== Logs / temp =====
+# =========================================================
+# Logs / temporales
+# =========================================================
 *.log
 *.tmp
 *.temp
-.DS_Store
+*.bak
+*.swp
+*.swo
 Thumbs.db
 
-# ===== Python / misc =====
-venv/
-.venv/
+# =========================================================
+# Imágenes de prueba / datasets / resultados pesados
+# =========================================================
+images/
+imagenesparatest/
+debug/
+
+app_metrics_detection/images/
+app_metrics_detection/imagenesparatest/
+app_metrics_detection/debug/
+
+**/imagenesparatest/
+**/test_images/
+**/test-images/
+**/datasets/
+**/dataset/
+**/results/
+**/resultados/
+**/runs/
+**/outputs/
+**/fused/
+**/fusion/
+**/reportes_test/
+**/reports_test/
+
+# Ignorar imágenes sueltas pesadas fuera de recursos Android/assets permitidos
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+*.tif
+*.tiff
+*.bmp
+*.gif
+
+# Permitir imágenes necesarias de Android res
+!app_metrics_detection/app/src/main/res/**/*.png
+!app_metrics_detection/app/src/main/res/**/*.jpg
+!app_metrics_detection/app/src/main/res/**/*.jpeg
+!app_metrics_detection/app/src/main/res/**/*.webp
+!app_metrics_detection/app/src/main/res/**/*.xml
+
+# Permitir imágenes necesarias dentro de assets reales
+!app_metrics_detection/app/src/main/assets/**/*.png
+!app_metrics_detection/app/src/main/assets/**/*.jpg
+!app_metrics_detection/app/src/main/assets/**/*.jpeg
+!app_metrics_detection/app/src/main/assets/**/*.webp
+
+# =========================================================
+# Modelos ML reales necesarios para la app
+# NO ignorar modelos dentro de src/main/assets
+# =========================================================
+!app_metrics_detection/app/src/main/assets/**/*.onnx
+!app_metrics_detection/app/src/main/assets/**/*.onnx.data
+!app_metrics_detection/app/src/main/assets/**/*.tflite
+!app_metrics_detection/app/src/main/assets/**/*.bin
+!app_metrics_detection/app/src/main/assets/**/*.json
+
+# Evitar subir modelos copiados por build/intermediates
+app_metrics_detection/app/build/
+**/build/intermediates/
+**/build/outputs/
+
+# =========================================================
+# Third party pesado / SDKs locales
+# =========================================================
+app_metrics_detection/third_party/opencv/OpenCV-android-sdk/samples/
+
+# =========================================================
+# Signing keys / release keys
+# En este repo privado SÍ se versionarán las keys necesarias.
+# =========================================================
+!keystore.properties
+!app_metrics_detection/keystore.properties
+!keystores/*.jks
+!*.jks
+!*.keystore
+!*.p12
+
+# Mantener fuera llaves/certificados sueltos no necesarios
+*.pem
+*.key
+*.crt
+*.cer
+
+# Google / Firebase secrets
+google-services.json
+service-account.json
+firebase-adminsdk*.json
+
+# =========================================================
+# Node / frontend si existiera
+# =========================================================
+node_modules/
+dist/
+.next/
+.vercel/
+
+# =========================================================
+# Python / entornos auxiliares
+# =========================================================
 __pycache__/
-
-# ===== Release artifacts =====
-*.apk
-*.aab
-
-# ===== Native / model heavy files =====
-*.zip
-*.7z
-*.rar
-
-# Si NO quieres subir librerías compiladas ni modelos:
-*.so
-*.a
-*.o
-
-# Si NO quieres subir modelos:
-# *.onnx
-# *.tflite
-# *.pt
-# *.bin
-
-# ===== Third party descargado =====
-app_metrics_detection/third_party/opencv/downloads/
-app_metrics_detection/third_party/opencv/OpenCV-android-sdk/
-app_metrics_detection/third_party/onnxruntime/
-
-# ===== Generated reports =====
-allfiles.txt
-filesizes.txt
+*.pyc
+.venv/
+venv/
+.env
+.env.*

@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.YOLOv8InstanceSegmentation"
+        parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorSurface">@color/md_surface</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/md_background</item>
+        <item name="android:statusBarColor">@color/md_background</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/textPrimary</item>
+    </style>
+
+    <style name="Theme.YOLOv8InstanceSegmentation" parent="Base.Theme.YOLOv8InstanceSegmentation" />
+</resources>

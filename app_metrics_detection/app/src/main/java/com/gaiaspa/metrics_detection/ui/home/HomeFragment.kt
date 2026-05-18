@@ -9,13 +9,22 @@ import androidx.navigation.fragment.findNavController
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.FragmentHomeBinding
 
+/**
+ * Root fragment for the home/capture tab in the main navigation.
+ *
+ * Acts as a pass-through entry point: immediately navigates to
+ * [Step1Fragment] on creation so the user lands directly on the
+ * batch metadata form. Uses the nav graph's [HomeFragment] as the
+ * start destination for the bottom navigation tab.
+ */
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     /**
-     * Infla el layout fragment_home.xml
+     * Inflates the layout and immediately navigates to Step1Fragment
+     * in [onViewCreated], so this screen is never actually seen.
      */
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,8 +36,8 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * Lógica una vez creada la vista. Aquí podrías tener un botón
-     * que, al pulsarlo, navegue hacia Step1Fragment
+     * On view creation, immediately navigates to Step1Fragment.
+     * This fragment serves as a trampoline — the user never sees it.
      */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

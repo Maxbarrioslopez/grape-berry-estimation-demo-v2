@@ -16,10 +16,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.gaiaspa.metrics_detection.FeatureFlags
 import com.gaiaspa.metrics_detection.MainActivity
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.ActivityLoginBinding
 import com.gaiaspa.metrics_detection.data.model.request.LoginRequest
+import com.gaiaspa.metrics_detection.i18n.LanguagePreferenceManager
 import com.gaiaspa.metrics_detection.network.ApiClient
 import com.gaiaspa.metrics_detection.network.ApiService
 import com.gaiaspa.metrics_detection.network.TokenProvider
@@ -35,6 +37,9 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (FeatureFlags.FEATURE_LANGUAGE_SWITCH) {
+            LanguagePreferenceManager.applySavedLanguageIfAny(this)
+        }
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -44,6 +49,8 @@ class LoginActivity : AppCompatActivity() {
             navigateToMain()
             return
         }
+
+        setupLanguageButton()
 
         binding.btnLogin.setOnClickListener {
             performLogin()
@@ -56,6 +63,18 @@ class LoginActivity : AppCompatActivity() {
         // CONEXIÓN OBLIGATORIA: Abrir flujo de recuperación de contraseña
         binding.tvForgotPassword.setOnClickListener {
             startActivity(Intent(this, RecoveryActivity::class.java))
+        }
+    }
+
+    private fun setupLanguageButton() {
+        binding.btnLanguage.visibility =
+            if (FeatureFlags.FEATURE_LANGUAGE_SWITCH) View.VISIBLE else View.GONE
+        binding.btnLanguage.setOnClickListener {
+            if (!FeatureFlags.FEATURE_LANGUAGE_SWITCH) return@setOnClickListener
+            LanguagePreferenceManager.showSelector(
+                activity = this,
+                cancelable = true
+            )
         }
     }
 
@@ -76,7 +95,7 @@ class LoginActivity : AppCompatActivity() {
         val password = binding.etPassword.text.toString().trim()
 
         if (email.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Por favor ingrese usuario y contraseña", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.login_empty_fields), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -91,7 +110,7 @@ class LoginActivity : AppCompatActivity() {
 
                 val body = loginResponse.body()
                 if (!loginResponse.isSuccessful || body == null) {
-                    Toast.makeText(this@LoginActivity, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LoginActivity, getString(R.string.login_invalid_credentials), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -110,7 +129,7 @@ class LoginActivity : AppCompatActivity() {
                 navigateToMain()
             } catch (e: Exception) {
                 Log.e("LoginActivity", "Login failure", e)
-                Toast.makeText(this@LoginActivity, "Error de conexión", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@LoginActivity, getString(R.string.connection_error), Toast.LENGTH_SHORT).show()
             } finally {
                 withContext(NonCancellable + Dispatchers.Main) {
                     setLoadingState(false)

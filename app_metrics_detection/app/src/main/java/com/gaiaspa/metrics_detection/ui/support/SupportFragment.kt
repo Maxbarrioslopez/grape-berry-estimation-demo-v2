@@ -26,19 +26,19 @@ class SupportFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Datos de contacto
-        binding.tvEmail.text = "support@metrics.com"
-        binding.tvPhone.text = "+56 9 8765 4321"
-        binding.tvHours.text = "Lunes – Viernes / 9:00 – 18:00"
+        binding.tvEmail.text = getString(R.string.support_email)
+        binding.tvPhone.text = getString(R.string.support_phone)
+        binding.tvHours.text = getString(R.string.contact_hours)
 
-        // Preguntas & respuestas
-        binding.faq1Question.text = "¿Cómo puedo recuperar mi contraseña?"
-        binding.faq1Answer.text = "Para recuperar tu contraseña, haz clic en '¿Olvidaste tu contraseña?' en la pantalla de inicio de sesión."
+        // Preguntas & respuestas (FAQ tradicionales)
+        binding.faq1Question.text = getString(R.string.faq_password_recovery)
+        binding.faq1Answer.text = getString(R.string.faq_password_recovery_answer)
 
-        binding.faq2Question.text = "¿Dónde puedo consultar mi historial de lotes?"
-        binding.faq2Answer.text = "Puedes acceder al historial de lotes en la pestaña 'Historial' en la barra de navegación inferior."
+        binding.faq2Question.text = getString(R.string.faq_history_access)
+        binding.faq2Answer.text = getString(R.string.faq_history_access_answer)
 
-        binding.faq3Question.text = "¿Cómo puedo contactar al soporte técnico?"
-        binding.faq3Answer.text = "Puedes contactarnos a través del correo electrónico o el teléfono indicados arriba."
+        binding.faq3Question.text = getString(R.string.faq_contact)
+        binding.faq3Answer.text = getString(R.string.faq_contact_answer)
 
         // Función helper para toggle
         fun setupToggle(container: View, answer: View, icon: ImageView) {
@@ -51,7 +51,6 @@ class SupportFragment : Fragment() {
                 )
             }
         }
-
 
         // Configuramos toggles
         setupToggle(binding.faq1Header, binding.faq1Answer, binding.faq1Icon)

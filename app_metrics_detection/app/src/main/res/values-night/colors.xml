@@ -1,0 +1,85 @@
+<resources>
+
+    <color name="md_background">#151B18</color>
+    <color name="md_surface">#1D2520</color>
+    <color name="md_surface_soft">#202B24</color>
+    <color name="md_surface_subtle">#18211C</color>
+    <color name="md_border_soft">#344238</color>
+    <color name="md_border_strong">#4A5D50</color>
+
+    <color name="colorPrimary">#76B77A</color>
+    <color name="colorPrimaryMedium">#355F3A</color>
+    <color name="colorPrimaryLight">#203A26</color>
+    <color name="colorPrimaryDark">#B9E0BB</color>
+    <color name="colorAccent">#8FCB93</color>
+
+    <color name="textPrimary">#EEF4EF</color>
+    <color name="textSecondary">#B6C3B7</color>
+    <color name="textHint">#859486</color>
+    <color name="textOnPrimary">#122015</color>
+
+    <color name="surface">@color/md_surface</color>
+    <color name="outlineGray">@color/md_border_soft</color>
+
+    <color name="error">#FFB4AB</color>
+    <color name="success">#9FD4A2</color>
+    <color name="warning">#F0C36C</color>
+    <color name="info">#9CC3FF</color>
+
+    <color name="success_soft">#1F3424</color>
+    <color name="warning_soft">#342A16</color>
+    <color name="error_soft">#3A211F</color>
+    <color name="info_soft">#1D2A3E</color>
+
+    <color name="chip_pending_bg">#26302A</color>
+    <color name="chip_pending_text">#C8D3C9</color>
+    <color name="chip_pending_border">#3B473F</color>
+    <color name="chip_incomplete_bg">#3A301B</color>
+    <color name="chip_incomplete_text">#F1CF83</color>
+    <color name="chip_incomplete_border">#6D5521</color>
+    <color name="chip_fused_bg">#203B27</color>
+    <color name="chip_fused_text">#B9E0BB</color>
+    <color name="chip_fused_border">#426C47</color>
+    <color name="chip_error_bg">#3A211F</color>
+    <color name="chip_error_text">#FFDAD6</color>
+    <color name="chip_error_border">#7C3C36</color>
+    <color name="chip_info_bg">#1D2A3E</color>
+    <color name="chip_info_text">#CDE0FF</color>
+    <color name="chip_info_border">#3B5277</color>
+
+    <color name="histogram_start">#A7D9A9</color>
+    <color name="histogram_end">#5FAD64</color>
+    <color name="histogram_grid">#314038</color>
+    <color name="histogram_axis">#AAB8AB</color>
+
+    <color name="button_enabled">@color/colorPrimary</color>
+    <color name="button_disabled">#4B574E</color>
+    <color name="button_text_enabled">@color/textOnPrimary</color>
+    <color name="button_text_disabled">#AAB8AB</color>
+    <color name="buttonEnabled">@color/colorPrimary</color>
+    <color name="buttonDisabled">@color/button_disabled</color>
+    <color name="button_secondary_bg">#253128</color>
+    <color name="button_danger_bg">#3A211F</color>
+
+    <color name="linkBlue">@color/info</color>
+    <color name="overlay_panel_bg">#D91E2922</color>
+    <color name="overlay_button_bg">#F02D3A31</color>
+    <color name="overlay_icon">#EEF4EF</color>
+    <color name="fullscreen_scrim">#F2131815</color>
+
+    <color name="overlayBlue">@color/info</color>
+    <color name="overlayGreen">@color/success</color>
+    <color name="overlayRed">@color/error</color>
+    <color name="overlay_orange">#E2B06A</color>
+    <color name="overlay_purple">#BCA7FF</color>
+    <color name="overlay_pink">#F0A6C6</color>
+    <color name="overlay_cyan">#84D1E2</color>
+    <color name="overlay_gray">#A9BAC3</color>
+
+    <color name="brown">#A98A5A</color>
+    <color name="dark_red">#D58B86</color>
+    <color name="pink">#E7B7C7</color>
+    <color name="dark_green">#7BAE7F</color>
+    <color name="light_green">#A7D9A9</color>
+
+</resources>

@@ -1,9 +1,28 @@
+/**
+ * Authenticator de OkHttp que renueva automáticamente el access token cuando el
+ * backend responde con HTTP 401 (Unauthorized).
+ *
+ * Flujo de renovación:
+ * 1. Verifica que no se haya reintentado más de 2 veces la misma cadena de respuestas.
+ * 2. Si el header Authorization coincide con el token almacenado, llama a
+ *    /auth/refresh-token de forma síncrona.
+ * 3. Si la renovación es exitosa, reconstruye la petición original con el nuevo token.
+ *    Para /auth/logout también reemplaza el refreshToken en el body.
+ * 4. Si falla, fuerza el cierre de sesión redirigiendo a LoginActivity.
+ *
+ * Crea su propio ApiService interno (sin AuthInterceptor) para evitar bucles
+ * infinitos de intercepción durante la renovación.
+ *
+ * @property appContext application context usado para inicializar TokenProvider
+ *                      y lanzar LoginActivity en caso de logout forzado.
+ */
 // src/main/java/com/gaiaspa/metrics_detection/network/TokenAuthenticator.kt
 package com.gaiaspa.metrics_detection.network
 
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.auth.LoginActivity
 import com.gaiaspa.metrics_detection.data.model.request.RefreshTokenRequest
 import okhttp3.Authenticator
@@ -137,7 +156,11 @@ class TokenAuthenticator(
                     false
                 }
             } else {
-                Log.e(TAG, "Refresh falló: ${resp.code()} / ${resp.errorBody()?.string()}")
+                if (BuildConfig.DEBUG) {
+                    Log.e(TAG, "Refresh falló: ${resp.code()} / ${resp.errorBody()?.string()}")
+                } else {
+                    Log.e(TAG, "Refresh falló: código ${resp.code()}")
+                }
                 false
             }
         } catch (e: IOException) {

@@ -1,20 +1,20 @@
 package com.gaiaspa.metrics_detection.ui.history
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.CalPredict
 import com.gaiaspa.metrics_detection.data.model.Lote
-import com.gaiaspa.metrics_detection.ml.ImageUtils
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -35,6 +35,9 @@ class LoteDetailAdapter(
     private val onImageClick: (String) -> Unit // ✅ Cambiado a String para evitar pasar Bitmaps pesados
 ) : RecyclerView.Adapter<LoteDetailAdapter.LoteDetailViewHolder>() {
 
+    private val isFusedMultiView: Boolean =
+        lote.calPredicts.isNotEmpty() && lote.images.size == lote.calPredicts.size * 2
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LoteDetailViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_image_prediction_detail, parent, false)
@@ -42,13 +45,17 @@ class LoteDetailAdapter(
     }
 
     override fun onBindViewHolder(holder: LoteDetailViewHolder, position: Int) {
-        // lote.images ahora prioriza uploadImages (512px) gracias al fix en Lote.kt
-        val imagePath = lote.images.getOrNull(position) ?: ""
+        val imagePath = if (isFusedMultiView) {
+            lote.representativeImagePathForPrediction(position).orEmpty()
+        } else {
+            lote.images.getOrNull(position).orEmpty()
+        }
         val prediction = lote.calPredicts.getOrNull(position)
-        holder.bind(imagePath, prediction)
+        holder.bind(position, imagePath, prediction)
     }
 
-    override fun getItemCount(): Int = lote.images.size
+    override fun getItemCount(): Int =
+        if (isFusedMultiView) lote.calPredicts.size else lote.images.size
 
     class LoteDetailViewHolder(
         itemView: View,
@@ -59,33 +66,20 @@ class LoteDetailAdapter(
         private val tvPredictionInfo: TextView = itemView.findViewById(R.id.tvPredictionInfo)
         private val barChart: BarChart = itemView.findViewById(R.id.barChart)
 
-        fun bind(imagePath: String, prediction: CalPredict?) {
-            val cleanPath = imagePath.replace("file://", "")
-            val file = File(cleanPath)
-            
-            try {
-                if (file.exists()) {
-                    Log.d("History_SAFE", "Cargando imagen persistente (512px): $cleanPath")
-                    // Decode con sampleo para seguridad absoluta en la lista
-                    val bitmap = ImageUtils.decodeSampledBitmap(cleanPath, 512, 512)
-                    
-                    if (bitmap != null) {
-                        ivPhoto.setImageBitmap(bitmap)
-                        ivPhoto.setOnClickListener { onImageClick(imagePath) }
-                    } else {
-                        Log.e("History_SAFE", "Fallo decode (Bitmap null): $cleanPath")
-                        ivPhoto.setImageResource(R.drawable.ic_gallery)
-                    }
-                } else {
-                    Log.w("History_SAFE", "Archivo no encontrado: $cleanPath")
-                    ivPhoto.setImageResource(R.drawable.ic_gallery)
-                    ivPhoto.setOnClickListener {
-                        Toast.makeText(itemView.context, "Archivo no encontrado", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("History_SAFE", "Error en bind: ${e.message}")
+        fun bind(position: Int, imagePath: String, prediction: CalPredict?) {
+            itemView.findViewById<TextView>(R.id.tvIndex)?.text = "#${position + 1}"
+            Log.d("HISTORY_IMG_BIND", "Detail bind pos=$position imagePath='$imagePath'")
+
+            val bitmap = decodeBitmap(imagePath)
+            if (bitmap != null && !bitmap.isRecycled) {
+                Log.d("HISTORY_IMG_BIND", "Detail bind pos=$position: OK")
+                ivPhoto.clearColorFilter()
+                ivPhoto.setImageBitmap(bitmap)
+                ivPhoto.setOnClickListener { onImageClick(imagePath) }
+            } else {
+                Log.w("HISTORY_IMG_BIND", "Detail bind pos=$position: FAILED")
                 ivPhoto.setImageResource(R.drawable.ic_gallery)
+                ivPhoto.setOnClickListener(null)
             }
 
             // Mostrar datos de predicción
@@ -94,16 +88,16 @@ class LoteDetailAdapter(
                 barChart.clear()
             } else if (prediction?.status == true) {
                 val predInfo = """
-                    Color: ${prediction.bunchColor}
-                    QTY: ${prediction.qty}
-                    Mean: ${prediction.mean} mm
-                    Mode: ${prediction.mode} mm
-                    STD: ${prediction.std}
+                    ${itemView.context.getString(R.string.color)}: ${prediction.bunchColor}
+                    ${itemView.context.getString(R.string.qty)}: ${prediction.qty}
+                    ${itemView.context.getString(R.string.mean)}: ${prediction.mean} mm
+                    ${itemView.context.getString(R.string.mode)}: ${prediction.mode} mm
+                    ${itemView.context.getString(R.string.std)}: ${prediction.std}
                 """.trimIndent()
                 tvPredictionInfo.text = predInfo
                 setupChart(barChart, prediction.bins, prediction.pred)
             } else {
-                tvPredictionInfo.text = "Sin predicción"
+                tvPredictionInfo.text = itemView.context.getString(R.string.no_prediction)
                 barChart.clear()
             }
         }
@@ -161,5 +155,43 @@ class LoteDetailAdapter(
                 invalidate()
             }
         }
+
+        private fun decodeBitmap(path: String): Bitmap? = runCatching {
+            if (path.isBlank()) {
+                Log.v("HISTORY_IMG_BIND", "decodeBitmap: path is blank")
+                return@runCatching null
+            }
+            Log.d("HISTORY_IMG_BIND", "decodeBitmap: trying path='$path'")
+
+            return@runCatching when {
+                path.startsWith("content://") -> {
+                    val uri = Uri.parse(path)
+                    itemView.context.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream)
+                    }
+                }
+                else -> {
+                    val cleanPath = path.replace("file://", "")
+                    val file = File(cleanPath)
+                    if (!file.exists() || file.length() <= 0) {
+                        Log.w("HISTORY_IMG_BIND", "decodeBitmap: file NOT FOUND at '$cleanPath'")
+                        return@runCatching null
+                    }
+                    val probe = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeFile(cleanPath, probe)
+                    if (probe.outWidth <= 0 || probe.outHeight <= 0) {
+                        Log.w("HISTORY_IMG_BIND", "decodeBitmap: bounds invalid for '$cleanPath'")
+                        return@runCatching null
+                    }
+                    var sample = 1
+                    while (probe.outWidth / sample > 512 || probe.outHeight / sample > 512) {
+                        sample *= 2
+                    }
+                    BitmapFactory.decodeFile(cleanPath, BitmapFactory.Options().apply { inSampleSize = sample })
+                }
+            }
+        }.onFailure { e ->
+            Log.e("HISTORY_IMG_BIND", "decodeBitmap: exception: ${e.message}", e)
+        }.getOrNull()
     }
 }

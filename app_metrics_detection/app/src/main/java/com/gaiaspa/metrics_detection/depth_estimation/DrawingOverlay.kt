@@ -20,9 +20,15 @@ import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
-// Overlay to display the depth map over the `PreviewView`.
-// See activity_main.xml
-// See activity_main.xml
+/**
+ * Visual-only depth-map overlay.
+ *
+ * Renders the depth estimation bitmap over the camera PreviewView.
+ * This is a presentation-only layer and must not alter any prediction
+ * data, quantities, calPredicts, or backend payloads.
+ *
+ * See also: activity_main.xml, FrameAnalyser.kt, MainActivity.kt
+ */
 class DrawingOverlay(context : Context, attributeSet : AttributeSet) : SurfaceView( context , attributeSet ) , SurfaceHolder.Callback {
 
     // This variable is assigned in FrameAnalyser.kt

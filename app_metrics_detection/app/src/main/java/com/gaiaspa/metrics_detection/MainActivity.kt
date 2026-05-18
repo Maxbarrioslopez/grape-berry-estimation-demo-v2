@@ -1,12 +1,13 @@
-// MainActivity.kt
 package com.gaiaspa.metrics_detection
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -17,6 +18,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.gaiaspa.metrics_detection.auth.LoginActivity
 import com.gaiaspa.metrics_detection.databinding.ActivityMainBinding
+import com.gaiaspa.metrics_detection.i18n.LanguagePreferenceManager
 import com.gaiaspa.metrics_detection.network.TokenProvider
 import com.gaiaspa.metrics_detection.worker.SyncManager
 import kotlinx.coroutines.cancel
@@ -24,6 +26,19 @@ import kotlinx.coroutines.launch
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 
+/**
+ * Main navigation host.
+ *
+ * Hosts the bottom-navigation tabs (Home, History, Profile, Support)
+ * and provides WorkManager sync lifecycle observation. On start it
+ * enqueues a manual sync and schedules periodic sync at 15 min intervals.
+ *
+ * The logout() callback clears all tokens and WorkManager tasks before
+ * redirecting to LoginActivity.
+ *
+ * Also manages runtime preferences: dark mode, screen rotation lock,
+ * and language switching (via feature flag).
+ */
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -34,9 +49,34 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
+    /**
+     * Lee la preferencia de modo oscuro desde SharedPreferences y la aplica
+     * globalmente mediante AppCompatDelegate.
+     */
+    private fun applySavedNightMode() {
+        val prefs = getSharedPreferences("dark_mode", Context.MODE_PRIVATE)
+        val isDark = prefs.getBoolean("enabled", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
+    }
+
+    /**
+     * Inicializa la actividad principal: aplica preferencias de tema, idioma y
+     * rotación, dispara la sincronización inicial y periódica vía WorkManager,
+     * infla el layout y configura la navegación por pestañas.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applySavedNightMode()
+        if (FeatureFlags.FEATURE_LANGUAGE_SWITCH) {
+            LanguagePreferenceManager.applySavedLanguageIfAny(this)
+        }
 
+        val rotationAllowed = FeatureFlags.FEATURE_SCREEN_ROTATION_TOGGLE &&
+            getSharedPreferences("rotation", Context.MODE_PRIVATE).getBoolean("allowed", false)
+        applyRotationLock(rotationAllowed)
 
         // Lanzar una sincronizacion manual
         SyncManager.enqueueManualSync(this)
@@ -149,6 +189,18 @@ class MainActivity : AppCompatActivity() {
                     this.cancel()
                 }
             }
+        }
+    }
+
+    /**
+     * Aplica el bloqueo de rotación según preferencia del usuario.
+     * OFF (default) → solo portrait; ON → sensor-based (landscape + portrait).
+     */
+    fun applyRotationLock(allowed: Boolean) {
+        requestedOrientation = if (allowed) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider paths for sharing internal files.
+
+    - files-path: persistent images stored under filesDir/gaiaspa.com/.
+    - cache-path: temporary camera captures and gallery copies under cacheDir/.
+
+    Used by camera (TakePicture), PDF sharing (ACTION_SEND), and gallery picker.
+-->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <files-path name="images" path="gaiaspa.com/" />
     <cache-path name="cache" path="." />

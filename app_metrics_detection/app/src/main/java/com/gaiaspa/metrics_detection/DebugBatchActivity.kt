@@ -13,11 +13,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Debug-only Activity that launches a [BatchProcessor] run and displays its
+ * result in a simple text view.
+ *
+ * Accepts optional intent extras to override input/output directories and the
+ * ONNX execution provider. On Android 11+ (API 30+), verifies that the app has
+ * the `MANAGE_EXTERNAL_STORAGE` permission before touching shared-storage paths.
+ *
+ * Not exported in the manifest — intended for internal developer use only.
+ */
 class DebugBatchActivity : AppCompatActivity() {
 
     companion object {
+        /** Intent extra: absolute path to the input image directory. */
         const val EXTRA_INPUT_DIR = "inputDir"
+        /** Intent extra: absolute path to the output directory for JSON results. */
         const val EXTRA_OUTPUT_DIR = "outputDir"
+        /** Intent extra: ONNX execution provider preference string. */
         const val EXTRA_PROVIDER = "provider"
     }
 
@@ -27,7 +40,7 @@ class DebugBatchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         statusView = TextView(this).apply {
-            text = "Starting debug batch..."
+            text = getString(R.string.processing)
             gravity = Gravity.CENTER
             textSize = 16f
             setPadding(48, 48, 48, 48)
@@ -48,11 +61,11 @@ class DebugBatchActivity : AppCompatActivity() {
             BatchProcessor.TAG,
             "DebugBatchActivity start requestedInput=${java.io.File(inputDir).absolutePath} requestedOutput=${java.io.File(outputDir).absolutePath} provider=$provider"
         )
-        statusView.text = "Running debug batch...\ninput=${java.io.File(inputDir).absolutePath}\noutput=${java.io.File(outputDir).absolutePath}\nprovider=$provider"
+        statusView.text = getString(R.string.processing)
 
         lifecycleScope.launch {
             if (!hasRequiredStorageAccess(inputDir, outputDir)) {
-                val message = "Missing shared-storage access for debug batch."
+                val message = getString(R.string.connection_error)
                 Log.e(BatchProcessor.TAG, message)
                 statusView.text = message
                 return@launch
@@ -68,14 +81,14 @@ class DebugBatchActivity : AppCompatActivity() {
                         outputDirPath = outputDir
                     )
                 }
-                statusView.text = "Batch finished SUCCESSFULLY.\n\nRunId: ${summary.runId}\nImages: ${summary.totalImagesFound}\nOK: ${summary.processedOk}\nError: ${summary.processedError}\n\nCheck results on your desktop."
+                statusView.text = getString(R.string.batch_saved_locally)
                 Log.d(
                     BatchProcessor.TAG,
                     "DebugBatchActivity end runId=${summary.runId} ok=${summary.processedOk} error=${summary.processedError} manifest=${summary.manifestPath}"
                 )
             } catch (t: Throwable) {
-                val message = t.message ?: "Debug batch failed"
-                statusView.text = "Batch FAILED.\n\nError: $message"
+                val message = t.message ?: getString(R.string.batch_save_error)
+                statusView.text = getString(R.string.batch_save_error)
                 Log.e(BatchProcessor.TAG, "DebugBatchActivity failure", t)
             }
             // Eliminado finish() para que el usuario pueda ver el resultado en pantalla

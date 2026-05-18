@@ -9,38 +9,67 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 
+/**
+ * Application class responsible for atomic model extraction on startup.
+ *
+ * ONNX models and optional `.data` weight files are extracted from the APK assets
+ * to the internal files directory (`filesDir/weights/`). Extraction uses a
+ * temp-file + rename pattern to prevent the ML pipeline from reading
+ * partially-written files in case of a crash or kill during extraction.
+ *
+ * Model files already present on disk are skipped (idempotent). If a file is
+ * corrupt the user must reinstall to trigger a fresh extraction.
+ *
+ * @see TokenProvider Initialised before model extraction so networking
+ *        is ready if needed later in the pipeline lifecycle.
+ */
 class MetricsDetectionApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
         TokenProvider.init(this)
-        
-        // Extraer modelos en segundo plano de forma atómica para evitar archivos corruptos
+
+        // Asynchronous extraction on IO dispatcher to avoid blocking the main thread.
         CoroutineScope(Dispatchers.IO).launch {
             prepareModels()
         }
     }
 
+    /**
+     * Iterates over the known ONNX model asset paths and extracts each one
+     * (plus any optional companion `.data` weight file) to internal storage.
+     */
     private fun prepareModels() {
         val models = listOf(
             "weights/modelos/legacy/seg_best.onnx",
             "weights/modelos/qty_model_rgbdt.onnx",
             "weights/modelos/hist_rgbdt_bimodal.onnx"
         )
-        
+
         models.forEach { assetPath ->
             extractAssetAtomic(assetPath)
-            // Extraer pesos externos .data si existen
+            // Optional external weights bundled alongside the ONNX model.
             extractAssetAtomic("$assetPath.data")
         }
     }
 
+    /**
+     * Extracts a single file from APK assets to internal storage atomically.
+     *
+     * Writes to a `.tmp` file first, then renames to the final name. This
+     * guarantees the target file is either fully written or absent — the ML
+     * pipeline will never see a truncated file.
+     *
+     * Skips extraction if the target file already exists and is non-empty
+     * (idempotent). Exceptions for optional `.data` files are silently caught;
+     * failures for mandatory ONNX files will cause pipeline errors at runtime.
+     */
     private fun extractAssetAtomic(assetPath: String) {
         val fileName = File(assetPath).name
         val weightsDir = File(filesDir, "weights").apply { mkdirs() }
         val targetFile = File(weightsDir, fileName)
-        
-        // Solo copiamos si no existe. Si está corrupto, el usuario debe reinstalar.
+
+        // Idempotent: skip if file already extracted successfully.
         if (targetFile.exists() && targetFile.length() > 0) return
 
         val tempFile = File(weightsDir, "$fileName.tmp")
@@ -50,12 +79,12 @@ class MetricsDetectionApp : Application() {
                     input.copyTo(output)
                 }
             }
-            // Renombrado atómico: si esto sucede, el archivo está completo.
+            // Atomic rename: the file is only visible once fully written.
             if (tempFile.renameTo(targetFile)) {
-                Log.d("App", "✅ Modelo listo: $fileName")
+                Log.d("App", "Modelo listo: $fileName")
             }
         } catch (e: Exception) {
-            // Es normal fallar para archivos .data opcionales
+            // Expected for optional .data files that don't exist in assets.
             if (tempFile.exists()) tempFile.delete()
         }
     }

@@ -10,9 +10,16 @@ import org.json.JSONObject
 import kotlin.math.roundToInt
 
 /**
- * MetricsPipeline.kt - v10.0 MIGRACIÓN OVERLAY NATIVO
- * Puente de comunicación con el motor C++.
- * Sincronizado con el contrato de JSON de grape_pipeline_jni.cpp (v10.0).
+ * MetricsPipeline — v10.0 MIGRACIÓN OVERLAY NATIVO
+ *
+ * Bridge layer between the Kotlin/Android UI and the native C++ ML engine
+ * ([grape_pipeline_jni.cpp]). Responsible for:
+ * - Validating that ONNX model files exist on disk before invoking JNI.
+ * - Delegating inference to the native library via [CppPipelineBridge].
+ * - Parsing the raw JSON response coming from native code into the [Success] domain model.
+ *
+ * The JSON contract is tightly coupled to the native implementation
+ * (v10.0 overlay generation) and must be kept in sync.
  */
 class MetricsPipeline(
     private val context: Context,
@@ -20,21 +27,43 @@ class MetricsPipeline(
     private val message: (String) -> Unit = {}
 ) {
     companion object {
+        /** Default ONNX execution provider preference passed to the native engine. */
         const val DEFAULT_PROVIDER = "auto"
         private const val TAG = "MetricsPipeline"
     }
 
+    /** Filename of the semantic segmentation ONNX model. */
     private val segModelFile = "seg_best.onnx"
+    /** Filename of the regression (quantity/calibre) ONNX model. */
     private val regModelFile = "qty_model_rgbdt.onnx"
     private val cppBridge = CppPipelineBridge(context)
 
+    /**
+     * Releases native resources held by the pipeline bridge.
+     * Must be called when the pipeline is no longer needed to avoid memory leaks.
+     */
     fun close() = cppBridge.close()
 
+    /**
+     * Runs the full inference pipeline on an image stored on disk.
+     *
+     * Validates that both ONNX model files exist under [Context.filesDir]/weights/,
+     * then delegates to the JNI bridge which executes segmentation + regression.
+     *
+     * @param imagePath Absolute path to the input image (JPEG/PNG).
+     * @param smoothEdges Whether to apply edge-smoothing post-processing.
+     * @param varietyId Optional variety identifier matching [RuntimeVarietyCatalog] IDs.
+     *        Pass `null` for variety-agnostic inference.
+     * @param visualOverlayBase Path to the high-quality upload copy used by the native
+     *        overlay generator. Pass `null` to skip overlay generation.
+     * @param onSuccess Callback invoked with the parsed [Success] result on completion.
+     * @param onFailure Callback invoked with a human-readable error message on failure.
+     */
     fun invokeFromFile(
         imagePath: String,
         smoothEdges: Boolean,
         varietyId: Int?,
-        visualOverlayBase: String? = null, // ✅ NUEVO: Ruta de la copia de upload_512
+        visualOverlayBase: String? = null, // Ruta de la copia de upload_512 para el overlay nativo
         onSuccess: (Success) -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -67,11 +96,26 @@ class MetricsPipeline(
     }
 }
 
+/**
+ * Lightweight wrapper around the JNI native library [libgrape_pipeline_jni].
+ *
+ * Handles native library loading, JSON result parsing, and error translation
+ * from JNI exceptions into Kotlin callbacks. Kept private so all JNI details
+ * remain encapsulated behind the [MetricsPipeline] public API.
+ */
 private class CppPipelineBridge(private val context: Context) {
     private var nativeLoaded = try { System.loadLibrary("grape_pipeline_jni"); true } catch (t: Throwable) { false }
 
+    /** Releases native-side resources if the library was loaded successfully. */
     fun close() { if (nativeLoaded) nativeRelease() }
 
+    /**
+     * Invokes the native pipeline and maps the result to a [Success] instance.
+     *
+     * @param varietyId Sentinel -1 is used when no variety is selected (native side
+     *        treats -1 as "variety agnostic").
+     * @param visualOverlayPath Empty string signals that overlay generation is not requested.
+     */
     fun invoke(imagePath: String, segModelPath: String, regModelPath: String, smoothEdges: Boolean, varietyId: Int?, useDepth: Boolean, providerPreference: String, visualOverlayPath: String?, onSuccess: (Success) -> Unit, onFailure: (String) -> Unit) {
         if (!nativeLoaded) { onFailure("Libreria nativa no cargada"); return }
         try {

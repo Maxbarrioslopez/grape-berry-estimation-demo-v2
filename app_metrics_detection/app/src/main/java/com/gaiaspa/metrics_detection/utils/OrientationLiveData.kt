@@ -17,7 +17,7 @@ class OrientationLiveData(context: Context, characteristics: CameraCharacteristi
                 else -> 0
             }
             val sensorOrientationDegrees =
-                characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)!!
+                characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
 
             val relative = (sensorOrientationDegrees + rotation + 360) % 360
             if (relative != value) postValue(relative)

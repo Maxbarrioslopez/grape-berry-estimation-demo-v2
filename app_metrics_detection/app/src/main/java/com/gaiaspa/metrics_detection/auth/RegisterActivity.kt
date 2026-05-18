@@ -59,19 +59,19 @@ class RegisterActivity : AppCompatActivity() {
         val inviteCode = binding.etInviteCode.text.toString().trim()
 
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            Toast.makeText(this, "Ingrese un correo electrónico válido", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.invalid_email), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (inviteCode.isEmpty()) {
-            Toast.makeText(this, "El código de invitación es obligatorio", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.invite_code_required), Toast.LENGTH_SHORT).show()
             return
         }
 
         // Transición visual
         binding.layoutStage1.visibility = View.GONE
         binding.layoutStage2.visibility = View.VISIBLE
-        binding.btnRegister.text = "Finalizar Registro"
+        binding.btnRegister.text = getString(R.string.register_final_button)
         currentStage = 2
     }
 
@@ -83,6 +83,10 @@ class RegisterActivity : AppCompatActivity() {
 
     /**
      * Procesa la solicitud final de registro usando el DTO CompanyRegisterRequest.
+     *
+     * La validación de consentimiento de datos (cbConsent) es local.
+     * El backend no tiene campo de consentimiento; si se requiere validación
+     * del lado del servidor, debe agregarse en CompanyRegisterRequest y ApiService.
      */
     private fun performRegister() {
         val name = binding.etNameRegister.text.toString().trim()
@@ -94,17 +98,22 @@ class RegisterActivity : AppCompatActivity() {
         val confirmPassword = binding.etConfirmPasswordRegister.text.toString().trim()
 
         if (name.isEmpty() || lastname.isEmpty() || rut.isEmpty() || password.isEmpty()) {
-            Toast.makeText(this, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.complete_all_fields), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (password != confirmPassword) {
-            Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.passwords_not_match), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (password.length < 6) {
-            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.password_min_length), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!binding.cbConsent.isChecked) {
+            Toast.makeText(this, getString(R.string.consent_required), Toast.LENGTH_LONG).show()
             return
         }
 
@@ -127,19 +136,19 @@ class RegisterActivity : AppCompatActivity() {
                 }
 
                 if (response.isSuccessful) {
-                    Toast.makeText(this@RegisterActivity, "Cuenta creada correctamente. Inicia sesión.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@RegisterActivity, getString(R.string.account_created_success), Toast.LENGTH_LONG).show()
                     finish()
                 } else {
                     val errorMsg = when (response.code()) {
-                        401 -> "Código de invitación inválido"
-                        403 -> "Este código ya no es válido o ya fue usado"
-                        409 -> "Este correo electrónico ya está registrado"
-                        else -> "Error en el registro: ${response.code()}"
+                        401 -> getString(R.string.invalid_invite_code)
+                        403 -> getString(R.string.invite_code_expired)
+                        409 -> getString(R.string.email_already_registered)
+                        else -> "${getString(R.string.network_error_prefix)}${response.code()}"
                     }
                     Toast.makeText(this@RegisterActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@RegisterActivity, "Error de red: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@RegisterActivity, "${getString(R.string.network_error_prefix)}${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 setLoadingState(false)
             }

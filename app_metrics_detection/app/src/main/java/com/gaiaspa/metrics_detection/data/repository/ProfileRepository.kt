@@ -2,6 +2,7 @@ package com.gaiaspa.metrics_detection.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.data.local.DatabaseProvider
 import com.gaiaspa.metrics_detection.data.local.ProfileDao
 import com.gaiaspa.metrics_detection.data.model.Profile
@@ -93,7 +94,11 @@ class ProfileRepository private constructor(
                     TokenProvider.logout() // Limpiamos tokens localmente
                 } else {
                     // Manejar error de logout en servidor
-                    Log.e(TAG, "Falló logout: ${response.code()} -> ${response.errorBody()?.string()}")
+                    if (BuildConfig.DEBUG) {
+                        Log.e(TAG, "Falló logout: ${response.code()} -> ${response.errorBody()?.string()}")
+                    } else {
+                        Log.e(TAG, "Falló logout: código ${response.code()}")
+                    }
             }
         }
         }else{

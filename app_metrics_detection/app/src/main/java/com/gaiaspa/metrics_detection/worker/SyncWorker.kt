@@ -3,6 +3,7 @@ package com.gaiaspa.metrics_detection.worker
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
+import com.gaiaspa.metrics_detection.BuildConfig
 import androidx.work.WorkerParameters
 import com.gaiaspa.metrics_detection.data.model.toBatchLoteGrapeRequest
 import com.gaiaspa.metrics_detection.data.repository.LoteRepository
@@ -13,9 +14,22 @@ import java.io.File
 import java.io.IOException
 
 /**
- * SyncWorker - v8.5 ROBUST UPLOAD
- * Sincroniza lotes locales con el backend.
- * Ajuste: Evita envíos vacíos y clasifica errores terminales para no bloquear la cola.
+ * [CoroutineWorker] responsable de subir lotes locales pendientes al backend y eliminar
+ * lotes marcados para borrado.
+ *
+ * ## Rol en la arquitectura
+ * Es el componente central de la sincronización offline-first. Se instancia desde
+ * [SyncManager] periódicamente o bajo demanda, y recorre los lotes no sincronizados en
+ * [LoteRepository] decidiendo por cada uno si debe subirse (insert) o eliminarse del
+ * servidor (delete).
+ *
+ * ## Clasificación de errores
+ * - Errores 4xx (excepto 401) se tratan como **terminales** para ese lote: se marca
+ *   como atendido para no bloquear la cola con reintentos inútiles.
+ * - Errores 5xx, IOException, y 401 provocan [Result.retry] para que WorkManager
+ *   reintente más tarde con backoff exponencial.
+ * - Si tras filtrar archivos en disco ninguna imagen es válida, el lote se marca como
+ *   error terminal y se devuelve `true` (atendido) igualmente.
  */
 class SyncWorker(
     appContext: Context,
@@ -26,6 +40,13 @@ class SyncWorker(
         private const val TAG = "SyncWorker_TRACE"
     }
 
+    /**
+     * Itera los lotes pendientes de sincronización mediante [synchronizeLotes].
+     *
+     * @return [Result.success] si todos los lotes se procesaron sin error;
+     *         [Result.retry] si algún lote falló de forma transitoria (5xx, IOException);
+     *         [Result.failure] solo ante errores críticos inesperados.
+     */
     override suspend fun doWork(): Result {
         val repository = LoteRepository.getInstance(applicationContext)
         Log.d(TAG, "--- INICIO SYNC WORKER ---")
@@ -51,6 +72,14 @@ class SyncWorker(
         }
     }
 
+    /**
+     * Recorre [LoteRepository.getNotSynced] y despacha cada lote a [processUpload]
+     * o [processDeletion] según su marca [Lote.toDelete].
+     *
+     * @param repository instancia única del repositorio local.
+     * @return `true` si **todos** los lotes se procesaron exitosamente;
+     *         `false` si al menos uno requirió reintento.
+     */
     private suspend fun synchronizeLotes(repository: LoteRepository): Boolean {
         val unsyncedLotes = repository.getNotSynced()
         if (unsyncedLotes.isEmpty()) return true
@@ -62,7 +91,6 @@ class SyncWorker(
             try {
                 val success = if (lote.toDelete) {
                     processDeletion(repository, lote.id, lote.cloudId)
-                    true 
                 } else {
                     processUpload(repository, lote)
                 }
@@ -76,6 +104,26 @@ class SyncWorker(
         return overallSuccess
     }
 
+    /**
+     * Sube un lote al backend tras validar que los archivos de imagen existen en disco.
+     *
+     * ## Flujo
+     * 1. Filtra [Lote.uploadImages] descartando paths que no apunten a un archivo real
+     *    y no vacío. Si el filtro produce la misma cantidad de paths que
+     *    [Lote.normalizedImages] (y no está vacío), se usan los upload filtrados;
+     *    en caso contrario se usan los normalized filtrados.
+     * 2. Si tras el filtro no queda ninguna imagen válida se marca error **terminal**
+     *    (el lote no podrá subirse nunca) y se devuelve `true` para no bloquear la cola.
+     * 3. Si el número de imágenes no coincide con [Lote.calPredicts] se registra un
+     *    warning como posible incumplimiento de contrato con el backend.
+     * 4. Llama a [LoteRepository.insertLoteGrapeCloud] y clasifica la respuesta HTTP:
+     *    - 2xx con body no nulo → éxito, se actualiza el lote y se borran los archivos locales.
+     *    - 2xx con body nulo → reintento.
+     *    - 4xx (≠401) → error terminal.
+     *    - Resto → reintento.
+     *
+     * @return `true` si el lote fue atendido (éxito o error terminal), `false` si debe reintentarse.
+     */
     private suspend fun processUpload(repository: LoteRepository, lote: Lote): Boolean {
         // 1. Validar archivos físicos reales
         val uploadPaths = lote.uploadImages.filter { path ->
@@ -92,14 +140,22 @@ class SyncWorker(
             }
         }
 
+        val logFinalPaths = finalPaths.joinToString(", ") { p -> p.substringAfterLast('/') }
+        Log.d("SYNC_IMAGE_SOURCE", "Lote ${lote.id}: overlayCount=${lote.overlayImages.size} uploadCount=${lote.uploadImages.size} finalPaths=[$logFinalPaths]")
+
         // ✅ AJUSTE ROBUSTEZ: Si tras filtrar no hay nada, es un error TERMINAL.
         if (finalPaths.isEmpty()) {
-            Log.e("UPLOAD", "Lote ${lote.id} sin archivos válidos en disco para subir")
+            Log.e("SYNC_IMAGE_SOURCE", "Lote ${lote.id} sin archivos válidos en disco para subir")
             repository.updateSyncError(lote.id, "TERMINAL: Archivos no encontrados")
             return true // Marcamos como 'atendido' para no bloquear la cola con reintentos inútiles
         }
 
-        Log.d("UPLOAD", "Lote ${lote.id} enviando ${finalPaths.size} archivos")
+        Log.d("SYNC_IMAGE_SOURCE", "Lote ${lote.id} enviando ${finalPaths.size} archivos (uploadImages limpias)")
+        if (finalPaths.size != lote.calPredicts.size) {
+            val message = "Posible contrato backend pendiente: ${finalPaths.size} imagenes y ${lote.calPredicts.size} predicciones"
+            Log.w("SYNC_IMAGE_SOURCE", "Lote ${lote.id}: $message")
+            repository.updateSyncError(lote.id, message)
+        }
 
         // 2. Llamada al Backend
         val response = repository.insertLoteGrapeCloud(
@@ -117,31 +173,71 @@ class SyncWorker(
                     if (file.exists()) file.delete()
                 }
                 true
-            } else false
+            } else {
+                Log.w(TAG, "API SUCCESS Lote ${lote.id} pero body null")
+                false
+            }
         } else {
             val code = response.code()
-            val errorBody = response.errorBody()?.string() ?: "Error"
-            Log.e(TAG, "API FAILURE Lote ${lote.id} (HTTP $code): $errorBody")
-            
+            val rawErrorBody = runCatching { response.errorBody()?.string() }.getOrNull()
+            val safeError = "HTTP $code"
+            val syncErrorToStore = if (BuildConfig.DEBUG) {
+                rawErrorBody ?: safeError
+            } else {
+                safeError
+            }
+
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "API FAILURE Lote ${lote.id} (HTTP $code): $rawErrorBody")
+            } else {
+                Log.e(TAG, "API FAILURE Lote ${lote.id}: $safeError")
+            }
+
             // Clasificación: Errores 4xx (negocio/contrato) son terminales para este lote.
             if (code in 400..499 && code != 401) {
-                repository.updateSyncError(lote.id, "TERMINAL ($code): $errorBody")
+                repository.updateSyncError(lote.id, "TERMINAL ($code): $syncErrorToStore")
                 true // No bloquear cola
             } else {
-                repository.updateSyncError(lote.id, "RETRY ($code): $errorBody")
+                repository.updateSyncError(lote.id, "RETRY ($code): $syncErrorToStore")
                 false // Reintentar (Error 5xx o similar)
             }
         }
     }
 
-    private suspend fun processDeletion(repository: LoteRepository, localId: Long, cloudId: String) {
-        if (cloudId.isNotEmpty()) {
-            val deleteResponse = repository.deleteLoteGrapeCloud(cloudId)
-            if (deleteResponse.isSuccessful || deleteResponse.code() == 404) {
+    /**
+     * Elimina un lote del servidor y posteriormente del almacenamiento local.
+     *
+     * Si [cloudId] está vacío se asume que el lote nunca llegó a subirse y se borra
+     * solo localmente. Un HTTP 404 del servidor se interpreta como éxito (el recurso
+     * ya no existe). Cualquier otro error produce [Result.retry].
+     *
+     * @return `true` si la eliminación (local o remota) fue exitosa, `false` si debe reintentarse.
+     */
+    private suspend fun processDeletion(repository: LoteRepository, localId: Long, cloudId: String): Boolean {
+        return try {
+            if (cloudId.isNotEmpty()) {
+                val deleteResponse = repository.deleteLoteGrapeCloud(cloudId)
+                if (deleteResponse.isSuccessful || deleteResponse.code() == 404) {
+                    repository.deleteLocalLote(localId)
+                    true
+                } else {
+                    val message = "DELETE RETRY (${deleteResponse.code()})"
+                    Log.w(TAG, "No se pudo borrar cloudId $cloudId: $message")
+                    repository.updateSyncError(localId, message)
+                    false
+                }
+            } else {
                 repository.deleteLocalLote(localId)
+                true
             }
-        } else {
-            repository.deleteLocalLote(localId)
+        } catch (e: IOException) {
+            Log.e(TAG, "Error de red eliminando lote $localId cloudId=$cloudId", e)
+            repository.updateSyncError(localId, "DELETE RETRY: ${e.message}")
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error eliminando lote $localId cloudId=$cloudId", e)
+            repository.updateSyncError(localId, "DELETE ERROR: ${e.message}")
+            false
         }
     }
 }

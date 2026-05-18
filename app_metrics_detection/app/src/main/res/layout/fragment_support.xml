@@ -18,7 +18,7 @@
             android:id="@+id/toolbarSupport"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:title="Centro de Soporte"
+            app:title="@string/support_title"
             app:titleCentered="true"
             app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6"
             app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
@@ -59,7 +59,7 @@
                         android:layout_height="wrap_content"
                         android:padding="16dp"
                         android:gravity="center"
-                        android:text="Contacto"
+                        android:text="@string/contact_us"
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
                     <View
@@ -87,7 +87,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="12dp"
-                            android:text="support@metrics.com"
+                            android:text="@string/support_email"
                             android:textSize="14sp"
                             android:textColor="@color/textSecondary"/>
                     </LinearLayout>
@@ -147,25 +147,22 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="12dp"
-                            android:text="Lunes – Viernes / 9:00 – 18:00"
+                            android:text="@string/contact_hours"
                             android:textSize="14sp"
                             android:textColor="@color/textSecondary"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFaqHeader"
+            <TextView
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="24dp"
-                android:text="Preguntas Frecuentes"
-                android:textAllCaps="false"
-                app:cornerRadius="24dp"
-                app:strokeColor="@color/outlineGray"
-                app:strokeWidth="1dp"
-                app:backgroundTint="@android:color/transparent"
-                android:textColor="@color/textPrimary"/>
+                android:layout_height="wrap_content"
+                android:text="@string/faq_title"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/textPrimary"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="16dp"/>
 
             <!-- FAQ 1 -->
             <com.google.android.material.card.MaterialCardView
@@ -198,7 +195,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="¿Cómo puedo recuperar mi contraseña?"
+                            android:text="@string/faq_password_recovery"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
@@ -216,7 +213,7 @@
                         android:layout_height="wrap_content"
                         android:visibility="gone"
                         android:padding="16dp"
-                        android:text="Para recuperar tu contraseña, haz clic en '¿Olvidaste tu contraseña?' en la pantalla de inicio de sesión."
+                        android:text="@string/faq_password_recovery_answer"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"/>
                 </LinearLayout>
@@ -253,7 +250,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="¿Dónde puedo consultar mi historial de lotes?"
+                            android:text="@string/faq_history_access"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
@@ -271,7 +268,7 @@
                         android:layout_height="wrap_content"
                         android:visibility="gone"
                         android:padding="16dp"
-                        android:text="Puedes acceder al historial de lotes en la pestaña 'Historial' en la barra de navegación inferior."
+                        android:text="@string/faq_history_access_answer"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"/>
                 </LinearLayout>
@@ -309,7 +306,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="¿Cómo puedo contactar al soporte técnico?"
+                            android:text="@string/faq_contact"
                             android:textSize="16sp"
                             android:textStyle="bold"/>
 
@@ -327,7 +324,7 @@
                         android:layout_height="wrap_content"
                         android:visibility="gone"
                         android:padding="16dp"
-                        android:text="Puedes contactarnos a través del correo electrónico o el teléfono indicados arriba."
+                        android:text="@string/faq_contact_answer"
                         android:textSize="14sp"
                         android:textColor="@color/textSecondary"/>
                 </LinearLayout>

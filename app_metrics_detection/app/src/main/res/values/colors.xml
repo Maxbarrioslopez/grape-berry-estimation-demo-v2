@@ -1,59 +1,97 @@
 <resources>
 
-
-    <!-- botón habilitado / deshabilitado -->
-    <color name="button_enabled">#3F51B5</color>    <!-- Indigo 500 -->
-    <color name="button_disabled">#B0B0B0</color>   <!-- Grey 400 -->
-    <!-- texto sobre botón habilitado / deshabilitado -->
-    <color name="button_text_enabled">#FFFFFF</color>  <!-- blanco -->
-    <color name="button_text_disabled">#F0F0F0</color> <!-- blanco tenue -->
-
+    <!-- Premium agritech surfaces -->
+    <color name="md_background">#F6F8F6</color>
+    <color name="md_surface">#FFFFFF</color>
+    <color name="md_surface_soft">#EEF4EE</color>
+    <color name="md_surface_subtle">#F9FBF9</color>
+    <color name="md_border_soft">#DDE5DD</color>
+    <color name="md_border_strong">#C4D0C4</color>
 
     <!-- Brand colors -->
-    <color name="colorPrimary">#3F51B5</color>       <!-- Indigo 500 -->
-    <color name="colorPrimaryMedium">#aeb6e3</color>
-
-    <color name="colorPrimaryLight">#f7f8fc</color>
-    <color name="colorPrimaryDark">#303F9F</color>   <!-- Indigo 700 -->
-    <color name="colorAccent">#2196F3</color>        <!-- Blue 500 -->
+    <color name="colorPrimary">#2E7D32</color>
+    <color name="colorPrimaryMedium">#B7D9BA</color>
+    <color name="colorPrimaryLight">#E8F5E9</color>
+    <color name="colorPrimaryDark">#1B5E20</color>
+    <color name="colorAccent">#43A047</color>
 
     <!-- Text colors -->
-    <color name="textPrimary">#212121</color>        <!-- Grey 900 -->
-    <color name="textSecondary">#757575</color>      <!-- Grey 600 -->
-    <color name="textHint">#BDBDBD</color>           <!-- Grey 400 -->
+    <color name="textPrimary">#1F2933</color>
+    <color name="textSecondary">#5F6B5F</color>
+    <color name="textHint">#8A958A</color>
+    <color name="textOnPrimary">#FFFFFF</color>
 
-
-    <!-- Surfaces and outlines -->
-    <color name="surface">#FFFFFF</color>
-    <color name="outlineGray">#D1D5DB</color>
+    <!-- Legacy aliases kept for existing layouts -->
+    <color name="surface">@color/md_surface</color>
+    <color name="outlineGray">@color/md_border_soft</color>
 
     <!-- Feedback colors -->
-    <color name="error">#F44336</color>              <!-- Red 500 -->
-    <color name="success">#4CAF50</color>            <!-- Green 500 -->
-    <color name="warning">#FFC107</color>            <!-- Amber 500 -->
+    <color name="error">#B3261E</color>
+    <color name="success">#2E7D32</color>
+    <color name="warning">#A66B00</color>
+    <color name="info">#1D4ED8</color>
+
+    <!-- Soft feedback surfaces -->
+    <color name="success_soft">#E8F5E9</color>
+    <color name="warning_soft">#FFF7DB</color>
+    <color name="error_soft">#FDECEC</color>
+    <color name="info_soft">#EAF2FF</color>
+
+    <!-- Chips -->
+    <color name="chip_pending_bg">#EEF2F0</color>
+    <color name="chip_pending_text">#4F5B4F</color>
+    <color name="chip_pending_border">#D5DDD5</color>
+    <color name="chip_incomplete_bg">#FFF7DB</color>
+    <color name="chip_incomplete_text">#7A4B00</color>
+    <color name="chip_incomplete_border">#F3D38C</color>
+    <color name="chip_fused_bg">#E8F5E9</color>
+    <color name="chip_fused_text">#1B5E20</color>
+    <color name="chip_fused_border">#B7D9BA</color>
+    <color name="chip_error_bg">#FDECEC</color>
+    <color name="chip_error_text">#8B1A12</color>
+    <color name="chip_error_border">#F5C2BE</color>
+    <color name="chip_info_bg">#EAF2FF</color>
+    <color name="chip_info_text">#164A9B</color>
+    <color name="chip_info_border">#C9DBFF</color>
+
+    <!-- Histogram -->
+    <color name="histogram_start">#8AD48E</color>
+    <color name="histogram_end">#2E7D32</color>
+    <color name="histogram_grid">#E5ECE5</color>
+    <color name="histogram_axis">#8A958A</color>
+
+    <!-- Buttons -->
+    <color name="button_enabled">@color/colorPrimary</color>
+    <color name="button_disabled">#B7C0B7</color>
+    <color name="button_text_enabled">@color/textOnPrimary</color>
+    <color name="button_text_disabled">#F6F8F6</color>
+    <color name="buttonEnabled">@color/colorPrimary</color>
+    <color name="buttonDisabled">@color/button_disabled</color>
+    <color name="button_secondary_bg">#F2F7F2</color>
+    <color name="button_danger_bg">#FDECEC</color>
 
     <!-- Link color -->
-    <color name="linkBlue">#2196F3</color>           <!-- Blue 500 -->
-
-    <!-- Button states -->
-    <color name="buttonEnabled">@color/colorPrimary</color>
-    <color name="buttonDisabled">#B0B0B0</color>
+    <color name="linkBlue">@color/info</color>
 
     <!-- Overlays -->
-    <color name="overlayBlue">#3F51B5</color>
-    <color name="overlayGreen">#009688</color>
-    <color name="overlayRed">#E53935</color>
-    <color name="overlay_orange">#FF5722</color>
-    <color name="overlay_purple">#9C27B0</color>
-    <color name="overlay_pink">#C2185B</color>
-    <color name="overlay_cyan">#00BCD4</color>
+    <color name="overlay_panel_bg">#D9FFFFFF</color>
+    <color name="overlay_button_bg">#F0FFFFFF</color>
+    <color name="overlay_icon">#213027</color>
+    <color name="fullscreen_scrim">#F21A211D</color>
+    <color name="overlayBlue">@color/info</color>
+    <color name="overlayGreen">@color/success</color>
+    <color name="overlayRed">@color/error</color>
+    <color name="overlay_orange">#C77600</color>
+    <color name="overlay_purple">#7C3AED</color>
+    <color name="overlay_pink">#BE185D</color>
+    <color name="overlay_cyan">#0891B2</color>
     <color name="overlay_gray">#607D8B</color>
 
-    <!--    Images-->
-    <color name="brown">#6A4E23</color> <!-- Color café -->
-    <color name="dark_red">#8B0000</color> <!-- Rojo oscuro -->
-    <color name="pink">#FFC0CB</color> <!-- Rosado -->
-    <color name="dark_green">#006400</color> <!-- Verde oscuro -->
-    <color name="light_green">#90EE90</color> <!-- Verde claro -->
+    <!-- Images -->
+    <color name="brown">#6A4E23</color>
+    <color name="dark_red">#8B0000</color>
+    <color name="pink">#FFC0CB</color>
+    <color name="dark_green">#006400</color>
+    <color name="light_green">#90EE90</color>
 
 </resources>

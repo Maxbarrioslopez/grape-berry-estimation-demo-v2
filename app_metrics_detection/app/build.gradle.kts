@@ -14,20 +14,23 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
-val prepareNativeDeps by tasks.registering(Exec::class) {
+val prepareNativeDeps by tasks.registering {
     group = "native"
-    description = "Descarga y extrae ONNX Runtime Android + OpenCV Android SDK en third_party"
-    workingDir = rootProject.projectDir
+    description = "Prepara dependencias nativas. En Linux no ejecuta el script PowerShell."
 
-    if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
-        commandLine(
-            "powershell",
-            "-ExecutionPolicy", "Bypass",
-            "-File", "scripts/prepare_native_deps.ps1"
-        )
-    } else {
-        doFirst {
-            throw GradleException("Este proyecto incluye automatizacion Windows via scripts/prepare_native_deps.ps1.")
+    doLast {
+        if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
+            exec {
+                workingDir = rootProject.projectDir
+                commandLine(
+                    "powershell",
+                    "-ExecutionPolicy", "Bypass",
+                    "-File", "scripts/prepare_native_deps.ps1"
+                )
+            }
+        } else {
+            println("Linux detectado: se omite scripts/prepare_native_deps.ps1")
+            println("Verifica manualmente que existan third_party/onnxruntime y third_party/opencv.")
         }
     }
 }
@@ -112,6 +115,12 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+    }
+
+    lint {
+        // Glide ships NotificationTarget, but this app does not post notifications.
+        // Keep POST_NOTIFICATIONS out until a real notification UX exists.
+        disable += "NotificationPermission"
     }
 
     externalNativeBuild {
