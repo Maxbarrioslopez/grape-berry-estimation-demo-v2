@@ -2,6 +2,7 @@ package com.gaiaspa.metrics_detection
 
 import android.app.Application
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import com.gaiaspa.metrics_detection.network.TokenProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,12 +28,22 @@ class MetricsDetectionApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        applyDefaultLightMode()
         TokenProvider.init(this)
 
         // Asynchronous extraction on IO dispatcher to avoid blocking the main thread.
         CoroutineScope(Dispatchers.IO).launch {
             prepareModels()
         }
+    }
+
+    private fun applyDefaultLightMode() {
+        val isDark = getSharedPreferences("dark_mode", MODE_PRIVATE)
+            .getBoolean("enabled", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (isDark) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 
     /**

@@ -149,6 +149,190 @@ void AppendIntArray(std::ostringstream& oss, const char* name, const std::vector
     oss << "]";
 }
 
+cv::Mat MakeBinaryOverlayMask(const cv::Mat& input) {
+    if (input.empty()) {
+        return {};
+    }
+
+    cv::Mat gray;
+    if (input.channels() == 1) {
+        gray = input;
+    } else {
+        cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
+    }
+
+    cv::Mat u8;
+    if (gray.depth() == CV_8U) {
+        u8 = gray.clone();
+    } else {
+        gray.convertTo(u8, CV_8U);
+    }
+
+    cv::Mat binary;
+    cv::threshold(u8, binary, 127.0, 255.0, cv::THRESH_BINARY);
+    return binary;
+}
+
+cv::Mat MergeInstanceMasksForOverlay(
+    const std::vector<cv::Mat>& instance_masks,
+    const cv::Size& fallback_size) {
+    cv::Size merged_size = fallback_size;
+    for (const cv::Mat& instance_mask : instance_masks) {
+        if (!instance_mask.empty()) {
+            merged_size = instance_mask.size();
+            break;
+        }
+    }
+    if (merged_size.width <= 0 || merged_size.height <= 0) {
+        return {};
+    }
+
+    cv::Mat merged = cv::Mat::zeros(merged_size, CV_8U);
+    for (const cv::Mat& instance_mask : instance_masks) {
+        cv::Mat binary = MakeBinaryOverlayMask(instance_mask);
+        if (binary.empty()) {
+            continue;
+        }
+        if (binary.size() != merged.size()) {
+            cv::resize(binary, binary, merged.size(), 0.0, 0.0, cv::INTER_NEAREST);
+        }
+        cv::max(merged, binary, merged);
+    }
+    return merged;
+}
+
+cv::Mat BuildGlobalGrapeMaskForOverlay(const PipelineInputs& inputs, const cv::Size& canvas_size) {
+    cv::Mat mask = MakeBinaryOverlayMask(inputs.seg.grapes_global_orig);
+
+    if (mask.empty() || cv::countNonZero(mask) == 0) {
+        mask = MakeBinaryOverlayMask(inputs.seg.grapes_global_lb);
+    }
+
+    if (mask.empty() || cv::countNonZero(mask) == 0) {
+        mask = MergeInstanceMasksForOverlay(
+            inputs.seg.grape_instance_masks_lb,
+            inputs.seg.grapes_global_lb.size());
+    }
+
+    if (mask.empty() || canvas_size.width <= 0 || canvas_size.height <= 0) {
+        return {};
+    }
+
+    if (mask.size() != canvas_size) {
+        cv::resize(mask, mask, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+    }
+
+    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel);
+    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    cv::GaussianBlur(mask, mask, cv::Size(3, 3), 0.0);
+    cv::threshold(mask, mask, 96.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    return mask;
+}
+
+void ApplyMagentaMaskOverlay(cv::Mat& canvas, const cv::Mat& mask) {
+    if (canvas.empty() || mask.empty()) {
+        return;
+    }
+
+    const cv::Scalar fill_color(180, 0, 180);
+    const cv::Scalar contour_color(255, 0, 255);
+    constexpr double kFillAlpha = 0.24;
+
+    cv::Mat color_layer(canvas.size(), canvas.type(), fill_color);
+    cv::Mat blended;
+    cv::addWeighted(canvas, 1.0 - kFillAlpha, color_layer, kFillAlpha, 0.0, blended);
+    blended.copyTo(canvas, mask);
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(mask.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    if (contours.empty()) {
+        return;
+    }
+
+    const int contour_thickness = std::max(2, std::min(4, canvas.cols / 420));
+    cv::drawContours(canvas, contours, -1, contour_color, contour_thickness, cv::LINE_AA);
+}
+
+cv::Mat BuildGlobalPingpongMaskForOverlay(const PipelineInputs& inputs, const cv::Size& canvas_size) {
+    cv::Mat mask = MakeBinaryOverlayMask(inputs.seg.pingpong_global_orig);
+
+    if (mask.empty() || cv::countNonZero(mask) == 0) {
+        mask = MakeBinaryOverlayMask(inputs.seg.pingpong_global_lb);
+    }
+
+    if (mask.empty() || cv::countNonZero(mask) == 0) {
+        mask = MergeInstanceMasksForOverlay(
+            inputs.seg.pingpong_instance_masks_lb,
+            inputs.seg.pingpong_global_lb.size());
+    }
+
+    if (mask.empty() || canvas_size.width <= 0 || canvas_size.height <= 0) {
+        return {};
+    }
+
+    if (mask.size() != canvas_size) {
+        cv::resize(mask, mask, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+    }
+
+    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel);
+    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    cv::GaussianBlur(mask, mask, cv::Size(3, 3), 0.0);
+    cv::threshold(mask, mask, 96.0, 255.0, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+
+    return mask;
+}
+
+void ApplyPingpongMaskOverlay(cv::Mat& canvas, const cv::Mat& mask) {
+    if (canvas.empty() || mask.empty()) {
+        return;
+    }
+
+    const cv::Scalar fill_color(0, 220, 255);
+    const cv::Scalar contour_color(0, 255, 255);
+    constexpr double kFillAlpha = 0.20;
+
+    cv::Mat color_layer(canvas.size(), canvas.type(), fill_color);
+    cv::Mat blended;
+    cv::addWeighted(canvas, 1.0 - kFillAlpha, color_layer, kFillAlpha, 0.0, blended);
+    blended.copyTo(canvas, mask);
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(mask.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    if (contours.empty()) {
+        return;
+    }
+
+    const int contour_thickness = std::max(2, std::min(3, canvas.cols / 560));
+    cv::drawContours(canvas, contours, -1, contour_color, contour_thickness, cv::LINE_AA);
+}
+
 }  // namespace
 
 float ComputeHistogramMean(const std::vector<float>& hist_prob, const std::vector<int>& bins) {
@@ -326,150 +510,42 @@ void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result) {
     }
 }
 
-    void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, const PipelineResult& result) {
-        if (path.empty() || !fs::exists(path)) return;
-
-        cv::Mat canvas = cv::imread(path);
-        if (canvas.empty()) return;
-
-        const int orig_w = inputs.seg.orig_bgr.cols;
-        const int orig_h = inputs.seg.orig_bgr.rows;
-        if (orig_w <= 0 || orig_h <= 0) return;
-
-        const float scaleX = static_cast<float>(canvas.cols) / static_cast<float>(orig_w);
-        const float scaleY = static_cast<float>(canvas.rows) / static_cast<float>(orig_h);
-
-        // Máscara global de ocupación: define dónde "ya hay uva"
-        cv::Mat global_occ = cv::Mat::zeros(canvas.size(), CV_8UC1);
-
-        struct DrawItem {
-            cv::Point2f center;
-            cv::Size2f visual_axes;  // tamaño del contorno visible
-            cv::Size2f occ_axes;     // tamaño usado para oclusión / corte
-            cv::Scalar color;
-        };
-
-        std::vector<DrawItem> items;
-        items.reserve(result.detections.size());
-
-        // Estilo cliente final
-        const cv::Scalar kClientGreen(76, 175, 80);  // uvas
-        const cv::Scalar kTechBlue(255, 180, 50);    // ping pong
-
-        // 1) Preparar items y construir máscara global de ocupación
-        for (const auto& det : result.detections) {
-            if (det.class_name.find("bunch") != std::string::npos) {
-                continue;
-            }
-
-            if (det.score < 0.35f) {
-                continue;
-            }
-            const bool is_ping = (det.class_name.find("ping") != std::string::npos);
-            const cv::Scalar color = is_ping ? kTechBlue : kClientGreen;
-
-            const cv::Point2f center(
-                    (det.x + det.w / 2.0f) * scaleX,
-                    (det.y + det.h / 2.0f) * scaleY
-            );
-
-            // visual_axes: lo que el usuario ve
-            const cv::Size2f visual_axes(
-                    (det.w * 0.43f) * scaleX,
-                    (det.h * 0.43f) * scaleY
-            );
-
-            // occ_axes: lo que usa el sistema para cortar contornos (misma escala que visual para evitar clipping)
-            const cv::Size2f occ_axes(
-                    (det.w * 0.43f) * scaleX,
-                    (det.h * 0.43f) * scaleY
-            );
-
-            items.push_back({center, visual_axes, occ_axes, color});
-
-            // La ocupación global debe usar occ_axes, no visual_axes
-            cv::ellipse(
-                    global_occ,
-                    center,
-                    occ_axes,
-                    0.0,
-                    0.0,
-                    360.0,
-                    cv::Scalar(255),
-                    cv::FILLED
-            );
-        }
-
-        GP_LOGD("NATIVE_OVERLAY_STYLE: FINAL_CLIENT_GREEN_BLUE_OCCLUSION | Detections: %zu", items.size());
-
-        // 2) Renderizado local por ROI con corte de contornos
-        for (const auto& item : items) {
-            const int pad = 2;
-
-            // El ROI debe cubrir completamente el contorno visible
-            cv::Rect roi_rect(
-                    static_cast<int>(std::floor(item.center.x - item.visual_axes.width - pad)),
-                    static_cast<int>(std::floor(item.center.y - item.visual_axes.height - pad)),
-                    static_cast<int>(std::ceil(item.visual_axes.width * 2.0f + pad * 2.0f)),
-                    static_cast<int>(std::ceil(item.visual_axes.height * 2.0f + pad * 2.0f))
-            );
-
-            roi_rect &= cv::Rect(0, 0, canvas.cols, canvas.rows);
-            if (roi_rect.width <= 0 || roi_rect.height <= 0) {
-                continue;
-            }
-
-            cv::Mat local_stroke = cv::Mat::zeros(roi_rect.size(), CV_8UC1);
-            cv::Mat self_fill    = cv::Mat::zeros(roi_rect.size(), CV_8UC1);
-
-            const cv::Point2f local_center(
-                    item.center.x - static_cast<float>(roi_rect.x),
-                    item.center.y - static_cast<float>(roi_rect.y)
-            );
-
-            // Contorno visible: usa visual_axes
-            cv::ellipse(
-                    local_stroke,
-                    local_center,
-                    item.visual_axes,
-                    0.0,
-                    0.0,
-                    360.0,
-                    cv::Scalar(255),
-                    1,
-                    cv::LINE_AA
-            );
-
-            // Relleno propio para restarse de la ocupación: usa occ_axes
-            cv::ellipse(
-                    self_fill,
-                    local_center,
-                    item.occ_axes,
-                    0.0,
-                    0.0,
-                    360.0,
-                    cv::Scalar(255),
-                    cv::FILLED
-            );
-
-            // Otras uvas = ocupación global menos mi propio cuerpo
-            cv::Mat others_occ = global_occ(roi_rect).clone();
-            cv::subtract(others_occ, self_fill, others_occ);
-
-            // Invertimos para quedarnos solo con zonas libres
-            cv::Mat others_inv;
-            cv::bitwise_not(others_occ, others_inv);
-
-            // El contorno visible solo puede pintarse donde no invade otra uva
-            cv::Mat visible_stroke;
-            cv::bitwise_and(local_stroke, others_inv, visible_stroke);
-
-            // Pintado final
-            canvas(roi_rect).setTo(item.color, visible_stroke);
-        }
-
-        cv::imwrite(path, canvas);
+void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, const PipelineResult& result) {
+    (void)result;
+    if (path.empty() || !fs::exists(path)) {
+        return;
     }
+
+    cv::Mat canvas = cv::imread(path, cv::IMREAD_COLOR);
+    if (canvas.empty()) {
+        return;
+    }
+
+    cv::Mat grape_mask = BuildGlobalGrapeMaskForOverlay(inputs, canvas.size());
+    cv::Mat ping_mask = BuildGlobalPingpongMaskForOverlay(inputs, canvas.size());
+
+    const bool has_grape = !grape_mask.empty() && cv::countNonZero(grape_mask) > 0;
+    const bool has_ping  = !ping_mask.empty()  && cv::countNonZero(ping_mask)  > 0;
+
+    if (!has_grape && !has_ping) {
+        GP_LOGD("NATIVE_OVERLAY_STYLE: MAGENTA_CYAN | empty both masks, keeping base image");
+        return;
+    }
+
+    if (has_grape) {
+        ApplyMagentaMaskOverlay(canvas, grape_mask);
+    }
+
+    if (has_ping) {
+        ApplyPingpongMaskOverlay(canvas, ping_mask);
+    }
+
+    cv::imwrite(path, canvas);
+    GP_LOGD(
+        "NATIVE_OVERLAY_STYLE: MAGENTA_CYAN | grape_pixels=%d ping_pixels=%d",
+        has_grape ? cv::countNonZero(grape_mask) : 0,
+        has_ping  ? cv::countNonZero(ping_mask)  : 0);
+}
 
 std::string PipelineResultToJson(const PipelineResult& result) {
     std::ostringstream oss;
