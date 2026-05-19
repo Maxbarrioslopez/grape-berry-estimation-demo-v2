@@ -5,22 +5,24 @@
     android:id="@+id/supportLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/surface">
+    android:background="@color/md_background">
 
     <!-- AppBar con título centrado y botón back -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/surface"
+        android:background="@color/md_background"
         app:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbarSupport"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@color/md_background"
             app:title="@string/support_title"
             app:titleCentered="true"
-            app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+            app:titleTextAppearance="@style/TextAppearance.Metrics.ToolbarTitle"
+            app:titleTextColor="@color/textPrimary"
             app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -29,7 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:padding="16dp"
+        android:padding="@dimen/screen_gutter"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -42,8 +44,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/md_surface"
+                app:cardCornerRadius="@dimen/radius_card"
                 app:strokeColor="@color/outlineGray"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
@@ -117,7 +119,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="12dp"
-                            android:text="+56 9 8765 4321"
+                            android:text="@string/support_phone"
                             android:textSize="14sp"
                             android:textColor="@color/textSecondary"/>
                     </LinearLayout>
@@ -174,7 +176,7 @@
                 app:cardElevation="0dp"
                 android:backgroundTint="@android:color/transparent"
 
-                app:cardCornerRadius="0dp">
+                app:cardCornerRadius="@dimen/radius_card_inner">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -229,7 +231,7 @@
                 app:cardElevation="0dp"
                 android:backgroundTint="@android:color/transparent"
 
-                app:cardCornerRadius="0dp">
+                app:cardCornerRadius="@dimen/radius_card_inner">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -285,7 +287,7 @@
 
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp"
-                app:cardCornerRadius="0dp">
+                app:cardCornerRadius="@dimen/radius_card_inner">
 
                 <LinearLayout
                     android:layout_width="match_parent"

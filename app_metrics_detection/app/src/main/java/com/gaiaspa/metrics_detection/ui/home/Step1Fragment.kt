@@ -70,6 +70,9 @@ class Step1Fragment : Fragment() {
             homeViewModel.selectedVariety.value = sel
             updateButtonState()
         }
+        binding.etVariety.setOnClickListener {
+            binding.etVariety.showDropDown()
+        }
 
         // Reflect ViewModel selection changes (e.g. restore) in the UI
         homeViewModel.selectedVariety.observe(viewLifecycleOwner) { sel ->

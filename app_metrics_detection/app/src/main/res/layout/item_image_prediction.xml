@@ -133,7 +133,7 @@
                 android:layout_height="76dp"
                 android:foreground="?attr/selectableItemBackgroundBorderless"
                 app:cardBackgroundColor="@color/md_surface_soft"
-                app:cardCornerRadius="12dp"
+                app:cardCornerRadius="@dimen/radius_card_inner"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/md_border_soft"
                 app:strokeWidth="1dp">
@@ -159,7 +159,7 @@
                     android:id="@+id/tvCompactQty"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="--"
+                    android:text="@string/metric_placeholder"
                     android:textColor="@color/textPrimary"
                     android:textSize="30sp"
                     android:textStyle="bold" />
@@ -177,7 +177,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="--"
+                    android:text="@string/metric_placeholder"
                     android:textColor="@color/textSecondary"
                     android:textSize="11sp" />
 
@@ -185,7 +185,7 @@
                     android:id="@+id/tvCompactMode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="--"
+                    android:text="@string/metric_placeholder"
                     android:textColor="@color/textSecondary"
                     android:textSize="11sp" />
 
@@ -193,7 +193,7 @@
                     android:id="@+id/tvCompactStd"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="--"
+                    android:text="@string/metric_placeholder"
                     android:textColor="@color/textSecondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -210,7 +210,7 @@
                 android:layout_width="24dp"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text=">"
+                android:text="@string/chevron_right"
                 android:textColor="@color/colorPrimaryDark"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -277,7 +277,7 @@
                     android:layout_marginTop="8dp"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:cardBackgroundColor="@color/md_surface"
-                    app:cardCornerRadius="18dp"
+                    app:cardCornerRadius="@dimen/radius_card_inner"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/md_border_soft"
                     app:strokeWidth="1dp">
@@ -412,7 +412,7 @@
                     android:layout_marginTop="8dp"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     app:cardBackgroundColor="@color/md_surface"
-                    app:cardCornerRadius="18dp"
+                    app:cardCornerRadius="@dimen/radius_card_inner"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/md_border_soft"
                     app:strokeWidth="1dp">

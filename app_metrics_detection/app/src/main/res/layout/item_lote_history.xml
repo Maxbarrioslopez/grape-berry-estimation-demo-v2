@@ -7,7 +7,7 @@
     android:layout_marginHorizontal="8dp"
     android:layout_marginTop="4dp"
     android:layout_marginBottom="4dp"
-    app:cardCornerRadius="14dp"
+    app:cardCornerRadius="@dimen/radius_card"
     app:strokeColor="@color/md_border_soft"
     android:backgroundTint="@android:color/transparent"
     app:strokeWidth="1dp"
@@ -59,7 +59,7 @@
                 android:id="@+id/tvLoteId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="N°123456"
+                android:text="@string/sample_lote_id"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="@color/textPrimary"/>
@@ -68,7 +68,7 @@
                 android:id="@+id/tvCompany"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Company"
+                android:text="@string/company"
                 android:textSize="13sp"
                 android:textColor="@color/textSecondary"
                 android:layout_marginTop="2dp"/>
@@ -98,7 +98,7 @@
                     android:id="@+id/tvDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="26 Abril 2025"
+                    android:text="@string/sample_date"
                     android:textSize="12sp"
                     android:textColor="@color/textHint"
                     android:layout_marginStart="4dp"/>

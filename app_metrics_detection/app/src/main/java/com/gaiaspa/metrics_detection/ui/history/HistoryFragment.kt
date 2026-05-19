@@ -57,7 +57,11 @@ class HistoryFragment : Fragment() {
         val filtered = filterLotes(viewModel.allLotes)
         val startIndex = (viewModel.currentPage - 1) * viewModel.pageSize
         val pageItems = filtered.drop(startIndex).take(viewModel.pageSize)
+        val isEmpty = filtered.isEmpty()
         adapter.updateData(pageItems, startIndex)
+        binding.recyclerHistory.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        binding.layoutEmptyHistory.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.paginationControls.visibility = if (isEmpty) View.GONE else View.VISIBLE
         binding.btnPreviousPage.isEnabled = viewModel.currentPage > 1
         binding.btnNextPage.isEnabled = (viewModel.currentPage * viewModel.pageSize) < filtered.size
     }
@@ -75,7 +79,6 @@ class HistoryFragment : Fragment() {
                         ?.setDuration(600)
                         ?.start()
 
-                    // 3) Aquí va tu lógica de sincronización
                     if (NetworkUtils.isNetworkAvailable(requireContext())) {
                         SyncManager.enqueueManualSync(requireContext())
                         showHistoryMessage(getString(R.string.sync_started), MessageTone.SUCCESS)

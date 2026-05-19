@@ -13,6 +13,8 @@
         <item name="android:fontFamily">sans-serif</item>
         <item name="fontFamily">sans-serif</item>
         <item name="android:textColor">@color/textPrimary</item>
+        <item name="textAppearanceHeadline6">@style/TextAppearance.Metrics.ToolbarTitle</item>
+        <item name="textAppearanceButton">@style/TextAppearance.Metrics.Button</item>
     </style>
 
     <style name="Theme.YOLOv8InstanceSegmentation" parent="Base.Theme.YOLOv8InstanceSegmentation" />

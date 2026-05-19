@@ -187,8 +187,9 @@
                 android:id="@+id/tvSignUp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xs"
                 android:text="@string/sign_up"
-                android:textSize="19dp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/colorPrimary"
                 android:clickable="true"/>

@@ -55,18 +55,14 @@
             <!-- Company -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilCompany"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/Widget.Metrics.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/company"
                 android:layout_marginBottom="16dp"
                 app:boxBackgroundMode="outline"
                 app:boxStrokeColor="@color/outlineGray"
-                app:boxStrokeWidth="1dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusBottomEnd="24dp">
+                app:boxStrokeWidth="1dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etCompany"
@@ -80,18 +76,14 @@
             <!-- Vessel -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilVessel"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/Widget.Metrics.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/vessel"
                 android:layout_marginBottom="16dp"
                 app:boxBackgroundMode="outline"
                 app:boxStrokeColor="@color/outlineGray"
-                app:boxStrokeWidth="1dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusBottomEnd="24dp">
+                app:boxStrokeWidth="1dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etVessel"
@@ -105,18 +97,14 @@
             <!-- Block (password + toggle) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilBlock"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/Widget.Metrics.TextInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/block"
                 android:layout_marginBottom="16dp"
                 app:boxBackgroundMode="outline"
                 app:boxStrokeColor="@color/colorPrimary"
-                app:boxStrokeWidth="1dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusBottomEnd="24dp">
+                app:boxStrokeWidth="1dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etBlock"
@@ -135,7 +123,7 @@
             <!-- Variety (PRO: Exposed Dropdown) -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilVariety"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                style="@style/Widget.Metrics.TextInputLayout.ExposedDropdown"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/variety"
@@ -143,18 +131,13 @@
                 app:boxBackgroundMode="outline"
                 app:boxStrokeColor="@color/outlineGray"
                 app:boxStrokeWidth="1dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusBottomEnd="24dp"
                 app:endIconMode="dropdown_menu">
 
-                <AutoCompleteTextView
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/etVariety"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
-                    android:focusable="false"
                     android:clickable="true"
                     android:textSize="14sp" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -165,6 +148,7 @@
     <!-- Botón Next Step anclado al fondo -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNext"
+        style="@style/Widget.Metrics.Button.Primary"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:layout_margin="16dp"
@@ -174,7 +158,6 @@
         android:text="@string/start_batch"
         android:textAllCaps="false"
         app:backgroundTint="@color/colorPrimary"
-        app:cornerRadius="28dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

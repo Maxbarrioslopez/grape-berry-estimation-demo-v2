@@ -39,7 +39,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="8dp"
         android:layout_marginHorizontal="8dp"
-        app:cardCornerRadius="14dp"
+        app:cardCornerRadius="@dimen/radius_card"
         app:strokeColor="@color/md_border_soft"
         app:strokeWidth="1dp"
         app:cardBackgroundColor="@color/md_surface"
@@ -69,7 +69,7 @@
                         android:id="@+id/tvLoteId"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="N°123456"
+                        android:text="@string/sample_lote_id"
                         android:textColor="@color/textPrimary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
@@ -79,7 +79,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Empresa XYZ"
+                        android:text="@string/sample_detail_company"
                         android:textColor="@color/textSecondary"
                         android:textSize="14sp" />
 
@@ -88,7 +88,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Embarcación 1"
+                        android:text="@string/sample_detail_vessel"
                         android:textColor="@color/textSecondary"
                         android:textSize="14sp" />
 
@@ -97,7 +97,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Bloque A"
+                        android:text="@string/sample_detail_block"
                         android:textColor="@color/textSecondary"
                         android:textSize="14sp" />
 
@@ -138,7 +138,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="09:00 AM"
+                    android:text="@string/sample_time"
                     android:textColor="@color/textSecondary"
                     android:textSize="14sp" />
 
@@ -155,7 +155,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:text="26 Abril 2025"
+                    android:text="@string/sample_date"
                     android:textColor="@color/textSecondary"
                     android:textSize="14sp" />
 
@@ -172,7 +172,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginStart="8dp"
-                    android:text="5 Img"
+                    android:text="@string/sample_images_count"
                     android:textColor="@color/textSecondary"
                     android:textSize="14sp" />
             </LinearLayout>
@@ -212,7 +212,7 @@
             android:textColor="@color/error"
             app:strokeColor="@color/error"
             app:strokeWidth="1dp"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="@dimen/radius_button" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDeleteLote"
@@ -224,7 +224,7 @@
             android:textAllCaps="false"
             android:textColor="@color/textOnPrimary"
             app:backgroundTint="@color/error"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="@dimen/radius_button" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -18,8 +18,8 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnClose"
         style="@style/Widget.Metrics.Button.IconOverlay"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="@dimen/button_height"
+        android:layout_height="@dimen/button_height"
         android:layout_gravity="top|end"
         android:layout_margin="18dp"
         android:contentDescription="@string/fullscreen_close"

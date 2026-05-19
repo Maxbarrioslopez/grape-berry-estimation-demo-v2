@@ -1,67 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp">
+    android:background="@color/md_background"
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/recovery_title"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/recovery_description"
-        android:textAlignment="center"
-        android:layout_marginBottom="32dp"/>
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal"
+        android:maxWidth="480dp"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_lg">
 
-    <!-- Campo Email -->
-    <EditText
-        android:id="@+id/etEmailRecovery"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Correo electrónico"
-        android:inputType="textEmailAddress"
-        android:layout_marginBottom="16dp"/>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarRecovery"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/md_background"
+            app:title="@string/recovery_title"
+            app:titleCentered="true"
+            app:titleTextAppearance="@style/TextAppearance.Metrics.ToolbarTitle"
+            app:titleTextColor="@color/textPrimary" />
 
-    <!-- Campo RUT -->
-    <EditText
-        android:id="@+id/etRutRecovery"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="RUT (ej: 12345678-9)"
-        android:inputType="text"
-        android:layout_marginBottom="16dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_marginBottom="@dimen/spacing_sm"
+            android:gravity="center"
+            android:text="@string/recovery_title"
+            android:textAppearance="@style/TextAppearance.Metrics.ScreenTitle" />
 
-    <!-- Campo Nueva Contraseña -->
-    <EditText
-        android:id="@+id/etNewPasswordRecovery"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nueva Contraseña"
-        android:inputType="textPassword"
-        android:layout_marginBottom="24dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_lg"
+            android:text="@string/recovery_description"
+            android:textAlignment="center"
+            android:textColor="@color/textSecondary"
+            android:textSize="14sp" />
 
-    <Button
-        android:id="@+id/btnChangePassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/update_password"
-        android:layout_marginBottom="16dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmailRecovery"
+            style="@style/Widget.Metrics.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_md"
+            android:hint="@string/email_address_label"
+            app:startIconDrawable="@drawable/ic_email"
+            app:startIconTint="@color/textSecondary">
 
-    <TextView
-        android:id="@+id/tvBackToLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/back_to_login"
-        android:textColor="@android:color/holo_blue_dark"
-        android:layout_marginTop="8dp"/>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmailRecovery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:minHeight="@dimen/button_height"
+                android:singleLine="true"
+                android:textColor="@color/textPrimary"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-</LinearLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilRutRecovery"
+            style="@style/Widget.Metrics.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_md"
+            android:hint="@string/rut_register_hint"
+            app:startIconDrawable="@drawable/ic_account_circle"
+            app:startIconTint="@color/textSecondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRutRecovery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:minHeight="@dimen/button_height"
+                android:singleLine="true"
+                android:textColor="@color/textPrimary"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilNewPasswordRecovery"
+            style="@style/Widget.Metrics.TextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_lg"
+            android:hint="@string/new_password_label"
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/textSecondary"
+            app:startIconDrawable="@drawable/ic_password"
+            app:startIconTint="@color/textSecondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNewPasswordRecovery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:minHeight="@dimen/button_height"
+                android:singleLine="true"
+                android:textColor="@color/textPrimary"
+                android:textSize="15sp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChangePassword"
+            style="@style/Widget.Metrics.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_md"
+            android:text="@string/update_password" />
+
+        <TextView
+            android:id="@+id/tvBackToLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:gravity="center"
+            android:minHeight="@dimen/button_height"
+            android:text="@string/back_to_login"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</ScrollView>

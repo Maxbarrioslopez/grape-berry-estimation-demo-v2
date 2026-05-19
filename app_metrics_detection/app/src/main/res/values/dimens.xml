@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">16dp</dimen>
+    <dimen name="spacing_lg">24dp</dimen>
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_card_inner">12dp</dimen>
+    <dimen name="radius_button">16dp</dimen>
+    <dimen name="radius_input">16dp</dimen>
     <dimen name="screen_gutter">16dp</dimen>
     <dimen name="screen_gutter_small">12dp</dimen>
     <dimen name="card_radius_premium">16dp</dimen>
@@ -7,9 +15,9 @@
     <dimen name="section_gap">12dp</dimen>
     <dimen name="section_gap_small">8dp</dimen>
     <dimen name="button_height">48dp</dimen>
-    <dimen name="button_radius">14dp</dimen>
+    <dimen name="button_radius">16dp</dimen>
     <dimen name="photo_preview_size">104dp</dimen>
     <dimen name="photo_preview_height">132dp</dimen>
     <dimen name="histogram_height">160dp</dimen>
-    <dimen name="chip_radius">24dp</dimen>
+    <dimen name="chip_radius">12dp</dimen>
 </resources>

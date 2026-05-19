@@ -29,7 +29,7 @@
                 app:title="@string/profile_title"
                 app:titleCentered="true"
                 app:titleTextColor="@color/textPrimary"
-                app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6"
+                app:titleTextAppearance="@style/TextAppearance.Metrics.ToolbarTitle"
                 app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -37,7 +37,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="@dimen/radius_card"
             app:cardBackgroundColor="@color/md_surface"
             app:cardElevation="0dp"
             app:strokeColor="@color/md_border_soft"
@@ -100,7 +100,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="@dimen/radius_card"
             app:cardBackgroundColor="@color/md_surface"
             app:cardElevation="0dp"
             app:strokeColor="@color/md_border_soft"
@@ -171,7 +171,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="14dp"
+            app:cardCornerRadius="@dimen/radius_card"
             app:cardBackgroundColor="@color/md_surface"
             app:cardElevation="0dp"
             app:strokeColor="@color/md_border_soft"
@@ -224,14 +224,13 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChangeLanguage"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            style="@style/Widget.Metrics.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginBottom="16dp"
             android:text="@string/change_language"
             android:textAllCaps="false"
             android:visibility="gone"
-            app:cornerRadius="28dp"
             app:strokeColor="@color/colorPrimary"
             app:strokeWidth="1dp"
             android:textColor="@color/colorPrimary" />
@@ -245,7 +244,6 @@
             android:layout_marginBottom="16dp"
             android:text="@string/download_batches"
             android:textAllCaps="false"
-            app:cornerRadius="28dp"
             app:backgroundTint="@color/colorPrimary"
             android:textColor="@color/textOnPrimary" />
 
@@ -257,7 +255,6 @@
             android:layout_marginBottom="32dp"
             android:text="@string/logout"
             android:textAllCaps="false"
-            app:cornerRadius="28dp"
             app:backgroundTint="@color/button_secondary_bg"
             app:strokeColor="@color/md_border_strong"
             app:strokeWidth="1dp"
@@ -276,7 +273,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             app:cardBackgroundColor="@color/md_surface"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="@dimen/radius_card"
             app:cardElevation="0dp"
             app:strokeColor="@color/md_border_soft"
             app:strokeWidth="1dp">
@@ -291,7 +288,7 @@
                     android:id="@+id/btnClearTemporaryFiles"
                     style="@style/Widget.Metrics.Button.Secondary"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="@dimen/button_height"
                     android:text="@string/clear_temporary_files"
                     android:textSize="13sp"
                     app:icon="@drawable/ic_delete"
@@ -301,7 +298,7 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="@dimen/button_height"
                     android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -325,7 +322,7 @@
                 <LinearLayout
                     android:id="@+id/rotationToggleRow"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="@dimen/button_height"
                     android:layout_marginTop="4dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
@@ -374,7 +371,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
+            app:cardCornerRadius="@dimen/radius_card"
             app:cardBackgroundColor="@color/button_danger_bg"
             app:strokeColor="@color/error"
             app:strokeWidth="1dp"
@@ -389,26 +386,24 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnClearDataSynced"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Widget.Metrics.Button.DangerSoft"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginBottom="8dp"
                     android:text="@string/delete_synced_data"
                     android:textAllCaps="false"
                     android:textColor="@color/error"
-                    app:cornerRadius="24dp"
                     app:strokeColor="@color/error"
                     app:strokeWidth="2dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnClearAllData"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Widget.Metrics.Button.DangerSoft"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:text="@string/delete_all_local_data"
                     android:textAllCaps="false"
                     android:textColor="@color/error"
-                    app:cornerRadius="24dp"
                     app:strokeColor="@color/error"
                     app:strokeWidth="2dp" />
             </LinearLayout>

@@ -48,7 +48,7 @@
                     android:id="@+id/tvIndex"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="#1"
+                    android:text="@string/sample_index"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/textPrimary"/>
@@ -58,7 +58,7 @@
                     android:id="@+id/tvPredictionInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Pred info"
+                    android:text="@string/prediction_info_placeholder"
                     android:textSize="14sp"
                     android:textColor="@color/textPrimary"
                     android:layout_marginTop="4dp" />

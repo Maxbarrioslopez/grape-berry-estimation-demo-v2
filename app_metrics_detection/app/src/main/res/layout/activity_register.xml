@@ -1,124 +1,239 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/md_background"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxWidth="480dp"
         android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal"
+        android:maxWidth="480dp"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="24dp">
+        android:padding="@dimen/spacing_lg">
 
-    <TextView
-        android:id="@+id/tvRegisterTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/register"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
-
-    <!-- Etapa 1: Validación de Invitación -->
-    <LinearLayout
-        android:id="@+id/layoutStage1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="visible">
-
-        <EditText
-            android:id="@+id/etEmailRegister"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbarRegister"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Correo electrónico"
-            android:inputType="textEmailAddress"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etInviteCode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Código de invitación"
-            android:inputType="text"
-            android:layout_marginBottom="16dp"/>
-    </LinearLayout>
-
-    <!-- Etapa 2: Datos Personales -->
-    <LinearLayout
-        android:id="@+id/layoutStage2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <EditText
-            android:id="@+id/etNameRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Nombre"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etLastnameRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Apellido"
-            android:inputType="textPersonName"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etRutRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="RUT (ej: 12345678-9)"
-            android:inputType="text"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etPasswordRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Contraseña"
-            android:inputType="textPassword"
-            android:layout_marginBottom="16dp"/>
-
-        <EditText
-            android:id="@+id/etConfirmPasswordRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Confirmar Contraseña"
-            android:inputType="textPassword"
-            android:layout_marginBottom="24dp"/>
-
-        <CheckBox
-            android:id="@+id/cbConsent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/consent_label"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="24dp"/>
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/continue_button"
-        android:layout_marginBottom="16dp"/>
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/md_background"
+            app:title="@string/register"
+            app:titleCentered="true"
+            app:titleTextAppearance="@style/TextAppearance.Metrics.ToolbarTitle"
+            app:titleTextColor="@color/textPrimary" />
 
         <TextView
-        android:id="@+id/tvLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="¿Ya tienes cuenta? Inicia Sesión"
-        android:textColor="@android:color/holo_blue_dark"
-        android:layout_marginTop="8dp"/>
+            android:id="@+id/tvRegisterTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_marginBottom="@dimen/spacing_lg"
+            android:gravity="center"
+            android:text="@string/register"
+            android:textAppearance="@style/TextAppearance.Metrics.ScreenTitle" />
 
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/layoutStage1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilEmailRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/email_address_label"
+                app:startIconDrawable="@drawable/ic_email"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmailRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilInviteCode"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/invite_code_label"
+                app:startIconDrawable="@drawable/ic_lock"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etInviteCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutStage2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilNameRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/name_label"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etNameRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName|textCapWords"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLastnameRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/lastname_label"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etLastnameRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName|textCapWords"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilRutRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/rut_register_hint"
+                app:startIconDrawable="@drawable/ic_account_circle"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etRutRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPasswordRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/password_label"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/textSecondary"
+                app:startIconDrawable="@drawable/ic_password"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPasswordRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilConfirmPasswordRegister"
+                style="@style/Widget.Metrics.TextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_md"
+                android:hint="@string/confirm_password_label"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/textSecondary"
+                app:startIconDrawable="@drawable/ic_password"
+                app:startIconTint="@color/textSecondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConfirmPasswordRegister"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:minHeight="@dimen/button_height"
+                    android:singleLine="true"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="15sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbConsent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_lg"
+                android:buttonTint="@color/colorPrimary"
+                android:lineSpacingExtra="@dimen/spacing_xs"
+                android:minHeight="@dimen/button_height"
+                android:text="@string/consent_label"
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRegister"
+            style="@style/Widget.Metrics.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_md"
+            android:text="@string/continue_button" />
+
+        <TextView
+            android:id="@+id/tvLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:minHeight="@dimen/button_height"
+            android:gravity="center"
+            android:text="@string/already_have_account_login"
+            android:textColor="@color/colorPrimary"
+            android:textStyle="bold" />
+
+    </LinearLayout>
 </ScrollView>
