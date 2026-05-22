@@ -3,6 +3,7 @@ package com.gaiaspa.metrics_detection
 import android.app.Application
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.gaiaspa.metrics_detection.network.TokenProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,7 @@ class MetricsDetectionApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("es"))
         applyDefaultLightMode()
         TokenProvider.init(this)
 

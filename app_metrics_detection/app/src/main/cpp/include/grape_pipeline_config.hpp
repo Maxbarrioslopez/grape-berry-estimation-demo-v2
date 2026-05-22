@@ -115,4 +115,84 @@ inline std::string ResolveVarietyName(
     return NormalizeVariety(InferVarietyFromFilename(image_path, variety_classes));
 }
 
+// ===========================================================================
+// VISUAL-ONLY OVERLAY CONSTANTS (no afectan el pipeline productivo)
+// ===========================================================================
+namespace overlay_visual {
+
+// --- Espesores de contorno (dinamicos, basados en ancho de imagen) ---
+inline constexpr float kContourWidthFactorBunchGrape = 300.0f;
+inline constexpr float kContourWidthFactorPingpong    = 420.0f;
+inline constexpr int   kContourThickMinBunchGrape = 3;
+inline constexpr int   kContourThickMaxBunchGrape = 5;
+inline constexpr int   kContourThickMinPingpong    = 2;
+inline constexpr int   kContourThickMaxPingpong    = 4;
+
+// --- Alpha de relleno ---
+inline constexpr double kFillAlphaBunchGrape = 0.10;
+inline constexpr double kFillAlphaPingpong    = 0.25;
+
+// --- Colores (BGR) ---
+inline const cv::Scalar kColorFillBunchGrape(255, 255, 0);
+inline const cv::Scalar kColorContourBunchGrape(255, 255, 0);
+inline const cv::Scalar kColorFillPingpong(0, 220, 255);
+inline const cv::Scalar kColorContourPingpong(0, 255, 255);
+inline const cv::Scalar kColorCentroidBunchGrape(0, 80, 255);
+inline const cv::Scalar kColorCentroidPingpong(255, 80, 0);
+inline const cv::Scalar kColorGrapeDot(0, 80, 255);
+inline const cv::Scalar kColorAuxiliaryDot(255, 0, 180);
+
+// --- Radios de centroide (dinamicos) ---
+inline constexpr float kCentroidRadiusFactorGrape    = 350.0f;
+inline constexpr float kCentroidRadiusFactorPingpong = 320.0f;
+inline constexpr float kCentroidRadiusFactorAux      = 380.0f;
+inline constexpr int   kCentroidRadiusMinGrape    = 2;
+inline constexpr int   kCentroidRadiusMaxGrape    = 4;
+inline constexpr int   kCentroidRadiusMinPingpong = 3;
+inline constexpr int   kCentroidRadiusMaxPingpong = 5;
+
+// --- Puntos auxiliares: distance transform + maximos locales + NMS ---
+inline constexpr float kAuxDtMinRadius = 3.0f;
+inline constexpr float kAuxDtMaxRadius = 30.0f;
+
+// Ventana de maximo local (dilate kernel)
+inline constexpr int   kAuxWindowMin    = 9;
+inline constexpr int   kAuxWindowMax    = 23;
+inline constexpr float kAuxWindowFactor = 130.0f;
+
+// Umbral de peak (descarta maximos debiles)
+inline constexpr float kAuxPeakMinAbs    = 2.5f;
+inline constexpr float kAuxPeakMinFactor = 520.0f;
+
+// Refinamiento de centro: ventana local para buscar max DT
+inline constexpr int kAuxRefineHalfWin = 2;
+
+// NMS: distancia minima entre puntos auxiliares
+inline constexpr int   kAuxNmsDistMin    = 9;
+inline constexpr float kAuxNmsDistFactor = 145.0f;
+
+// Distancia minima a puntos oficiales
+inline constexpr int   kAuxOffDistMin    = 8;
+inline constexpr float kAuxOffDistFactor = 150.0f;
+
+// Limite maximo de puntos auxiliares
+inline constexpr int   kAuxMaxPointsMin    = 20;
+inline constexpr int   kAuxMaxPointsMax    = 70;
+inline constexpr float kAuxMaxPointsFactor = 45.0f;
+
+// --- Post-procesado de mascara ---
+inline constexpr int    kMorphKernelSize         = 3;
+inline constexpr int    kBlurKernelSize          = 3;
+inline constexpr double kBinaryThreshold         = 127.0;
+inline constexpr double kSoftThreshold           = 96.0;
+inline constexpr double kBinaryMaxVal            = 255.0;
+
+// --- Simplificacion de contorno ---
+inline constexpr double kApproxPolyEpsilonFactor = 0.001;
+
+// --- Separacion diagnostica ---
+inline constexpr int kDiagLogInterval = 0;  // >0  para log cada N imagenes
+
+}  // namespace overlay_visual
+
 }  // namespace grape

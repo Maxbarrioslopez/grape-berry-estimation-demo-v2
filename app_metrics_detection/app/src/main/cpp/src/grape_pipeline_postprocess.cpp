@@ -1,6 +1,7 @@
 #include "grape_pipeline_postprocess.hpp"
 
 #include "grape_pipeline_config.hpp"
+#include "grape_pipeline_preprocess.hpp"
 #include <android/log.h>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -201,136 +202,493 @@ cv::Mat MergeInstanceMasksForOverlay(
     return merged;
 }
 
-cv::Mat BuildGlobalGrapeMaskForOverlay(const PipelineInputs& inputs, const cv::Size& canvas_size) {
-    cv::Mat mask = MakeBinaryOverlayMask(inputs.seg.grapes_global_orig);
+// ══════════════════════════════════════════════════════════════════════════════
+// VISUAL-ONLY OVERLAY PIPELINE — helpers modulares
+// ══════════════════════════════════════════════════════════════════════════════
 
+namespace ov = overlay_visual;
+
+std::tuple<float, float, float> RecomputeLetterboxParams(
+    const cv::Size& original_size,
+    int model_img_size) {
+    const float ratio = std::min(
+        static_cast<float>(model_img_size) / static_cast<float>(original_size.width),
+        static_cast<float>(model_img_size) / static_cast<float>(original_size.height));
+    const int rw = static_cast<int>(std::round(original_size.width * ratio));
+    const int rh = static_cast<int>(std::round(original_size.height * ratio));
+    const float dw = (static_cast<float>(model_img_size) - rw) / 2.0f;
+    const float dh = (static_cast<float>(model_img_size) - rh) / 2.0f;
+    return {ratio, dw, dh};
+}
+
+cv::Mat CleanMaskForOverlay(cv::Mat mask) {
     if (mask.empty() || cv::countNonZero(mask) == 0) {
-        mask = MakeBinaryOverlayMask(inputs.seg.grapes_global_lb);
+        return {};
+    }
+    cv::threshold(mask, mask, ov::kBinaryThreshold, ov::kBinaryMaxVal, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+    const cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE,
+        cv::Size(ov::kMorphKernelSize, ov::kMorphKernelSize));
+    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel);
+    cv::threshold(mask, mask, ov::kBinaryThreshold, ov::kBinaryMaxVal, cv::THRESH_BINARY);
+    if (cv::countNonZero(mask) == 0) {
+        return {};
+    }
+    cv::GaussianBlur(
+        mask, mask,
+        cv::Size(ov::kBlurKernelSize, ov::kBlurKernelSize), 0.0);
+    cv::threshold(mask, mask, ov::kSoftThreshold, ov::kBinaryMaxVal, cv::THRESH_BINARY);
+    return mask;
+}
+
+cv::Mat MapMaskToCanvas(
+    const cv::Mat& mask_src,
+    const cv::Size& orig_size,
+    const cv::Size& canvas_size,
+    int model_img_size) {
+    if (mask_src.empty() || canvas_size.width <= 0 || canvas_size.height <= 0) {
+        return {};
+    }
+    cv::Mat binary = MakeBinaryOverlayMask(mask_src);
+    if (binary.empty() || cv::countNonZero(binary) == 0) {
+        return {};
     }
 
-    if (mask.empty() || cv::countNonZero(mask) == 0) {
-        mask = MergeInstanceMasksForOverlay(
+    cv::Mat mask_in_orig;
+    if (binary.size() == orig_size) {
+        mask_in_orig = binary;
+    } else {
+        const auto [ratio, dw, dh] = RecomputeLetterboxParams(orig_size, model_img_size);
+        mask_in_orig = ScaleMaskBackToOriginal(binary, ratio, dw, dh, orig_size);
+    }
+
+    if (mask_in_orig.empty() || cv::countNonZero(mask_in_orig) == 0) {
+        return {};
+    }
+
+    if (mask_in_orig.size() != canvas_size) {
+        cv::Mat resized;
+        cv::resize(mask_in_orig, resized, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+        return CleanMaskForOverlay(resized);
+    }
+    return CleanMaskForOverlay(mask_in_orig.clone());
+}
+
+cv::Point2f ComputeVisualCentroid(const cv::Mat& mask) {
+    if (mask.empty()) {
+        return cv::Point2f(-1.0f, -1.0f);
+    }
+    const auto m = cv::moments(mask, true);
+    if (m.m00 > 0.0) {
+        return cv::Point2f(
+            static_cast<float>(m.m10 / m.m00),
+            static_cast<float>(m.m01 / m.m00));
+    }
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(mask, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    if (!contours.empty()) {
+        const cv::Rect br = cv::boundingRect(contours.front());
+        return cv::Point2f(
+            br.x + br.width / 2.0f,
+            br.y + br.height / 2.0f);
+    }
+    return cv::Point2f(-1.0f, -1.0f);
+}
+
+cv::Mat BuildCombinedBunchGrapeMaskForOverlay(
+    const PipelineInputs& inputs,
+    const cv::Size& canvas_size,
+    int model_img_size) {
+    const cv::Size orig_size = inputs.seg.orig_bgr.size();
+    if (orig_size.width <= 0 || orig_size.height <= 0) {
+        return {};
+    }
+
+    cv::Mat combined_orig = cv::Mat::zeros(orig_size, CV_8U);
+    {
+        cv::Mat bunch_bin = MakeBinaryOverlayMask(inputs.seg.bunch_global_orig);
+        if (!bunch_bin.empty()) cv::max(combined_orig, bunch_bin, combined_orig);
+    }
+    {
+        cv::Mat grape_bin = MakeBinaryOverlayMask(inputs.seg.grapes_global_orig);
+        if (!grape_bin.empty()) cv::max(combined_orig, grape_bin, combined_orig);
+    }
+
+    if (cv::countNonZero(combined_orig) > 0) {
+        cv::Mat resized;
+        cv::resize(combined_orig, resized, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+        return CleanMaskForOverlay(resized);
+    }
+
+    const auto [ratio, dw, dh] = RecomputeLetterboxParams(orig_size, model_img_size);
+    cv::Mat combined_lb = cv::Mat::zeros(cv::Size(model_img_size, model_img_size), CV_8U);
+    {
+        cv::Mat bunch_lb_bin = MakeBinaryOverlayMask(inputs.seg.bunch_global_lb);
+        if (!bunch_lb_bin.empty()) cv::max(combined_lb, bunch_lb_bin, combined_lb);
+    }
+    {
+        cv::Mat grape_lb_bin = MakeBinaryOverlayMask(inputs.seg.grapes_global_lb);
+        if (!grape_lb_bin.empty()) cv::max(combined_lb, grape_lb_bin, combined_lb);
+    }
+    if (cv::countNonZero(combined_lb) == 0) {
+        combined_lb = MergeInstanceMasksForOverlay(
             inputs.seg.grape_instance_masks_lb,
-            inputs.seg.grapes_global_lb.size());
+            cv::Size(model_img_size, model_img_size));
     }
 
-    if (mask.empty() || canvas_size.width <= 0 || canvas_size.height <= 0) {
+    if (cv::countNonZero(combined_lb) > 0) {
+        cv::Mat orig_mask = ScaleMaskBackToOriginal(combined_lb, ratio, dw, dh, orig_size);
+        cv::Mat resized;
+        cv::resize(orig_mask, resized, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+        return CleanMaskForOverlay(resized);
+    }
+
+    return {};
+}
+
+cv::Mat BuildGlobalPingpongMaskForOverlay(
+    const PipelineInputs& inputs,
+    const cv::Size& canvas_size,
+    int model_img_size) {
+    const cv::Size orig_size = inputs.seg.orig_bgr.size();
+    if (orig_size.width <= 0 || orig_size.height <= 0) {
         return {};
     }
 
-    if (mask.size() != canvas_size) {
-        cv::resize(mask, mask, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
-    }
+    cv::Mat mask = MapMaskToCanvas(
+        inputs.seg.pingpong_global_orig, orig_size, canvas_size, model_img_size);
 
-    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
-    }
-
-    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel);
-    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
-    }
-
-    cv::GaussianBlur(mask, mask, cv::Size(3, 3), 0.0);
-    cv::threshold(mask, mask, 96.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
+    if (mask.empty() || cv::countNonZero(mask) == 0) {
+        const auto [ratio, dw, dh] = RecomputeLetterboxParams(orig_size, model_img_size);
+        cv::Mat lb_mask = MakeBinaryOverlayMask(inputs.seg.pingpong_global_lb);
+        if (lb_mask.empty() || cv::countNonZero(lb_mask) == 0) {
+            lb_mask = MergeInstanceMasksForOverlay(
+                inputs.seg.pingpong_instance_masks_lb,
+                cv::Size(model_img_size, model_img_size));
+        }
+        if (!lb_mask.empty() && cv::countNonZero(lb_mask) > 0) {
+            cv::Mat orig_mask = ScaleMaskBackToOriginal(lb_mask, ratio, dw, dh, orig_size);
+            cv::Mat resized;
+            cv::resize(orig_mask, resized, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
+            mask = CleanMaskForOverlay(resized);
+        }
     }
 
     return mask;
 }
 
-void ApplyMagentaMaskOverlay(cv::Mat& canvas, const cv::Mat& mask) {
-    if (canvas.empty() || mask.empty()) {
-        return;
-    }
-
-    const cv::Scalar fill_color(180, 0, 180);
-    const cv::Scalar contour_color(255, 0, 255);
-    constexpr double kFillAlpha = 0.24;
-
-    cv::Mat color_layer(canvas.size(), canvas.type(), fill_color);
-    cv::Mat blended;
-    cv::addWeighted(canvas, 1.0 - kFillAlpha, color_layer, kFillAlpha, 0.0, blended);
-    blended.copyTo(canvas, mask);
-
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(mask.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    if (contours.empty()) {
-        return;
-    }
-
-    const int contour_thickness = std::max(2, std::min(4, canvas.cols / 420));
-    cv::drawContours(canvas, contours, -1, contour_color, contour_thickness, cv::LINE_AA);
+void DrawFilledCentroid(
+    cv::Mat& canvas,
+    const cv::Point2f& centroid,
+    const cv::Scalar& color,
+    int radius) {
+    if (centroid.x < 0 || centroid.y < 0) return;
+    cv::circle(canvas, centroid, radius + 1, cv::Scalar(25, 25, 25), cv::FILLED, cv::LINE_AA);
+    cv::circle(canvas, centroid, radius, color, cv::FILLED, cv::LINE_AA);
 }
 
-cv::Mat BuildGlobalPingpongMaskForOverlay(const PipelineInputs& inputs, const cv::Size& canvas_size) {
-    cv::Mat mask = MakeBinaryOverlayMask(inputs.seg.pingpong_global_orig);
+std::vector<cv::Point2f> RenderOfficialGrapeDots(
+    cv::Mat& canvas,
+    const std::vector<cv::Mat>& grape_instance_masks_lb,
+    const cv::Size& orig_size,
+    int model_img_size) {
+    std::vector<cv::Point2f> points;
+    if (canvas.empty() || grape_instance_masks_lb.empty()) return points;
+    if (orig_size.width <= 0 || orig_size.height <= 0) return points;
 
-    if (mask.empty() || cv::countNonZero(mask) == 0) {
-        mask = MakeBinaryOverlayMask(inputs.seg.pingpong_global_lb);
+    const auto [ratio, dw, dh] = RecomputeLetterboxParams(orig_size, model_img_size);
+
+    const int radius = std::max(
+        ov::kCentroidRadiusMinGrape,
+        std::min(ov::kCentroidRadiusMaxGrape,
+                 static_cast<int>(canvas.cols / ov::kCentroidRadiusFactorGrape)));
+
+    const float scale_x = static_cast<float>(canvas.cols) / static_cast<float>(orig_size.width);
+    const float scale_y = static_cast<float>(canvas.rows) / static_cast<float>(orig_size.height);
+
+    for (const cv::Mat& mask_lb : grape_instance_masks_lb) {
+        if (mask_lb.empty()) continue;
+
+        const cv::Point2f centroid_lb = ComputeVisualCentroid(mask_lb);
+        if (centroid_lb.x < 0 || centroid_lb.y < 0) continue;
+
+        float orig_x = std::clamp(
+            (centroid_lb.x - dw) / ratio, 0.0f,
+            static_cast<float>(orig_size.width - 1));
+        float orig_y = std::clamp(
+            (centroid_lb.y - dh) / ratio, 0.0f,
+            static_cast<float>(orig_size.height - 1));
+
+        const cv::Point2f canvas_pt(orig_x * scale_x, orig_y * scale_y);
+        DrawFilledCentroid(canvas, canvas_pt, ov::kColorGrapeDot, radius);
+        points.push_back(canvas_pt);
     }
 
-    if (mask.empty() || cv::countNonZero(mask) == 0) {
-        mask = MergeInstanceMasksForOverlay(
-            inputs.seg.pingpong_instance_masks_lb,
-            inputs.seg.pingpong_global_lb.size());
-    }
-
-    if (mask.empty() || canvas_size.width <= 0 || canvas_size.height <= 0) {
-        return {};
-    }
-
-    if (mask.size() != canvas_size) {
-        cv::resize(mask, mask, canvas_size, 0.0, 0.0, cv::INTER_NEAREST);
-    }
-
-    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
-    }
-
-    const cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-    cv::morphologyEx(mask, mask, cv::MORPH_CLOSE, kernel);
-    cv::threshold(mask, mask, 127.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
-    }
-
-    cv::GaussianBlur(mask, mask, cv::Size(3, 3), 0.0);
-    cv::threshold(mask, mask, 96.0, 255.0, cv::THRESH_BINARY);
-    if (cv::countNonZero(mask) == 0) {
-        return {};
-    }
-
-    return mask;
+    return points;
 }
 
-void ApplyPingpongMaskOverlay(cv::Mat& canvas, const cv::Mat& mask) {
-    if (canvas.empty() || mask.empty()) {
-        return;
+struct AuxBerryStats {
+    int raw_candidates       = 0;
+    int rejected_low_dt      = 0;
+    int peak_candidates      = 0;
+    int rejected_near_off    = 0;
+    int rejected_duplicates  = 0;
+    int after_nms            = 0;
+};
+
+AuxBerryStats BuildAuxiliaryBerryPoints(
+    std::vector<cv::Point2f>& aux_points_out,
+    const cv::Mat& bunch_grape_mask,
+    const cv::Mat& pingpong_mask,
+    const std::vector<cv::Point2f>& official_points,
+    const cv::Size& canvas_size) {
+    AuxBerryStats stats;
+    aux_points_out.clear();
+    if (bunch_grape_mask.empty() || cv::countNonZero(bunch_grape_mask) == 0) {
+        return stats;
     }
 
-    const cv::Scalar fill_color(0, 220, 255);
-    const cv::Scalar contour_color(0, 255, 255);
-    constexpr double kFillAlpha = 0.20;
+    cv::Mat dt;
+    cv::distanceTransform(bunch_grape_mask, dt, cv::DIST_L2, 5);
 
-    cv::Mat color_layer(canvas.size(), canvas.type(), fill_color);
-    cv::Mat blended;
-    cv::addWeighted(canvas, 1.0 - kFillAlpha, color_layer, kFillAlpha, 0.0, blended);
-    blended.copyTo(canvas, mask);
+    const int window_size = std::max(
+        ov::kAuxWindowMin,
+        std::min(ov::kAuxWindowMax,
+                 static_cast<int>(canvas_size.width / ov::kAuxWindowFactor)));
+    const cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE, cv::Size(window_size, window_size));
+    cv::Mat dilated;
+    cv::dilate(dt, dilated, kernel);
 
-    std::vector<std::vector<cv::Point>> contours;
-    cv::findContours(mask.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    if (contours.empty()) {
-        return;
+    const float peak_min = std::max(
+        ov::kAuxPeakMinAbs,
+        canvas_size.width / ov::kAuxPeakMinFactor);
+
+    const int min_dist_off = std::max(
+        ov::kAuxOffDistMin,
+        static_cast<int>(canvas_size.width / ov::kAuxOffDistFactor));
+    const int min_dist_nms = std::max(
+        ov::kAuxNmsDistMin,
+        static_cast<int>(canvas_size.width / ov::kAuxNmsDistFactor));
+    const int min_dist_off_sq = min_dist_off * min_dist_off;
+    const int min_dist_nms_sq = min_dist_nms * min_dist_nms;
+
+    const int max_points = std::max(
+        ov::kAuxMaxPointsMin,
+        std::min(ov::kAuxMaxPointsMax,
+                 static_cast<int>(canvas_size.width / ov::kAuxMaxPointsFactor)));
+
+    std::vector<std::pair<cv::Point2f, float>> candidates;
+    candidates.reserve(static_cast<size_t>(dt.rows * dt.cols / 32));
+
+    bool has_pingpong = !pingpong_mask.empty() && cv::countNonZero(pingpong_mask) > 0;
+
+    for (int y = 0; y < dt.rows; ++y) {
+        const float* dt_row  = dt.ptr<float>(y);
+        const float* dil_row = dilated.ptr<float>(y);
+        for (int x = 0; x < dt.cols; ++x) {
+            const float val = dt_row[x];
+            if (val <= 0.0f) continue;               // background
+            stats.raw_candidates++;
+
+            if (val < ov::kAuxDtMinRadius) continue;  // demasiado pequeno
+            if (val > ov::kAuxDtMaxRadius) continue;  // tallo/blob grande
+
+            if (val < peak_min) {
+                stats.rejected_low_dt++;
+                continue;
+            }
+
+            if (val != dil_row[x]) continue;           // no es maximo local
+
+            if (has_pingpong && pingpong_mask.at<uchar>(y, x) > 0) continue;
+
+            stats.peak_candidates++;
+
+            const cv::Point2f pt(static_cast<float>(x), static_cast<float>(y));
+
+            bool too_close = false;
+            for (const cv::Point2f& op : official_points) {
+                const float dx = pt.x - op.x;
+                const float dy = pt.y - op.y;
+                if (dx * dx + dy * dy < static_cast<float>(min_dist_off_sq)) {
+                    too_close = true;
+                    break;
+                }
+            }
+            if (too_close) {
+                stats.rejected_near_off++;
+                continue;
+            }
+
+            candidates.emplace_back(pt, val);
+        }
     }
 
-    const int contour_thickness = std::max(2, std::min(3, canvas.cols / 560));
-    cv::drawContours(canvas, contours, -1, contour_color, contour_thickness, cv::LINE_AA);
+    std::sort(candidates.begin(), candidates.end(),
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    for (const auto& [pt, dt_val] : candidates) {
+        if (static_cast<int>(aux_points_out.size()) >= max_points) break;
+
+        bool too_close = false;
+        for (const cv::Point2f& ap : aux_points_out) {
+            const float dx = pt.x - ap.x;
+            const float dy = pt.y - ap.y;
+            if (dx * dx + dy * dy < static_cast<float>(min_dist_nms_sq)) {
+                too_close = true;
+                break;
+            }
+        }
+        if (too_close) {
+            stats.rejected_duplicates++;
+            continue;
+        }
+
+        // Refinar centro: buscar maximo local DT en ventana pequeña
+        constexpr int rhw = ov::kAuxRefineHalfWin;
+        int best_x = static_cast<int>(pt.x);
+        int best_y = static_cast<int>(pt.y);
+        float best_val = dt.at<float>(best_y, best_x);
+        for (int dy = -rhw; dy <= rhw; ++dy) {
+            for (int dx = -rhw; dx <= rhw; ++dx) {
+                const int nx = best_x + dx;
+                const int ny = best_y + dy;
+                if (nx < 0 || nx >= dt.cols || ny < 0 || ny >= dt.rows) continue;
+                const float v = dt.at<float>(ny, nx);
+                if (v > best_val) {
+                    best_val = v;
+                    best_x = nx;
+                    best_y = ny;
+                }
+            }
+        }
+        aux_points_out.emplace_back(
+            static_cast<float>(best_x), static_cast<float>(best_y));
+    }
+
+    stats.after_nms = static_cast<int>(aux_points_out.size());
+    return stats;
+}
+
+void RenderAuxiliaryBerryDots(
+    cv::Mat& canvas,
+    const std::vector<cv::Point2f>& aux_points) {
+    if (canvas.empty() || aux_points.empty()) return;
+
+    const int radius = std::max(
+        ov::kCentroidRadiusMinGrape,
+        std::min(ov::kCentroidRadiusMaxGrape,
+                 static_cast<int>(canvas.cols / ov::kCentroidRadiusFactorAux)));
+
+    for (const cv::Point2f& pt : aux_points) {
+        DrawFilledCentroid(canvas, pt, ov::kColorAuxiliaryDot, radius);
+    }
+}
+
+void RenderCentroids(
+    cv::Mat& canvas,
+    const cv::Mat& bunch_grape_mask,
+    const cv::Mat& pingpong_mask) {
+    const bool has_bg = !bunch_grape_mask.empty() && cv::countNonZero(bunch_grape_mask) > 0;
+    const bool has_pp = !pingpong_mask.empty()    && cv::countNonZero(pingpong_mask)    > 0;
+
+    const int bg_radius = std::max(
+        ov::kCentroidRadiusMinGrape,
+        std::min(ov::kCentroidRadiusMaxGrape,
+                 static_cast<int>(canvas.cols / ov::kCentroidRadiusFactorGrape)));
+    const int pp_radius = std::max(
+        ov::kCentroidRadiusMinPingpong,
+        std::min(ov::kCentroidRadiusMaxPingpong,
+                 static_cast<int>(canvas.cols / ov::kCentroidRadiusFactorPingpong)));
+
+    if (has_bg) {
+        const cv::Point2f bg_c = ComputeVisualCentroid(bunch_grape_mask);
+        if (bg_c.x >= 0 && bg_c.y >= 0) {
+            DrawFilledCentroid(canvas, bg_c, ov::kColorCentroidBunchGrape, bg_radius);
+        }
+    }
+    if (has_pp) {
+        const cv::Point2f pp_c = ComputeVisualCentroid(pingpong_mask);
+        if (pp_c.x >= 0 && pp_c.y >= 0) {
+            DrawFilledCentroid(canvas, pp_c, ov::kColorCentroidPingpong, pp_radius);
+        }
+    }
+}
+
+void RenderVisualOverlayLayers(
+    cv::Mat& canvas,
+    const cv::Mat& bunch_grape_mask,
+    const cv::Mat& pingpong_mask) {
+    const bool has_bg = !bunch_grape_mask.empty() && cv::countNonZero(bunch_grape_mask) > 0;
+    const bool has_pp = !pingpong_mask.empty()    && cv::countNonZero(pingpong_mask)    > 0;
+
+    if (!has_bg && !has_pp) return;
+
+    // Capa 1: Fill suave bunch+grape
+    if (has_bg) {
+        cv::Mat color_layer(canvas.size(), canvas.type(), ov::kColorFillBunchGrape);
+        cv::Mat blended;
+        cv::addWeighted(
+            canvas, 1.0 - ov::kFillAlphaBunchGrape,
+            color_layer, ov::kFillAlphaBunchGrape, 0.0, blended);
+        blended.copyTo(canvas, bunch_grape_mask);
+    }
+
+    // Capa 2: Fill pingpong
+    if (has_pp) {
+        cv::Mat color_layer(canvas.size(), canvas.type(), ov::kColorFillPingpong);
+        cv::Mat blended;
+        cv::addWeighted(
+            canvas, 1.0 - ov::kFillAlphaPingpong,
+            color_layer, ov::kFillAlphaPingpong, 0.0, blended);
+        blended.copyTo(canvas, pingpong_mask);
+    }
+
+    // Capa 3: Contorno pingpong
+    if (has_pp) {
+        std::vector<std::vector<cv::Point>> pp_contours;
+        cv::findContours(pingpong_mask.clone(), pp_contours,
+                         cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        if (!pp_contours.empty()) {
+            const int pp_thickness = std::max(
+                ov::kContourThickMinPingpong,
+                std::min(ov::kContourThickMaxPingpong,
+                         static_cast<int>(canvas.cols / ov::kContourWidthFactorPingpong)));
+            cv::drawContours(
+                canvas, pp_contours, -1,
+                ov::kColorContourPingpong, pp_thickness, cv::LINE_AA);
+        }
+    }
+
+    // Capa 4: Contorno externo bunch+grape (cyan, simplificado)
+    if (has_bg) {
+        std::vector<std::vector<cv::Point>> bg_contours;
+        cv::findContours(bunch_grape_mask.clone(), bg_contours,
+                         cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        if (!bg_contours.empty()) {
+            const int bg_thickness = std::max(
+                ov::kContourThickMinBunchGrape,
+                std::min(ov::kContourThickMaxBunchGrape,
+                         static_cast<int>(canvas.cols / ov::kContourWidthFactorBunchGrape)));
+
+            std::vector<std::vector<cv::Point>> simplified;
+            simplified.reserve(bg_contours.size());
+            for (const auto& c : bg_contours) {
+                const double peri = cv::arcLength(c, true);
+                const double eps = ov::kApproxPolyEpsilonFactor * peri;
+                std::vector<cv::Point> approx;
+                cv::approxPolyDP(c, approx, eps, true);
+                simplified.push_back(std::move(approx));
+            }
+            cv::drawContours(
+                canvas, simplified, -1,
+                ov::kColorContourBunchGrape, bg_thickness, cv::LINE_AA);
+        }
+    }
 }
 
 }  // namespace
@@ -521,30 +879,64 @@ void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, co
         return;
     }
 
-    cv::Mat grape_mask = BuildGlobalGrapeMaskForOverlay(inputs, canvas.size());
-    cv::Mat ping_mask = BuildGlobalPingpongMaskForOverlay(inputs, canvas.size());
+    constexpr int kModelImgSize = 512;
 
-    const bool has_grape = !grape_mask.empty() && cv::countNonZero(grape_mask) > 0;
-    const bool has_ping  = !ping_mask.empty()  && cv::countNonZero(ping_mask)  > 0;
+    cv::Mat bunch_grape_mask = BuildCombinedBunchGrapeMaskForOverlay(
+        inputs, canvas.size(), kModelImgSize);
+    cv::Mat ping_mask = BuildGlobalPingpongMaskForOverlay(
+        inputs, canvas.size(), kModelImgSize);
 
-    if (!has_grape && !has_ping) {
-        GP_LOGD("NATIVE_OVERLAY_STYLE: MAGENTA_CYAN | empty both masks, keeping base image");
+    const bool has_bg = !bunch_grape_mask.empty() && cv::countNonZero(bunch_grape_mask) > 0;
+    const bool has_pp = !ping_mask.empty()        && cv::countNonZero(ping_mask)        > 0;
+
+    if (!has_bg && !has_pp) {
+        GP_LOGD("OVERLAY_DIAG canvas=%dx%d bunch_nonzero=0 pingpong_nonzero=0 centroids=0 contours=0",
+                canvas.cols, canvas.rows);
         return;
     }
 
-    if (has_grape) {
-        ApplyMagentaMaskOverlay(canvas, grape_mask);
+    RenderVisualOverlayLayers(canvas, bunch_grape_mask, ping_mask);
+
+    const std::vector<cv::Point2f> official_pts = RenderOfficialGrapeDots(
+        canvas,
+        inputs.seg.grape_instance_masks_lb,
+        inputs.seg.orig_bgr.size(),
+        kModelImgSize);
+
+    int aux_peak = 0;
+    int aux_after_nms = 0;
+    AuxBerryStats aux_stats;
+    if (has_bg) {
+        std::vector<cv::Point2f> aux_pts;
+        aux_stats = BuildAuxiliaryBerryPoints(
+            aux_pts, bunch_grape_mask, ping_mask, official_pts, canvas.size());
+        aux_peak = aux_stats.peak_candidates;
+        aux_after_nms = aux_stats.after_nms;
+        if (!aux_pts.empty()) {
+            RenderAuxiliaryBerryDots(canvas, aux_pts);
+        }
     }
 
-    if (has_ping) {
-        ApplyPingpongMaskOverlay(canvas, ping_mask);
-    }
+    RenderCentroids(canvas, bunch_grape_mask, ping_mask);
+
+    int off_drawn  = static_cast<int>(official_pts.size());
+    int final_pts  = off_drawn + aux_after_nms;
 
     cv::imwrite(path, canvas);
-    GP_LOGD(
-        "NATIVE_OVERLAY_STYLE: MAGENTA_CYAN | grape_pixels=%d ping_pixels=%d",
-        has_grape ? cv::countNonZero(grape_mask) : 0,
-        has_ping  ? cv::countNonZero(ping_mask)  : 0);
+    GP_LOGD("OVERLAY_POINTS canvas=%dx%d official=%d"
+            " aux_raw=%d aux_peaks=%d aux_after_nms=%d"
+            " rejected_near_official=%d rejected_duplicates=%d rejected_low_dt=%d"
+            " pingpong=%d final=%d",
+            canvas.cols, canvas.rows,
+            off_drawn,
+            aux_stats.raw_candidates,
+            aux_peak,
+            aux_after_nms,
+            aux_stats.rejected_near_off,
+            aux_stats.rejected_duplicates,
+            aux_stats.rejected_low_dt,
+            (has_pp ? 1 : 0),
+            final_pts);
 }
 
 std::string PipelineResultToJson(const PipelineResult& result) {

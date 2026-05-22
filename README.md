@@ -314,15 +314,112 @@ guardaron en `capturas_vistas_app_4/`.
 - Validacion de orientacion si se habilita la feature flag.
 - Validacion de sincronizacion real contra backend disponible.
 
+## Overlay Visual — Arquitectura de Pipeline Paralelo
+
+### Separacion estricta
+
+El sistema de overlay opera como un **pipeline visual paralelo** completamente
+independiente del pipeline productivo:
+
+| Pipeline | Proposito | Archivos |
+|----------|-----------|----------|
+| **Productivo** | Inferencia ONNX, conteo (QTY), histograma (HIST), features RGBDT, distance transform, JSON predictivo | `grape_pipeline_core.cpp`, `grape_pipeline_preprocess.cpp`, `grape_pipeline_onnx.cpp` |
+| **Visual paralelo** | Construccion de mascaras visuales, render de overlay, centroides, capas y colores | `grape_pipeline_postprocess.cpp`, `grape_pipeline_config.hpp` (namespace `overlay_visual`) |
+
+El pipeline productivo **no fue alterado**. El pipeline visual lee los datos
+de segmentacion (`SegmentationOutput`) producidos por el pipeline productivo
+pero jamas modifica `count_total`, `pred[]`, `mean`, `mode`, `std`,
+`seg_count_base`, `detections[]`, `hist_prob` ni ninguna metrica de negocio.
+
+### Modulos del pipeline visual
+
+| Funcion | Rol |
+|---------|-----|
+| `RecomputeLetterboxParams()` | Recalcula ratio/dw/dh del letterbox a partir de dimensiones originales y modelo |
+| `CleanMaskForOverlay()` | Post-procesa mascaras binarias: threshold, morph close, Gauss blur, soft threshold |
+| `MapMaskToCanvas()` | Mapea mascara desde espacio letterbox (`_lb`) u original (`_orig`) al canvas final |
+| `BuildCombinedBunchGrapeMaskForOverlay()` | Construye mascara visual uniendo bunch + grape (`_orig` primero, `_lb` con reverse-letterbox como fallback) |
+| `BuildGlobalPingpongMaskForOverlay()` | Construye mascara visual de pingpong con reverse-letterbox correcto |
+| `ComputeVisualCentroid()` | Calcula centroide via `cv::moments` con fallback a `boundingRect` |
+| `DrawFilledCentroid()` | Dibuja centroide con borde oscuro para contraste |
+| `RenderVisualOverlayLayers()` | Render maestro: aplica fill, contornos y centroides en orden correcto |
+| `SaveVisualOverlay()` | Orquestador: lee imagen base, construye mascaras, renderiza, guarda |
+
+### Reverse-letterbox visual
+
+Las mascaras existen en dos espacios:
+- `_orig`: ya mapeadas al tamano original de la imagen (calculadas en `RunSegmentationPipeline()` via `ScaleMaskBackToOriginal()`)
+- `_lb`: en espacio letterbox 512x512
+
+El pipeline visual **prefiere `_orig`** (mapeo correcto garantizado). Si solo
+existen mascaras `_lb`, aplica `ScaleMaskBackToOriginal()` con los parametros
+de letterbox recalculados (`ratio`, `dw`, `dh`). Ya no se hace resize directo.
+
+### Orden de render
+
+```
+1. Imagen original (fondo)
+2. Fill suave bunch+grape  (cyan, alpha 0.10)
+3. Fill pingpong            (naranja, alpha 0.25)
+4. Contorno pingpong        (amarillo, grosor dinamico)
+5. Centroides               (bunch/grape naranja-rojizo, pingpong azul)
+6. Contorno externo bunch+grape (cyan, approxPolyDP simplificado, grosor dinamico)
+```
+
+### Colores visuales (BGR)
+
+| Elemento | Color | BGR |
+|----------|-------|-----|
+| Fill bunch+grape | Cyan tenue | (255, 255, 0) |
+| Contorno bunch+grape | Cyan | (255, 255, 0) |
+| Fill pingpong | Naranja | (0, 220, 255) |
+| Contorno pingpong | Amarillo | (0, 255, 255) |
+| Centroide bunch/grape | Rojo-naranja | (0, 80, 255) |
+| Centroide pingpong | Azul | (255, 80, 0) |
+
+Constantes definidas en `grape_pipeline_config.hpp`, namespace `overlay_visual`.
+
+### Parametros dinamicos
+
+Los espesores de contorno y radios de centroide se calculan proporcionalmente
+al ancho de la imagen para adaptarse a distintas resoluciones:
+
+- Contorno bunch+grape: `max(3, min(5, cols / 300))`
+- Contorno pingpong:    `max(2, min(4, cols / 420))`
+- Centroide bunch/grape: `max(2, min(4, cols / 350))`
+- Centroide pingpong:    `max(3, min(5, cols / 320))`
+
+### Logs de diagnostico
+
+```
+OVERLAY_DIAG canvas=WxH bunch_grape_nonzero=N pingpong_nonzero=N centroids=N contours=N
+```
+
+### Constantes visuales vs productivas
+
+Todas las constantes del pipeline visual estan en `namespace overlay_visual`
+dentro de `grape_pipeline_config.hpp`. Son independientes y no reemplazan
+`kDefaultSegConfThreshold`, `kDefaultSegMaskThreshold`, `kCaliberMinMm`,
+`kCaliberMaxMm` ni ninguna constante del pipeline productivo.
+
+### Validacion de no impacto
+
+- `count_total`, `pred[]`, `mean`, `mode`, `std` no se modifican.
+- `seg_count_base`, `detections[]` se leen pero no se alteran.
+- `PipelineResultToJson()` no cambia.
+- `SaveDebugArtifacts()` no cambia su logica productiva.
+- `GrapePipelineCore::Run()` solo llama a `SaveVisualOverlay()`; su firma y
+  comportamiento productivo no cambian.
+
 ## Alcance Protegido
 
-En esta iteracion visual no se modificaron:
+En esta iteracion no se modificaron:
 
-- JNI/C++.
+- JNI/C++ (excepto overlay visual en postprocess.cpp y constantes visual-only en config.hpp).
 - ONNX/assets/modelos.
 - Room/DAO/entities.
 - Retrofit/API/network.
 - WorkManager/sync.
-- Pipeline ML.
+- Pipeline ML productivo (thresholds, NMS, conteo, histograma, predicciones, RGBDT, distance transform).
 - Package/applicationId.
 - Navegacion critica.

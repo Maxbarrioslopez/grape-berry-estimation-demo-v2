@@ -21,10 +21,17 @@ Documentacion tecnica actualizada del proyecto:
 Esta primera iteracion moderniza XML/Material Components, radios, spacing,
 tipografia, empty states, toolbars e iconografia sin modificar:
 
-- JNI/C++.
+- JNI/C++ (excepto overlay visual: ver `../README.md` seccion "Overlay Visual").
 - ONNX/assets/modelos.
 - Room/DAO/entities.
 - Retrofit/API/network.
 - WorkManager/sync.
-- Pipeline ML.
+- Pipeline ML productivo.
 - Navegacion critica.
+
+### Overlay Visual (iteracion actual)
+
+El overlay visual fue refactorizado como pipeline paralelo independiente:
+- `grape_pipeline_postprocess.cpp`: funciones modulares de render visual.
+- `grape_pipeline_config.hpp` (`namespace overlay_visual`): constantes visuales.
+- Documentacion completa en `../README.md` (seccion Overlay Visual) y `../README2.md` (paper tecnico).
