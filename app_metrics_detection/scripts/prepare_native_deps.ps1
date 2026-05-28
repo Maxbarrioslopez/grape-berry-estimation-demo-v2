@@ -35,32 +35,32 @@ $OpenCvSdkDir = Join-Path $OpenCvDir "OpenCV-android-sdk"
 Write-Host "[deps] RepoRoot: $RepoRoot"
 
 if (!(Test-Path $OnnxAarPath)) {
-    Write-Host "[deps] Descargando ONNX Runtime AAR: $OnnxAarUrl"
+    Write-Host "[deps] Downloading ONNX Runtime AAR: $OnnxAarUrl"
     Invoke-WebRequest -Uri $OnnxAarUrl -OutFile $OnnxAarPath
 } else {
-    Write-Host "[deps] ONNX Runtime AAR ya existe: $OnnxAarPath"
+    Write-Host "[deps] ONNX Runtime AAR already exists: $OnnxAarPath"
 }
 
 if (!(Test-Path $OnnxExtractDir)) {
-    Write-Host "[deps] Extrayendo ONNX Runtime AAR"
+    Write-Host "[deps] Extracting ONNX Runtime AAR"
     Copy-Item -Force $OnnxAarPath $OnnxZipPath
     Expand-Archive -Path $OnnxZipPath -DestinationPath $OnnxExtractDir -Force
 } else {
-    Write-Host "[deps] ONNX Runtime ya extraido: $OnnxExtractDir"
+    Write-Host "[deps] ONNX Runtime already extracted: $OnnxExtractDir"
 }
 
 if (!(Test-Path $OpenCvZipPath)) {
-    Write-Host "[deps] Descargando OpenCV Android SDK: $OpenCvZipUrl"
+    Write-Host "[deps] Downloading OpenCV Android SDK: $OpenCvZipUrl"
     Invoke-WebRequest -Uri $OpenCvZipUrl -OutFile $OpenCvZipPath
 } else {
-    Write-Host "[deps] OpenCV zip ya existe: $OpenCvZipPath"
+    Write-Host "[deps] OpenCV zip already exists: $OpenCvZipPath"
 }
 
 if (!(Test-Path $OpenCvSdkDir)) {
-    Write-Host "[deps] Extrayendo OpenCV Android SDK"
+    Write-Host "[deps] Extracting OpenCV Android SDK"
     Expand-Archive -Path $OpenCvZipPath -DestinationPath $OpenCvExtractRoot -Force
 } else {
-    Write-Host "[deps] OpenCV SDK ya extraido: $OpenCvSdkDir"
+    Write-Host "[deps] OpenCV SDK already extracted: $OpenCvSdkDir"
 }
 
 $OnnxHeaders = Join-Path $OnnxExtractDir "headers"
@@ -68,13 +68,13 @@ $OnnxSoArm64 = Join-Path $OnnxExtractDir "jni/arm64-v8a/libonnxruntime.so"
 $OpenCvJniDir = Join-Path $OpenCvSdkDir "sdk/native/jni"
 
 if (!(Test-Path $OnnxHeaders)) {
-    throw "No encontrado: $OnnxHeaders"
+    throw "Not found: $OnnxHeaders"
 }
 if (!(Test-Path $OnnxSoArm64)) {
-    throw "No encontrado: $OnnxSoArm64"
+    throw "Not found: $OnnxSoArm64"
 }
 if (!(Test-Path $OpenCvJniDir)) {
-    throw "No encontrado: $OpenCvJniDir"
+    throw "Not found: $OpenCvJniDir"
 }
 
 Write-Host "[deps] OK"

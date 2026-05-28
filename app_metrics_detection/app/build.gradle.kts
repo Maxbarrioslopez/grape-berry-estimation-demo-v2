@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 val prepareNativeDeps by tasks.registering {
     group = "native"
-    description = "Prepara dependencias nativas usando PowerShell en Windows y Bash en Linux."
+    description = "Prepare native dependencies using PowerShell on Windows and Bash on Linux."
 
     doLast {
         if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
@@ -51,7 +51,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // IMPROVEMENT: Expanded ABI support for greater compatibility on Google Play.
+            // Expanded ABI support for broader device compatibility.
             // Note: Ensure libraries in third_party have the corresponding .so files.
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
@@ -59,7 +59,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
-                // MEJORA: Soporte para Android 15 (16 KB page size)
+                // Android 15 compatibility (16 KB page size)
                 arguments += "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
 
                 val ortRoot = (project.findProperty("ONNXRUNTIME_ANDROID_ROOT") as String?)

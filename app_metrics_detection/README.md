@@ -10,13 +10,11 @@ The application processes RGB images of grape bunches, runs ONNX-based segmentat
 
 ## Research Context
 
-[PAPER_TITLE]  
-[INSTITUTION_OR_AFFILIATION]  
-[YEAR]
+An Android offline-first system for operational grape bunch analysis through on-device inference and multi-view A/B fusion  
+ScaleAiLab - Universidad Adolfo Ibanez; Universidad de Vina del Mar; Universidad Tecnologica de Chile INACAP  
+2026 (draft manuscript)
 
-This implementation accompanies the research paper cited above. It serves as a reproducibility artifact, reference implementation, and demonstration of the on-device ML pipeline described in the paper.
-
-Before formal publication, replace `[PAPER_TITLE]`, `[AUTHOR_NAME]`, `[INSTITUTION_OR_AFFILIATION]`, `[CONTACT_EMAIL]`, and `[YEAR]` with the final paper and author metadata.
+This implementation accompanies the draft research manuscript and serves as a reproducibility artifact, reference implementation, and demonstration of the on-device ML pipeline described in the paper.
 
 ---
 
@@ -188,12 +186,12 @@ In summary:
 If you use this code or the accompanying research in an academic context, please cite:
 
 ```
-[AUTHOR_NAME]. "[PAPER_TITLE]". [INSTITUTION_OR_AFFILIATION], [YEAR].
+Soto, M.; Barrios, M.; Ormeno-Arriagada, P.; Vasquez, J. "An Android offline-first system for operational grape bunch analysis through on-device inference and multi-view A/B fusion". Draft manuscript, 2026.
 ```
 
 ### Commercial Use
 
-Commercial use requires prior written permission from the authors. Contact [CONTACT_EMAIL] for inquiries.
+Commercial use requires prior written permission from the authors. Contact jorge.vasquez.a@uai.cl for inquiries.
 
 ### Terms and Conditions
 
@@ -215,6 +213,6 @@ This license notice should be reviewed by the project owner or legal advisor bef
 
 ## Contact
 
-[AUTHOR_NAME]  
-[INSTITUTION_OR_AFFILIATION]  
-[CONTACT_EMAIL]
+Jorge Vasquez (corresponding author)  
+Facultad de Ingenieria y Ciencias, Universidad Adolfo Ibanez  
+jorge.vasquez.a@uai.cl

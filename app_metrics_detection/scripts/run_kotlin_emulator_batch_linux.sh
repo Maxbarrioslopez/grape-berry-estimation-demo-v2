@@ -49,7 +49,7 @@ OPTIONS:
   --limit N           Limit images
   --build true|false  Build APK            (default: false)
   --install true|false Install APK         (default: false)
-  --eval true|false   Forensic evaluation  (default: true)
+    --eval true|false   Evaluation report    (default: true)
   --provider PROVIDER auto|cpu|nnapi       (default: auto)
   --fused true|false  Fused A/B            (default: true)
   --pair-policy P     auto|strict|single-view
@@ -265,7 +265,7 @@ sleep 1
 $ADB -s "$DEVICE_SERIAL" logcat -c 2>/dev/null || true
 
 # Background logcat capture
-$ADB -s "$DEVICE_SERIAL" logcat -v time 2>/dev/null | grep --line-buffered -iE "batch|forense|gt-check|exception|onnx|model|error" > "$LOGCAT_FILE" 2>&1 &
+$ADB -s "$DEVICE_SERIAL" logcat -v time 2>/dev/null | grep --line-buffered -iE "batch|forense|forensic|gt-check|exception|onnx|model|error" > "$LOGCAT_FILE" 2>&1 &
 LOGCAT_PID=$!
 
 # Launch
@@ -345,7 +345,7 @@ while [[ $ELAPSED -lt $(( WAIT_TIMEOUT_MIN * 60 )) ]]; do
         echo ""
         warn "No progress for 30 cycles (~5min) and 0 JSONs. Aborting."
         echo -e "${GRAY}Last logcat lines:${RESET}"
-        $ADB -s "$DEVICE_SERIAL" logcat -d -t 50 2>/dev/null | grep -iE "batch|forense|onnx|model|exception|error|DebugBatch" | tail -10
+        $ADB -s "$DEVICE_SERIAL" logcat -d -t 50 2>/dev/null | grep -iE "batch|forense|forensic|onnx|model|exception|error|DebugBatch" | tail -10
         break
     fi
 done

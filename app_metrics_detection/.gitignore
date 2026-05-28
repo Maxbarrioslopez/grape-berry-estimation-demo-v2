@@ -67,6 +67,8 @@ datasets/
 dataset/
 results/
 resultados/
+resultados_test_uvas/
+grape_test_results/
 runs/
 fused/
 fusion/

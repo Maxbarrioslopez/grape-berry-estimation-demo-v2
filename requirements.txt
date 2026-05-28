@@ -1,0 +1,23 @@
+# Optional Python environment for reproducibility/analysis tooling.
+# Not required to build or run the Android app.
+# Recommended Python: 3.11.x
+
+# Core numeric stack
+numpy==1.26.4
+pandas==2.2.2
+scipy==1.13.1
+
+# Visualization and reporting
+matplotlib==3.9.0
+seaborn==0.13.2
+
+# Statistics and data exports
+statsmodels==0.14.2
+openpyxl==3.1.5
+
+# Utilities
+tqdm==4.66.4
+python-dateutil==2.9.0.post0
+
+# Optional testing (for analysis scripts)
+pytest==8.2.2

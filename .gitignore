@@ -32,8 +32,11 @@ app_metrics_detection/app/release/
 # =========================================================
 .idea/
 .vscode/
+.ai/
+**/.ai/
 *.iml
 .DS_Store
+.python-version
 nul
 
 # =========================================================
@@ -65,6 +68,8 @@ app_metrics_detection/debug/
 **/dataset/
 **/results/
 **/resultados/
+**/resultados_test_uvas/
+**/grape_test_results/
 **/runs/
 **/outputs/
 **/fused/
