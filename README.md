@@ -254,9 +254,9 @@ cd app_metrics_detection
 
 Expected requirements:
 
-- Android SDK installed and configured in `local.properties`.
-- Native dependencies present in `third_party/onnxruntime` and
-  `third_party/opencv`.
+- Native dependencies present in `third_party/onnxruntime` and `third_party/opencv`.
+
+On Linux, run `./scripts/prepare_native_deps_linux.sh` from `app_metrics_detection/` to restore them automatically.
 
 ## How to Run
 

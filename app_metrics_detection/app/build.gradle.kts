@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 val prepareNativeDeps by tasks.registering {
     group = "native"
-    description = "Prepara dependencias nativas. En Linux no ejecuta el script PowerShell."
+    description = "Prepara dependencias nativas usando PowerShell en Windows y Bash en Linux."
 
     doLast {
         if (org.gradle.internal.os.OperatingSystem.current().isWindows) {
@@ -29,8 +29,10 @@ val prepareNativeDeps by tasks.registering {
                 )
             }
         } else {
-            println("Linux detectado: se omite scripts/prepare_native_deps.ps1")
-            println("Verifica manualmente que existan third_party/onnxruntime y third_party/opencv.")
+            exec {
+                workingDir = rootProject.projectDir
+                commandLine("bash", "scripts/prepare_native_deps_linux.sh")
+            }
         }
     }
 }
