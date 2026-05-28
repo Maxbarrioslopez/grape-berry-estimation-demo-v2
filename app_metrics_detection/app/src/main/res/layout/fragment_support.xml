@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/md_background">
 
-    <!-- AppBar con título centrado y botón back -->
+    <!-- AppBar with centered title and back button -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -55,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <!-- Título -->
+                    <!-- Title -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

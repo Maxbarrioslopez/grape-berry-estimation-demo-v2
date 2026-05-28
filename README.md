@@ -1,29 +1,38 @@
 # Metrics Detection
 
-Informe tecnico del proyecto Android **Metrics Detection**, una aplicacion
-AgTech para captura de racimos, inferencia local de Computer Vision/ML,
-persistencia local, historial, exportacion PDF y sincronizacion con backend.
+## Public Academic Demo Status
 
-Este README documenta lo confirmado por el codigo y por el build local. No
-declara precision, latencia, rendimiento de campo ni seguridad criptografica
-mas alla de lo observable en la implementacion.
+The publishable Android project is in `app_metrics_detection/`. For the public
+academic demonstration repository, default `debug` and `release` builds run with
+`DEMO_MODE=true`: no username/password, no real login, no backend calls, no cloud
+sync, and local-only saved records. Backend/auth/sync code is preserved for
+private reactivation, but disabled in the public build configuration.
 
-## Descripcion del Proyecto
+Technical report of the Android project **Metrics Detection**, an
+AgTech application for bunch capture, local Computer Vision/ML inference,
+local persistence, history, PDF export, and preserved backend synchronization
+code that is disabled in the public academic demo build.
 
-Metrics Detection permite:
+This README documents what has been confirmed by the code and local build. It does
+not declare precision, latency, field performance, or cryptographic security
+beyond what is observable in the implementation.
 
-- Iniciar sesion y enrutar al usuario autenticado.
-- Crear un lote con company, vessel, block y variety.
-- Capturar o seleccionar imagenes de racimos.
-- Ejecutar inferencia local mediante pipeline Android + JNI/C++ + ONNX/OpenCV.
-- Revisar resultados, imagenes y distribuciones visuales.
-- Guardar lotes localmente en Room.
-- Ver historial y detalle de lote.
-- Exportar/compartir PDF.
-- Sincronizar lotes con backend cuando hay conectividad.
-- Gestionar perfil, almacenamiento local, modo oscuro y soporte.
+## Project Description
 
-## Arquitectura General
+Metrics Detection enables:
+
+- Demo routing directly to the local workflow; the preserved login flow is disabled in public `DEMO_MODE` builds.
+- Creating a batch with company, vessel, block, and variety.
+- Capturing or selecting bunch images.
+- Running local inference via Android + JNI/C++ + ONNX/OpenCV pipeline.
+- Reviewing results, images, and visual distributions.
+- Saving batches locally in Room.
+- Viewing history and batch detail.
+- Exporting/sharing PDF.
+- Preserved backend synchronization for private builds; disabled in public `DEMO_MODE` builds.
+- Managing profile, local storage, dark mode, and support.
+
+## General Architecture
 
 ```mermaid
 flowchart TD
@@ -42,384 +51,383 @@ flowchart TD
     JNI --> OpenCV[OpenCV]
     VM --> Room[(Room)]
     HVM --> Room
-    Room --> Repo[LoteRepository]
+    Room --> Repo[BatchRepository]
     Repo --> Retrofit[Retrofit API]
     Work[WorkManager] --> Repo
     PDF[PDF Utils] --> History
 ```
 
-## Stack Android Confirmado
+## Confirmed Android Stack
 
-| Area | Tecnologia |
+| Area | Technology |
 |---|---|
-| Lenguaje | Kotlin 2.0.0, Java 8 bytecode |
+| Language | Kotlin 2.0.0, Java 8 bytecode |
 | UI | XML Views, ViewBinding, Material Components 1.12.0, AppCompat |
-| Navegacion | AndroidX Navigation Fragment/UI 2.7.7 |
+| Navigation | AndroidX Navigation Fragment/UI 2.7.7 |
 | Layout | ConstraintLayout, CoordinatorLayout, ScrollView/NestedScrollView |
-| Persistencia | Room 2.5.2 |
-| Red | Retrofit 2.9.0, OkHttp 4.9.1/4.12.0, Gson |
+| Persistence | Room 2.5.2 |
+| Network | Retrofit 2.9.0, OkHttp 4.9.1/4.12.0, Gson |
 | Background | WorkManager 2.7.1 |
-| Imagenes | Glide 4.15.1, Android Photo Picker/GetContent, camara |
-| Graficos | MPAndroidChart |
+| Images | Glide 4.15.1, Android Photo Picker/GetContent, camera |
+| Charts | MPAndroidChart |
 | PDF | `android.graphics.pdf.PdfDocument` |
-| Seguridad local | AndroidX Security Crypto para `EncryptedSharedPreferences` |
+| Local security | AndroidX Security Crypto for `EncryptedSharedPreferences` |
 | ML/CV | JNI/C++17, ONNX Runtime Android 1.24.3, OpenCV Android SDK |
 | Build | Android Gradle Plugin 8.5.1, compileSdk 34, minSdk 28 |
 
-## Flujo de Usuario
+## User Flow
 
-1. `LauncherActivity` decide si mostrar autenticacion o `MainActivity` segun
-   `TokenProvider.isLoggedIn()`.
-2. `LoginActivity` autentica contra backend y guarda sesion local.
-3. `MainActivity` inicializa bottom navigation: Inicio, Historial, Perfil y
-   Soporte.
-4. En Inicio, `Step1Fragment` recolecta metadata del lote.
-5. `Step2Fragment` permite crear racimos, capturar/cargar imagenes, revisar
-   Frente/Reverso, procesar y guardar.
-6. Historial lista lotes locales, permite filtrar, seleccionar, ver detalle y
-   compartir PDF.
-7. Perfil muestra datos de usuario y acciones de almacenamiento local.
-8. Soporte muestra contacto y preguntas frecuentes.
+1. In public `DEMO_MODE` builds, `LauncherActivity` shows the academic agreement and then opens `MainActivity` without authentication.
+2. In private non-demo builds, the preserved authentication flow can route through `LoginActivity`.
+3. `MainActivity` initializes bottom navigation: Home, History, Profile, and
+   Support.
+4. In Home, `Step1Fragment` collects batch metadata.
+5. `Step2Fragment` allows creating bunches, capturing/loading images, reviewing
+   Front/Back, processing, and saving.
+6. History lists local batches, allows filtering, selecting, viewing detail, and
+   sharing PDF.
+7. Profile displays user data and local storage actions.
+8. Support shows contact information and FAQs.
 
-## Flujo ML / Computer Vision
+## ML / Computer Vision Flow
 
-El flujo ML se documenta a nivel conceptual porque esta iteracion visual no
-modifica JNI, C++, ONNX, OpenCV ni assets de modelos.
+The ML flow is documented at a conceptual level because this visual iteration does not
+modify JNI, C++, ONNX, OpenCV, or model assets.
 
-1. La app extrae modelos ONNX desde assets a almacenamiento interno en
+1. The app extracts ONNX models from assets to internal storage in
    `MetricsDetectionApp`.
-2. `HomeViewModel` coordina la preparacion de imagenes y llama al pipeline.
-3. `MetricsPipeline` valida archivos de modelo y delega al puente nativo.
-4. El codigo JNI/C++ ejecuta preprocesamiento, inferencia ONNX y operaciones
-   OpenCV.
-5. El resultado vuelve a Kotlin como datos de prediccion, histogramas, imagenes
-   procesadas y metadata.
-6. La UI muestra resumen, detalle, imagenes e histograma.
+2. `HomeViewModel` coordinates image preparation and calls the pipeline.
+3. `MetricsPipeline` validates model files and delegates to the native bridge.
+4. The JNI/C++ code runs preprocessing, ONNX inference, and OpenCV
+   operations.
+5. The result returns to Kotlin as prediction data, histograms, processed
+   images, and metadata.
+6. The UI displays summary, detail, images, and histogram.
 
-Modelos observados en assets:
+Models observed in assets:
 
-- `weights/modelos/legacy/seg_best.onnx`
-- `weights/modelos/qty_model_rgbdt.onnx`
-- `weights/modelos/qty_model_rgbdt.onnx.data`
-- `weights/modelos/hist_rgbdt_bimodal.onnx`
-- `weights/modelos/hist_rgbdt_bimodal.onnx.data`
+- `weights/models/legacy/seg_best.onnx`
+- `weights/models/qty_model_rgbdt.onnx`
+- `weights/models/qty_model_rgbdt.onnx.data`
+- `weights/models/hist_rgbdt_bimodal.onnx`
+- `weights/models/hist_rgbdt_bimodal.onnx.data`
 
-## UI/UX Actualizada
+## Updated UI/UX
 
-Primera iteracion visual segura aplicada:
+First safe visual iteration applied:
 
-- Radios unificados: cards principales `16dp`, cards internas `12dp`,
-  botones `16dp`, inputs `16dp`, chips `12dp`.
-- Tipografia existente ordenada: `roboto_medium.ttf` se usa en titulos de
-  toolbar, titulos de pantalla y botones. Merriweather se conserva disponible,
-  pero no se fuerza como cuerpo por riesgo de volver editorial una app tecnica.
-- Registro y Recuperacion migrados a Material Components con
-  `TextInputLayout`, `TextInputEditText`, `MaterialButton` y `MaterialCheckBox`.
-- Spacing/padding normalizado con `spacing_xs/sm/md/lg`.
-- Bottom navigation muestra labels y usa icono real de Home.
-- Empty state de racimos usa texto claro: "Sin racimos todavia" y
-  "Captura o selecciona imagenes para comenzar el analisis."
-- Toolbars de Historial, Perfil, Soporte, Registro y Recuperacion quedan con
-  apariencia consistente.
-- Se movieron textos visibles de XML a `strings.xml`/`values-en/strings.xml`
-  cuando era seguro.
+- Unified border radii: main cards `16dp`, inner cards `12dp`,
+  buttons `16dp`, inputs `16dp`, chips `12dp`.
+- Existing typography organized: `roboto_medium.ttf` is used in toolbar
+  titles, screen titles, and buttons. Merriweather is kept available,
+  but not forced as body text to avoid making a technical app look editorial.
+- Registration and Recovery migrated to Material Components with
+  `TextInputLayout`, `TextInputEditText`, `MaterialButton`, and `MaterialCheckBox`.
+- Spacing/padding normalized with `spacing_xs/sm/md/lg`.
+- Bottom navigation shows labels and uses a real Home icon.
+- Bunch empty state uses clear text: "No bunches yet" and
+  "Capture or select images to begin analysis."
+- History, Profile, Support, Registration, and Recovery toolbars have
+  consistent appearance.
+- Visible text moved from XML to `strings.xml`/`values-en/strings.xml`
+  when safe.
 
-## Responsividad
+## Responsiveness
 
-Ajustes aplicados para pantallas pequenas y telefonos estandar:
+Adjustments applied for small screens and standard phones:
 
-- Formularios de Registro y Recuperacion viven dentro de `ScrollView` con
+- Registration and Recovery forms live inside `ScrollView` with
   `fillViewport=true`.
-- Inputs y botones conservan ancho flexible y `minHeight` tactil de 48dp.
-- Bottom navigation aumenta altura para labels visibles.
-- Filtros compactos de racimos evitan alturas fijas de 38dp.
-- Accion de cierre en pantalla completa pasa a 48dp.
-- Textos de botones y placeholders se mantienen desde recursos localizables.
+- Inputs and buttons retain flexible width and a touch `minHeight` of 48dp.
+- Bottom navigation increases height for visible labels.
+- Compact bunch filters avoid fixed heights of 38dp.
+- Full-screen close action increased to 48dp.
+- Button texts and placeholders are kept from localizable resources.
 
-Se realizo validacion runtime en emulador `Pixel_7` para Login, Registro,
-Recuperacion, Crear lote, selector de variedad, galeria del sistema, seleccion
-de imagen, carga Frente/Reverso, inferencia local, resultado resumen, Historial,
-Perfil, Soporte y modo claro/oscuro. Quedan pendientes la validacion con teclado
-abierto, orientacion si se habilita por feature flag, exportacion PDF recapturada
-y sincronizacion real contra backend disponible.
+Runtime validation was performed on `Pixel_7` emulator for Login, Registration,
+Recovery, Create batch, variety selector, system gallery, image
+selection, Front/Back loading, local inference, result summary, History,
+Profile, Support, and light/dark mode. Pending: validation with keyboard
+open, orientation if enabled by feature flag, re-captured PDF export,
+and real sync against available backend.
 
-## Color y Tema
+## Color and Theme
 
-La paleta revisada es coherente con AgTech + ML:
+The revised palette is consistent with AgTech + ML:
 
-- Verde: marca, accion primaria, exito y agricultura.
-- Azul: informacion tecnica/sistema.
-- Rojo: error/destructivo.
-- Amarillo/naranja: advertencias.
-- Superficies claras/oscuras: `md_background`, `md_surface`,
+- Green: brand, primary action, success, and agriculture.
+- Blue: technical/system information.
+- Red: error/destructive.
+- Yellow/orange: warnings.
+- Light/dark surfaces: `md_background`, `md_surface`,
   `md_surface_soft`, `md_surface_subtle`.
 
-La app cuenta con `values/colors.xml`, `values-night/colors.xml`,
-`values/themes.xml` y `values-night/themes.xml`. El modo oscuro se aplica con
-`AppCompatDelegate` y preferencia local.
+The app has `values/colors.xml`, `values-night/colors.xml`,
+`values/themes.xml`, and `values-night/themes.xml`. Dark mode is applied with
+`AppCompatDelegate` and local preference.
 
 ## Offline / Online
 
-Confirmado por codigo:
+Confirmed by code:
 
-- La inferencia se ejecuta localmente con modelos incluidos en assets.
-- Room mantiene lotes locales.
-- WorkManager programa sincronizacion periodica y manual cuando hay red.
-- Retrofit/OkHttp comunican autenticacion, perfil y lotes con backend.
-- `NetworkUtils` valida conectividad de interfaz, no disponibilidad real de un
-  host remoto.
+- Inference runs locally with models included in assets.
+- Room keeps local batches.
+- WorkManager schedules periodic and manual sync when network is available.
+- Retrofit/OkHttp handle authentication, profile, and batches with backend.
+- `NetworkUtils` validates interface connectivity, not real host
+  availability.
 
-## Seguridad y Autenticacion
+## Security and Authentication
 
-Confirmado por codigo:
+Confirmed by code:
 
-- Login contra `auth/login`.
-- Refresh token mediante `auth/refresh-token`.
-- Logout contra `auth/logout`.
-- Tokens y datos de sesion en `EncryptedSharedPreferences`.
-- `allowBackup=false` en manifest.
+- Login against `auth/login`.
+- Token refresh via `auth/refresh-token`.
+- Logout against `auth/logout`.
+- Tokens and session data in `EncryptedSharedPreferences`.
+- `allowBackup=false` in manifest.
 
-No se documentan credenciales internas en este README publico.
+No internal credentials are documented in this public README.
 
-## Capturas de Vistas
+## View Screenshots
 
-Documentacion completa de capturas:
+Complete screenshot documentation:
 
 - [vistas.md](vistas.md)
 
-Capturas representativas:
+Representative screenshots:
 
 ![Login](capturas_vistas_app_4/claro/01_login.png)
 
-![Crear lote](capturas_vistas_app_4/claro/04_crear_lote.png)
+![Create batch](capturas_vistas_app_4/claro/04_crear_lote.png)
 
-![Captura racimos](capturas_vistas_app_4/claro/07_captura_racimos.png)
+![Bunch capture](capturas_vistas_app_4/claro/07_captura_racimos.png)
 
-![Resultado](capturas_vistas_app_4/claro/14_resultado_resumen.png)
+![Result](capturas_vistas_app_4/claro/14_resultado_resumen.png)
 
-![Historial](capturas_vistas_app_4/claro/19_historial.png)
+![History](capturas_vistas_app_4/claro/19_historial.png)
 
-![Perfil](capturas_vistas_app_4/claro/23_perfil_configuracion.png)
+![Profile](capturas_vistas_app_4/claro/23_perfil_configuracion.png)
 
-![Soporte](capturas_vistas_app_4/claro/24_soporte.png)
+![Support](capturas_vistas_app_4/claro/24_soporte.png)
 
-## Archivos Principales
+## Main Files
 
-| Archivo | Rol |
+| File | Role |
 |---|---|
-| `app_metrics_detection/app/src/main/AndroidManifest.xml` | Permisos, activities, provider, theme |
-| `app_metrics_detection/app/build.gradle.kts` | Configuracion Android, JNI, dependencias |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/LauncherActivity.kt` | Ruteo inicial auth/main |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/MainActivity.kt` | Host de navegacion y sync |
+| `app_metrics_detection/app/src/main/AndroidManifest.xml` | Permissions, activities, provider, theme |
+| `app_metrics_detection/app/build.gradle.kts` | Android config, JNI, dependencies |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/LauncherActivity.kt` | Initial auth/main routing |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/MainActivity.kt` | Navigation and sync host |
 | `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/auth/LoginActivity.kt` | Login |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/auth/RegisterActivity.kt` | Registro por invitacion |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/auth/RecoveryActivity.kt` | Recuperacion de contrasena |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/ui/home/HomeViewModel.kt` | Orquestacion de lote, imagenes e inferencia |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/ml/MetricsPipeline.kt` | Entrada Kotlin al pipeline ML |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/auth/RegisterActivity.kt` | Invitation-based registration |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/auth/RecoveryActivity.kt` | Password recovery |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/ui/home/HomeViewModel.kt` | Batch, image, and inference orchestration |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/ml/MetricsPipeline.kt` | Kotlin entry point to ML pipeline |
 | `app_metrics_detection/app/src/main/cpp/` | JNI/C++/OpenCV/ONNX |
 | `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/data/local/` | Room DB/DAO |
-| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/network/` | Retrofit, tokens e interceptores |
+| `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/network/` | Retrofit, tokens, and interceptors |
 | `app_metrics_detection/app/src/main/java/com/gaiaspa/metrics_detection/worker/` | WorkManager sync/download |
 | `app_metrics_detection/app/src/main/res/layout/` | UI XML |
-| `app_metrics_detection/app/src/main/res/values/` | Temas, colores, estilos, dimensiones y strings |
+| `app_metrics_detection/app/src/main/res/values/` | Themes, colors, styles, dimensions, and strings |
 
-## Cambios Visuales Aplicados
+## Visual Changes Applied
 
-| Area | Archivos |
+| Area | Files |
 |---|---|
-| Radios/spacing/tipografia | `dimens.xml`, `styles.xml`, `themes.xml`, `values-night/themes.xml` |
-| Registro | `activity_register.xml`, `strings.xml`, `values-en/strings.xml` |
-| Recuperacion | `activity_recovery.xml`, `strings.xml`, `values-en/strings.xml` |
-| Navegacion inferior | `activity_main.xml`, `menu_bottom_nav.xml` |
+| Borders/spacing/typography | `dimens.xml`, `styles.xml`, `themes.xml`, `values-night/themes.xml` |
+| Registration | `activity_register.xml`, `strings.xml`, `values-en/strings.xml` |
+| Recovery | `activity_recovery.xml`, `strings.xml`, `values-en/strings.xml` |
+| Bottom navigation | `activity_main.xml`, `menu_bottom_nav.xml` |
 | Toolbars/empty states | `fragment_history.xml`, `fragment_step2.xml`, `fragment_support.xml`, `fragment_profile.xml` |
-| Historial/detalle/items | `item_lote_history.xml`, `fragment_lote_detail.xml`, `item_image_prediction.xml`, `item_image_prediction_detail.xml` |
-| Paneles visuales | `bg_histogram_panel.xml`, `bg_photo_panel.xml`, `bg_result_panel.xml` |
+| History/detail/items | `item_lote_history.xml`, `fragment_lote_detail.xml`, `item_image_prediction.xml`, `item_image_prediction_detail.xml` |
+| Visual panels | `bg_histogram_panel.xml`, `bg_photo_panel.xml`, `bg_result_panel.xml` |
 
-## Como Compilar
+## How to Build
 
-Desde el modulo Android:
+From the Android module:
 
 ```bash
 cd app_metrics_detection
 ./gradlew assembleDebug
 ```
 
-Requisitos esperados:
+Expected requirements:
 
-- Android SDK instalado y configurado en `local.properties`.
-- Dependencias nativas presentes en `third_party/onnxruntime` y
+- Android SDK installed and configured in `local.properties`.
+- Native dependencies present in `third_party/onnxruntime` and
   `third_party/opencv`.
 
-## Como Ejecutar
+## How to Run
 
-Con dispositivo o emulador conectado:
+With a connected device or emulator:
 
 ```bash
 cd app_metrics_detection
 ./gradlew installDebug
 ```
 
-Luego abrir la app desde el launcher del dispositivo/emulador.
+Then open the app from the device/emulator launcher.
 
-## Como Validar
+## How to Validate
 
-Checklist recomendado:
+Recommended checklist:
 
-- Login con credenciales internas de validacion.
-- Crear lote con company/vessel/block/variety.
-- Seleccionar imagen desde galeria.
-- Capturar o cargar Frente/Reverso.
-- Revisar resultado, imagenes e histograma.
-- Guardar lote.
-- Abrir Historial y Detalle de lote.
-- Compartir PDF.
-- Revisar Perfil, almacenamiento y Soporte.
-- Revisar modo claro/oscuro.
-- Revisar Registro y Recuperacion visualmente.
+- Login with internal validation credentials.
+- Create a batch with company/vessel/block/variety.
+- Select an image from the gallery.
+- Capture or load Front/Back.
+- Review result, images, and histogram.
+- Save batch.
+- Open History and Batch Detail.
+- Share PDF.
+- Review Profile, storage, and Support.
+- Review light/dark mode.
+- Review Registration and Recovery visually.
 
-## Validacion Local Realizada
+## Local Validation Performed
 
 ```bash
 cd app_metrics_detection
 ./gradlew assembleDebug
 ```
 
-Resultado: build debug exitoso.
+Result: debug build successful.
 
-Tambien se uso `adb devices` y se encontro el emulador `emulator-5554`
-(`Pixel_7`). Se ejecuto `./gradlew installDebug`, se abrio la app, se inicio
-sesion con credenciales internas de validacion, se seleccionaron imagenes reales
-desde `imagenesparatest/` mediante el Photo Picker y se obtuvo resultado de
-inferencia Frente/Reverso en modo claro y oscuro. Las capturas nuevas se
-guardaron en `capturas_vistas_app_4/`.
+`adb devices` was also used and the `emulator-5554` emulator (`Pixel_7`) was found.
+`./gradlew installDebug` was run, the app was opened, login
+was performed with internal validation credentials, real images were selected
+from `imagenesparatest/` via the Photo Picker, and Front/Back inference
+results were obtained in light and dark mode. New screenshots were
+saved in `capturas_vistas_app_4/`.
 
-## Riesgos Conocidos
+## Known Risks
 
-- Existe una nueva serie de capturas en `capturas_vistas_app_4/`, documentada
-  en `vistas.md`, con modo claro y oscuro.
-- La inferencia Frente/Reverso fue ejecutada con imagenes de prueba, pero sus
-  valores no son metricas experimentales de precision o performance.
-- Exportacion PDF y sincronizacion backend quedan pendientes de validacion
-  manual completa.
-- Las metricas cuantitativas de precision, latencia y rendimiento quedan
-  pendientes de validacion experimental.
-- Algunas preferencias como selector de idioma y rotacion aparecen gateadas por
+- There is a new series of screenshots in `capturas_vistas_app_4/`, documented
+  in `vistas.md`, with light and dark mode.
+- Front/Back inference was run with test images, but its
+  values are not experimental precision or performance metrics.
+- PDF export and backend sync remain pending full manual
+  validation.
+- Quantitative precision, latency, and performance metrics remain
+  pending experimental validation.
+- Some preferences such as language selector and rotation appear gated by
   feature flags.
 
-## Pendientes
+## Pending
 
-- Recapturar pantalla completa de imagen y hoja de compartir/exportar PDF en
-  modo claro y oscuro.
-- Validacion con teclado abierto en Registro/Recuperacion.
-- Validacion de orientacion si se habilita la feature flag.
-- Validacion de sincronizacion real contra backend disponible.
+- Re-capture full-screen image and PDF share/export sheet in
+  light and dark mode.
+- Validation with keyboard open in Registration/Recovery.
+- Orientation validation if the feature flag is enabled.
+- Real sync validation against available backend.
 
-## Overlay Visual — Arquitectura de Pipeline Paralelo
+## Visual Overlay — Parallel Pipeline Architecture
 
-### Separacion estricta
+### Strict separation
 
-El sistema de overlay opera como un **pipeline visual paralelo** completamente
-independiente del pipeline productivo:
+The overlay system operates as a **parallel visual pipeline** fully
+independent from the production pipeline:
 
-| Pipeline | Proposito | Archivos |
-|----------|-----------|----------|
-| **Productivo** | Inferencia ONNX, conteo (QTY), histograma (HIST), features RGBDT, distance transform, JSON predictivo | `grape_pipeline_core.cpp`, `grape_pipeline_preprocess.cpp`, `grape_pipeline_onnx.cpp` |
-| **Visual paralelo** | Construccion de mascaras visuales, render de overlay, centroides, capas y colores | `grape_pipeline_postprocess.cpp`, `grape_pipeline_config.hpp` (namespace `overlay_visual`) |
+| Pipeline | Purpose | Files |
+|----------|---------|-------|
+| **Production** | ONNX inference, count (QTY), histogram (HIST), RGBDT features, distance transform, predictive JSON | `grape_pipeline_core.cpp`, `grape_pipeline_preprocess.cpp`, `grape_pipeline_onnx.cpp` |
+| **Parallel visual** | Visual mask construction, overlay rendering, centroids, layers, and colors | `grape_pipeline_postprocess.cpp`, `grape_pipeline_config.hpp` (namespace `overlay_visual`) |
 
-El pipeline productivo **no fue alterado**. El pipeline visual lee los datos
-de segmentacion (`SegmentationOutput`) producidos por el pipeline productivo
-pero jamas modifica `count_total`, `pred[]`, `mean`, `mode`, `std`,
-`seg_count_base`, `detections[]`, `hist_prob` ni ninguna metrica de negocio.
+The production pipeline **was not modified**. The visual pipeline reads the segmentation
+data (`SegmentationOutput`) produced by the production pipeline
+but never modifies `count_total`, `pred[]`, `mean`, `mode`, `std`,
+`seg_count_base`, `detections[]`, `hist_prob`, or any business metric.
 
-### Modulos del pipeline visual
+### Visual pipeline modules
 
-| Funcion | Rol |
-|---------|-----|
-| `RecomputeLetterboxParams()` | Recalcula ratio/dw/dh del letterbox a partir de dimensiones originales y modelo |
-| `CleanMaskForOverlay()` | Post-procesa mascaras binarias: threshold, morph close, Gauss blur, soft threshold |
-| `MapMaskToCanvas()` | Mapea mascara desde espacio letterbox (`_lb`) u original (`_orig`) al canvas final |
-| `BuildCombinedBunchGrapeMaskForOverlay()` | Construye mascara visual uniendo bunch + grape (`_orig` primero, `_lb` con reverse-letterbox como fallback) |
-| `BuildGlobalPingpongMaskForOverlay()` | Construye mascara visual de pingpong con reverse-letterbox correcto |
-| `ComputeVisualCentroid()` | Calcula centroide via `cv::moments` con fallback a `boundingRect` |
-| `DrawFilledCentroid()` | Dibuja centroide con borde oscuro para contraste |
-| `RenderVisualOverlayLayers()` | Render maestro: aplica fill, contornos y centroides en orden correcto |
-| `SaveVisualOverlay()` | Orquestador: lee imagen base, construye mascaras, renderiza, guarda |
+| Function | Role |
+|----------|------|
+| `RecomputeLetterboxParams()` | Recomputes letterbox ratio/dw/dh from original and model dimensions |
+| `CleanMaskForOverlay()` | Post-processes binary masks: threshold, morph close, Gaussian blur, soft threshold |
+| `MapMaskToCanvas()` | Maps mask from letterbox space (`_lb`) or original (`_orig`) to the final canvas |
+| `BuildCombinedBunchGrapeMaskForOverlay()` | Builds visual mask joining bunch + grape (`_orig` first, `_lb` with reverse-letterbox as fallback) |
+| `BuildGlobalPingpongMaskForOverlay()` | Builds visual pingpong mask with proper reverse-letterbox |
+| `ComputeVisualCentroid()` | Computes centroid via `cv::moments` with `boundingRect` fallback |
+| `DrawFilledCentroid()` | Draws centroid with dark border for contrast |
+| `RenderVisualOverlayLayers()` | Master render: applies fill, contours, and centroids in correct order |
+| `SaveVisualOverlay()` | Orchestrator: reads base image, builds masks, renders, saves |
 
 ### Reverse-letterbox visual
 
-Las mascaras existen en dos espacios:
-- `_orig`: ya mapeadas al tamano original de la imagen (calculadas en `RunSegmentationPipeline()` via `ScaleMaskBackToOriginal()`)
-- `_lb`: en espacio letterbox 512x512
+Masks exist in two spaces:
+- `_orig`: already mapped to the original image size (computed in `RunSegmentationPipeline()` via `ScaleMaskBackToOriginal()`)
+- `_lb`: in letterbox space 512x512
 
-El pipeline visual **prefiere `_orig`** (mapeo correcto garantizado). Si solo
-existen mascaras `_lb`, aplica `ScaleMaskBackToOriginal()` con los parametros
-de letterbox recalculados (`ratio`, `dw`, `dh`). Ya no se hace resize directo.
+The visual pipeline **prefers `_orig`** (guaranteed correct mapping). If only
+`_lb` masks exist, it applies `ScaleMaskBackToOriginal()` with the recomputed
+letterbox parameters (`ratio`, `dw`, `dh`). Direct resize is no longer used.
 
-### Orden de render
+### Render order
 
 ```
-1. Imagen original (fondo)
-2. Fill suave bunch+grape  (cyan, alpha 0.10)
-3. Fill pingpong            (naranja, alpha 0.25)
-4. Contorno pingpong        (amarillo, grosor dinamico)
-5. Centroides               (bunch/grape naranja-rojizo, pingpong azul)
-6. Contorno externo bunch+grape (cyan, approxPolyDP simplificado, grosor dinamico)
+1. Original image (background)
+2. Soft fill bunch+grape  (cyan, alpha 0.10)
+3. Pingpong fill            (orange, alpha 0.25)
+4. Pingpong outline         (yellow, dynamic thickness)
+5. Centroids                (bunch/grape reddish-orange, pingpong blue)
+6. Outer contour bunch+grape (cyan, simplified approxPolyDP, dynamic thickness)
 ```
 
-### Colores visuales (BGR)
+### Visual colors (BGR)
 
-| Elemento | Color | BGR |
+| Element | Color | BGR |
 |----------|-------|-----|
-| Fill bunch+grape | Cyan tenue | (255, 255, 0) |
-| Contorno bunch+grape | Cyan | (255, 255, 0) |
-| Fill pingpong | Naranja | (0, 220, 255) |
-| Contorno pingpong | Amarillo | (0, 255, 255) |
-| Centroide bunch/grape | Rojo-naranja | (0, 80, 255) |
-| Centroide pingpong | Azul | (255, 80, 0) |
+| Fill bunch+grape | Soft cyan | (255, 255, 0) |
+| Contour bunch+grape | Cyan | (255, 255, 0) |
+| Fill pingpong | Orange | (0, 220, 255) |
+| Contour pingpong | Yellow | (0, 255, 255) |
+| Centroid bunch/grape | Red-orange | (0, 80, 255) |
+| Centroid pingpong | Blue | (255, 80, 0) |
 
-Constantes definidas en `grape_pipeline_config.hpp`, namespace `overlay_visual`.
+Constants defined in `grape_pipeline_config.hpp`, namespace `overlay_visual`.
 
-### Parametros dinamicos
+### Dynamic parameters
 
-Los espesores de contorno y radios de centroide se calculan proporcionalmente
-al ancho de la imagen para adaptarse a distintas resoluciones:
+Contour thicknesses and centroid radii are calculated proportionally
+to image width to adapt to different resolutions:
 
-- Contorno bunch+grape: `max(3, min(5, cols / 300))`
-- Contorno pingpong:    `max(2, min(4, cols / 420))`
-- Centroide bunch/grape: `max(2, min(4, cols / 350))`
-- Centroide pingpong:    `max(3, min(5, cols / 320))`
+- Bunch+grape contour: `max(3, min(5, cols / 300))`
+- Pingpong contour:    `max(2, min(4, cols / 420))`
+- Bunch/grape centroid: `max(2, min(4, cols / 350))`
+- Pingpong centroid:    `max(3, min(5, cols / 320))`
 
-### Logs de diagnostico
+### Diagnostic logs
 
 ```
 OVERLAY_DIAG canvas=WxH bunch_grape_nonzero=N pingpong_nonzero=N centroids=N contours=N
 ```
 
-### Constantes visuales vs productivas
+### Visual constants vs production
 
-Todas las constantes del pipeline visual estan en `namespace overlay_visual`
-dentro de `grape_pipeline_config.hpp`. Son independientes y no reemplazan
+All visual pipeline constants are in `namespace overlay_visual`
+within `grape_pipeline_config.hpp`. They are independent and do not replace
 `kDefaultSegConfThreshold`, `kDefaultSegMaskThreshold`, `kCaliberMinMm`,
-`kCaliberMaxMm` ni ninguna constante del pipeline productivo.
+`kCaliberMaxMm`, or any production pipeline constant.
 
-### Validacion de no impacto
+### No-impact validation
 
-- `count_total`, `pred[]`, `mean`, `mode`, `std` no se modifican.
-- `seg_count_base`, `detections[]` se leen pero no se alteran.
-- `PipelineResultToJson()` no cambia.
-- `SaveDebugArtifacts()` no cambia su logica productiva.
-- `GrapePipelineCore::Run()` solo llama a `SaveVisualOverlay()`; su firma y
-  comportamiento productivo no cambian.
+- `count_total`, `pred[]`, `mean`, `mode`, `std` are not modified.
+- `seg_count_base`, `detections[]` are read but not altered.
+- `PipelineResultToJson()` does not change.
+- `SaveDebugArtifacts()` does not change its production logic.
+- `GrapePipelineCore::Run()` only calls `SaveVisualOverlay()`; its signature and
+  production behavior do not change.
 
-## Alcance Protegido
+## Protected Scope
 
-En esta iteracion no se modificaron:
+In this iteration the following were not modified:
 
-- JNI/C++ (excepto overlay visual en postprocess.cpp y constantes visual-only en config.hpp).
-- ONNX/assets/modelos.
+- JNI/C++ (except visual overlay in postprocess.cpp and visual-only constants in config.hpp).
+- ONNX/assets/models.
 - Room/DAO/entities.
 - Retrofit/API/network.
 - WorkManager/sync.
-- Pipeline ML productivo (thresholds, NMS, conteo, histograma, predicciones, RGBDT, distance transform).
+- Production ML pipeline (thresholds, NMS, count, histogram, predictions, RGBDT, distance transform).
 - Package/applicationId.
-- Navegacion critica.
+- Critical navigation.

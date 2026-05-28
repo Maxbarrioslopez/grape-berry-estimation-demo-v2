@@ -26,9 +26,9 @@ import java.io.File
 
 /**
  * LoteDetailAdapter - v9.0 ARCHITECTURAL FIX
- * 1. Usa upload_512 como fuente persistente y liviana.
- * 2. Manejo defensivo de errores para evitar crashes.
- * 3. Paso de rutas (String) en lugar de Bitmaps pesados.
+ * 1. Uses upload_512 as lightweight persistent source.
+ * 2. Defensive error handling to prevent crashes.
+ * 3. Passes paths (String) instead of heavy Bitmaps.
  */
 class LoteDetailAdapter(
     private val lote: Lote,
@@ -82,7 +82,7 @@ class LoteDetailAdapter(
                 ivPhoto.setOnClickListener(null)
             }
 
-            // Mostrar datos de predicción
+            // Display prediction data
             if(prediction?.status == false) {
                 tvPredictionInfo.text = prediction.error
                 barChart.clear()

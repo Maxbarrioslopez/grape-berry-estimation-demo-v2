@@ -6,7 +6,7 @@ import android.graphics.PointF
 import kotlin.math.sqrt
 import kotlin.math.max
 import kotlin.math.min
-// Función para realizar la interpolación bicúbica en un punto (x, y)
+// Function to perform bicubic interpolation at a point (x, y)
 fun bicubicInterpolation(x: Double, y: Double, image: Array<FloatArray>): Float {
     val a = -0.5
     var result = 0.0
@@ -21,7 +21,7 @@ fun bicubicInterpolation(x: Double, y: Double, image: Array<FloatArray>): Float 
     return result.toFloat()
 }
 
-// Función para calcular el peso cúbico
+// Function to calculate the cubic weight
 fun cubicWeight(t: Double): Double {
     return if (t < 0) {
         ((1 + 2 * t) * (1 + t) * (1 + t)) / 6
@@ -30,15 +30,15 @@ fun cubicWeight(t: Double): Double {
     }
 }
 
-// Función principal para redimensionar el depthMap con interpolación bicúbica
+// Main function to resize depthMap with bicubic interpolation
 fun resizeDepthMapWithBicubicInterpolation(depthMap: TensorBuffer, targetWidth: Int, targetHeight: Int): TensorBuffer {
 
-    // Convertir el tensor de profundidad a una matriz 2D
+    // Convert depth tensor to a 2D matrix
     val depthArray = depthMap.floatArray
     val originalHeight = depthMap.shape[0]
     val originalWidth = depthMap.shape[1]
 
-    // Convertir el tensor a una matriz bidimensional de flotantes
+    // Convert the tensor to a two-dimensional float matrix
     val image = Array(originalHeight) { FloatArray(originalWidth) }
     for (y in 0 until originalHeight) {
         for (x in 0 until originalWidth) {
@@ -46,10 +46,10 @@ fun resizeDepthMapWithBicubicInterpolation(depthMap: TensorBuffer, targetWidth: 
         }
     }
 
-    // Crear una matriz para almacenar la imagen redimensionada
+    // Create a matrix to store the resized image
     val resizedImage = Array(targetHeight) { FloatArray(targetWidth) }
 
-    // Mapear coordenadas de la nueva imagen a la original usando interpolación bicúbica
+    // Map coordinates from the new image to the original using bicubic interpolation
     for (y in 0 until targetHeight) {
         for (x in 0 until targetWidth) {
             val srcX = x.toDouble() * (originalWidth - 1) / (targetWidth - 1)
@@ -59,10 +59,10 @@ fun resizeDepthMapWithBicubicInterpolation(depthMap: TensorBuffer, targetWidth: 
         }
     }
 
-    // Convertir la matriz redimensionada de vuelta a un tensor
+    // Convert the resized matrix back to a tensor
     val resizedTensor = TensorBuffer.createFixedSize(intArrayOf(targetHeight, targetWidth), DataType.FLOAT32)
 
-    // Cargar la matriz redimensionada en el TensorBuffer
+    // Load the resized matrix into the TensorBuffer
     val resizedArray = FloatArray(targetHeight * targetWidth)
     for (y in 0 until targetHeight) {
         for (x in 0 until targetWidth) {

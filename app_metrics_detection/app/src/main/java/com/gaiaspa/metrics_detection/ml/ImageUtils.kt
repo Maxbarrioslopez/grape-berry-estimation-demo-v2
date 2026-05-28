@@ -57,13 +57,13 @@ object ImageUtils {
      * @return Absolute path to the generated file, or null on failure.
      */
     fun generateUpload512(srcPath: String, outputDir: File): String? {
-        Log.d(TAG, "Generando imagen de subida de alta calidad (1024px)...")
+        Log.d(TAG, "Generating high-quality upload image (1024px)...")
         var scaled: Bitmap? = null
         return try {
-            // 1. Decodificamos con sampleo a un tamaño cercano a 1024 para ahorrar RAM
+            // 1. Decode with sampling to a size close to 1024 to save RAM
             val rotated = decodeSampledBitmap(srcPath, 1024, 1024) ?: return null
             
-            // 2. Calculamos nuevas dimensiones manteniendo proporción (Lado mayor = 1024)
+            // 2. Calculate new dimensions preserving aspect ratio (Longest side = 1024)
             val width = rotated.width
             val height = rotated.height
             val newWidth: Int
@@ -77,20 +77,20 @@ object ImageUtils {
                 newWidth = (width * 1024) / height
             }
             
-            // 3. Escalado final
+            // 3. Final scaling
             scaled = Bitmap.createScaledBitmap(rotated, newWidth, newHeight, true)
             if (scaled != rotated) rotated.recycle()
             
-            // 4. Compresión y guardado (Mantenemos prefijo upload_512 por compatibilidad de sistema)
+            // 4. Compress and save (Keep upload_512 prefix for system compatibility)
             val outFile = File(outputDir, "upload_512_${System.currentTimeMillis()}.jpg")
             FileOutputStream(outFile).use { out ->
                 scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
             }
             
-            Log.d(TAG, "Imagen de subida generada: ${newWidth}x${newHeight} px en ${outFile.absolutePath}")
+            Log.d(TAG, "Upload image generated: ${newWidth}x${newHeight} px at ${outFile.absolutePath}")
             outFile.absolutePath
         } catch (e: Exception) {
-            Log.e(TAG, "Error generando imagen de subida: ${e.message}")
+            Log.e(TAG, "Error generating upload image: ${e.message}")
             null
         } finally {
             scaled?.recycle()
@@ -122,10 +122,10 @@ object ImageUtils {
             
             BitmapFactory.decodeFile(path, options)?.let { rotateImageIfRequired(it, path) }
         } catch (e: OutOfMemoryError) {
-            Log.e(TAG, "OOM decodificando imagen: $path")
+            Log.e(TAG, "OOM decoding image: $path")
             null
         } catch (e: Exception) { 
-            Log.e(TAG, "Error decodificando: ${e.message}")
+            Log.e(TAG, "Error decoding: ${e.message}")
             null 
         }
     }
@@ -179,7 +179,7 @@ object ImageUtils {
             }
             file.absolutePath
         } catch (e: Exception) { 
-            Log.e(TAG, "Error guardando: ${e.message}")
+            Log.e(TAG, "Error saving: ${e.message}")
             null 
         }
     }

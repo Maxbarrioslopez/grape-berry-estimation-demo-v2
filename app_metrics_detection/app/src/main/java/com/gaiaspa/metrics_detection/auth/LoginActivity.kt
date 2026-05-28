@@ -1,8 +1,12 @@
 /**
  * LoginActivity.kt
  *
- * Propósito: Punto de entrada para la autenticación de usuarios.
- * Responsabilidad: Validar credenciales y navegar a Registro o Recuperación.
+ * Purpose: Entry point for user authentication.
+ * Responsibility: Validate credentials and navigate to Registration or Recovery.
+ *
+ * In DEMO_MODE: The real login UI is preserved for architectural demonstration.
+ * The login action is intercepted locally — no backend call is made.
+ * Registration and password recovery screens remain navigable for UI inspection.
  */
 package com.gaiaspa.metrics_detection.auth
 
@@ -16,6 +20,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.FeatureFlags
 import com.gaiaspa.metrics_detection.MainActivity
 import com.gaiaspa.metrics_detection.R
@@ -37,11 +42,17 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         if (FeatureFlags.FEATURE_LANGUAGE_SWITCH) {
             LanguagePreferenceManager.applySavedLanguageIfAny(this)
         }
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (BuildConfig.DEMO_MODE) {
+            setupDemoMode()
+            return
+        }
 
         apiService = ApiClient.create(applicationContext)
 
@@ -60,10 +71,40 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
 
-        // CONEXIÓN OBLIGATORIA: Abrir flujo de recuperación de contraseña
         binding.tvForgotPassword.setOnClickListener {
             startActivity(Intent(this, RecoveryActivity::class.java))
         }
+    }
+
+    /**
+     * In DEMO_MODE: preserves the real login UI for architectural demonstration.
+     * Login button is intercepted — no backend call, no credentials required.
+     * Registration and recovery screens remain navigable for UI inspection.
+     */
+    private fun setupDemoMode() {
+        setupLanguageButton()
+
+        binding.btnLogin.setOnClickListener {
+            performDemoModeLogin()
+        }
+
+        binding.tvSignUp.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
+
+        binding.tvForgotPassword.setOnClickListener {
+            startActivity(Intent(this, RecoveryActivity::class.java))
+        }
+    }
+
+    private fun performDemoModeLogin() {
+        binding.root.hideKeyboard()
+        Toast.makeText(
+            this,
+            getString(R.string.demo_login_intercepted),
+            Toast.LENGTH_LONG
+        ).show()
+        navigateToMain()
     }
 
     private fun setupLanguageButton() {

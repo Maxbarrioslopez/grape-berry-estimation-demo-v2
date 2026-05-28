@@ -1,10 +1,10 @@
 # ============================================================
-# LOCAL PROPERTIES — TEMPLATE DE EJEMPLO
+# LOCAL PROPERTIES - EXAMPLE TEMPLATE
 # ============================================================
-# Copiar este archivo como local.properties solo si Android
-# Studio no lo genera automáticamente al abrir el proyecto.
+# Copy this file as local.properties only if Android Studio does not
+# generate it automatically when opening the project.
 #
-# local.properties NO está versionado (ver .gitignore).
+# local.properties is ignored and must not be uploaded.
 # ============================================================
 
 # Linux:

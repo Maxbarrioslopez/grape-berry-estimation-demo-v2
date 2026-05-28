@@ -2,41 +2,25 @@ package com.gaiaspa.metrics_detection.worker
 
 import android.content.Context
 import androidx.work.*
+import com.gaiaspa.metrics_detection.BuildConfig
 import java.util.concurrent.TimeUnit
 
 /**
- * Punto de entrada único para programar trabajos de sincronización con WorkManager.
+ * Single entry point for scheduling synchronization jobs with WorkManager.
  *
- * ## Rol en la arquitectura
- * Actúa como fachada sobre Jetpack WorkManager, ocultando los detalles de construcción
- * de [Constraints] y políticas de encolado ([ExistingPeriodicWorkPolicy], [ExistingWorkPolicy]).
- * Tanto la sincronización periódica como la manual delegan en [SyncWorker].
- *
- * ## Trabajos registrados
- * | Nombre               | Tipo      | Política        |
- * |----------------------|-----------|-----------------|
- * | `SyncLotesWork`      | Periódico | KEEP            |
- * | `ManualSyncWork`     | Una vez   | KEEP            |
- *
- * Ambos requieren conectividad de red ([NetworkType.CONNECTED]).
+ * In DEMO_MODE all scheduling is skipped to prevent cloud operations.
  */
 object SyncManager {
 
     private const val PERIODIC_SYNC_WORK_NAME = "SyncLotesWork"
     private const val MANUAL_SYNC_WORK_NAME = "ManualSyncWork"
 
-    /**
-     * Programa una sincronización periódica que se ejecuta cada 15 minutos
-     * cuando el dispositivo está conectado a Internet.
-     *
-     * @param context Contexto de aplicación usado para obtener la instancia de [WorkManager].
-     */
     fun schedulePeriodicSync(context: Context) {
+        if (BuildConfig.DEMO_MODE) return
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        // Intervalo de 15 minutos según el comentario.
         val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(
             15, TimeUnit.MINUTES
         )
@@ -50,13 +34,8 @@ object SyncManager {
         )
     }
 
-    /**
-     * Programa una sincronización manual que se ejecuta una vez
-     * cuando el dispositivo está conectado a Internet.
-     *
-     * @param context Contexto de aplicación usado para obtener la instancia de [WorkManager].
-     */
     fun enqueueManualSync(context: Context) {
+        if (BuildConfig.DEMO_MODE) return
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()

@@ -1,22 +1,22 @@
 /**
- * Repositorio singleton que abstrae las operaciones de lectura/escritura sobre
- * lotes de detección de uvas, combinando almacenamiento local (Room) y remoto
- * (Retrofit hacia el backend).
+ * Singleton repository that abstracts read/write operations on grape detection
+ * lots, combining local storage (Room) and remote storage (Retrofit to the backend).
  *
- * Arquitectura:
- * - Capa de datos (data/repository): orquesta LoteDao (local) y ApiService (remoto).
- * - Patrón singleton con double-checked locking para acceso thread-safe desde
- *   múltiples componentes (Activities, Workers, ViewModels).
- * - Todas las operaciones remotas son suspend y se ejecutan en Dispatchers.IO.
+ * Architecture:
+ * - Data layer (data/repository): orchestrates LoteDao (local) and ApiService (remote).
+ * - Singleton pattern with double-checked locking for thread-safe access from
+ *   multiple components (Activities, Workers, ViewModels).
+ * - All remote operations are suspend and run on Dispatchers.IO.
  *
- * Ámbito de usuario: cada operación local filtra por el userId del usuario
- * autenticado actual (obtenido de TokenProvider), garantizando aislamiento
- * de datos entre cuentas.
+ * User scope: each local operation filters by the userId of the currently
+ * authenticated user (obtained from TokenProvider), ensuring data isolation
+ * between accounts.
  */
 package com.gaiaspa.metrics_detection.data.repository
 
 import android.content.Context
 import android.util.Log
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.data.local.DatabaseProvider
 import com.gaiaspa.metrics_detection.data.local.LoteDao
 import com.gaiaspa.metrics_detection.data.model.Lote
@@ -41,10 +41,10 @@ import java.net.URL
 import retrofit2.Response
 
 /**
- * Resultado de una operación de borrado local.
- * @property deleted true si se eliminó al menos una fila en Room.
- * @property missingLote true si el lote no existía en la base de datos local.
- * @property failedFileCount número de archivos físicos que no pudieron eliminarse del sistema de archivos.
+ * Result of a local deletion operation.
+ * @property deleted true if at least one row was deleted in Room.
+ * @property missingLote true if the lot did not exist in the local database.
+ * @property failedFileCount number of physical files that could not be deleted from the filesystem.
  */
 data class LocalDeleteResult(
     val deleted: Boolean,
@@ -64,9 +64,9 @@ class LoteRepository private constructor(
         private const val TAG = "LoteRepository"
 
         /**
-         * Obtiene la instancia única del repositorio, creándola si es necesario.
-         * @param context usado para inicializar la base de datos Room y el cliente API.
-         * @return la instancia singleton de LoteRepository.
+         * Obtains the unique repository instance, creating it if necessary.
+         * @param context used to initialize the Room database and API client.
+         * @return the singleton instance of LoteRepository.
          */
         fun getInstance(context: Context): LoteRepository {
             return INSTANCE ?: synchronized(this) {
@@ -84,42 +84,42 @@ class LoteRepository private constructor(
     }
 
     /**
-     * @return el ID del usuario autenticado actual, o "undefined_user" si no hay sesión.
+     * @return the ID of the currently authenticated user, or "undefined_user" if no session.
      */
     fun getCurrentUserId(): String {
         TokenProvider.init(context)
         return TokenProvider.getUserId().ifBlank { "undefined_user" }
     }
 
-    // ── Operaciones locales (Room) ───────────────────────────────────────────
+    // ── Local operations (Room) ───────────────────────────────────────────────
 
     /**
-     * Inserta un lote nuevo en Room, asociándolo al usuario actual y marcándolo
-     * como no sincronizado.
+     * Inserts a new lot into Room, associating it with the current user and
+     * marking it as unsynchronized.
      */
     fun insertLocalLote(lote: Lote) {
         val uid = getCurrentUserId()
         loteDao.insertLote(lote.copy(userId = uid, synced = false))
     }
 
-    /** @return todos los lotes del usuario actual, ordenados por fecha de predicción descendente. */
+    /** @return all lots for the current user, sorted by descending prediction date. */
     fun getAllLotes(): List<Lote> = loteDao.getAllLotes(getCurrentUserId()).sortedByDescending { it.predictedAt }
-    /** @return cantidad total de lotes del usuario actual en Room. */
+    /** @return total count of lots for the current user in Room. */
     fun getLoteCount(): Int = loteDao.getLoteCount(getCurrentUserId())
-    /** @return lotes pendientes de sincronización (synced = false). */
+    /** @return lots pending synchronization (synced = false). */
     fun getNotSynced(): List<Lote> = loteDao.getNotSyncedLotes(getCurrentUserId())
-    /** @return el lote con el ID local dado, o null si no existe o pertenece a otro usuario. */
+    /** @return the lot with the given local ID, or null if it does not exist or belongs to another user. */
     fun getLoteById(loteId: Long): Lote? = loteDao.getLoteById(loteId, getCurrentUserId())
 
     /**
-     * Borra un lote y sus imágenes físicas asociadas sin tocar backend ni cloudId remoto.
+     * Deletes a lot and its associated physical images without touching backend or remote cloudId.
      */
     fun deleteLocalLote(loteId: Long): LocalDeleteResult {
         val userId = getCurrentUserId()
         return try {
             val lote = loteDao.getLoteById(loteId, userId)
             if (lote == null) {
-                Log.w(TAG, "deleteLocalLote: lote $loteId no encontrado para usuario $userId")
+                Log.w(TAG, "deleteLocalLote: lot $loteId not found for user $userId")
                 return LocalDeleteResult(deleted = false, missingLote = true)
             }
 
@@ -142,15 +142,15 @@ class LoteRepository private constructor(
     }
 
     /**
-     * Marca un lote como no sincronizado y pendiente de eliminación remota.
-     * Útil cuando una sincronización no se completó y se necesita reintentar.
+     * Marks a lot as unsynchronized and pending remote deletion.
+     * Useful when a synchronization did not complete and a retry is needed.
      */
     fun markLoteAsNotSyncedAndToDelete(loteId: Long) = loteDao.markLoteAsNotSyncedAndToDelete(loteId, getCurrentUserId())
-    /** Registra un mensaje de error de sincronización para el lote indicado. */
+    /** Records a synchronization error message for the specified lot. */
     fun updateSyncError(loteId: Long, error: String?) = loteDao.updateSyncError(loteId, getCurrentUserId(), error)
     /**
-     * Elimina todos los lotes y sus archivos físicos asociados del usuario actual.
-     * @return número de filas eliminadas de Room.
+     * Deletes all lots and their associated physical files for the current user.
+     * @return number of rows deleted from Room.
      */
     fun deleteAllData(): Int {
         val userId = getCurrentUserId()
@@ -165,8 +165,8 @@ class LoteRepository private constructor(
     }
 
     /**
-     * Elimina solo los lotes ya sincronizados (sus archivos locales e imágenes en caché).
-     * @return número de filas eliminadas.
+     * Deletes only the already synchronized lots (their local files and cached images).
+     * @return number of rows deleted.
      */
     fun deleteAllDataSynced(): Int {
         val userId = getCurrentUserId()
@@ -181,8 +181,8 @@ class LoteRepository private constructor(
     }
 
     /**
-     * Inserta un lote desde la nube solo si no existe ya localmente (por cloudId).
-     * @return true si se insertó, false si ya existía.
+     * Inserts a lot from the cloud only if it does not already exist locally (by cloudId).
+     * @return true if inserted, false if it already existed.
      */
     fun verifyAndInsertLoteFromCloud(lote: Lote): Boolean {
         return if (!loteDao.doesLoteExist(lote.cloudId)) {
@@ -210,32 +210,36 @@ class LoteRepository private constructor(
                 if (!file.exists()) {
                     false
                 } else if (!file.delete()) {
-                    Log.w(TAG, "No se pudo borrar archivo local: $cleanPath")
+                    Log.w(TAG, "Could not delete local file: $cleanPath")
                     true
                 } else {
                     false
                 }
             }.getOrElse { e ->
-                Log.w(TAG, "Error borrando archivo local: $cleanPath", e)
+                Log.w(TAG, "Error deleting local file: $cleanPath", e)
                 true
             }
         }
     }
 
-    // ── Operaciones remotas (Retrofit) ──────────────────────────────────────
+    // ── Remote operations (Retrofit) ─────────────────────────────────────────
 
     /**
-     * Sube un lote completo al backend, incluyendo metadatos e imágenes.
-     * Se ejecuta en [Dispatchers.IO] para no bloquear el hilo principal.
+     * Uploads a complete lot to the backend, including metadata and images.
+     * Runs on [Dispatchers.IO] to avoid blocking the main thread.
      *
-     * @param loteRequest DTO con los metadatos del lote (userId, company, vessel, etc.).
-     * @param imagePaths rutas locales absolutas de las imágenes JPEG a subir.
-     * @return [Response] con [LoteResponse] conteniendo el cloudId y URLs remotas.
+     * @param loteRequest DTO with lot metadata (userId, company, vessel, etc.).
+     * @param imagePaths absolute local paths of the JPEG images to upload.
+     * @return [Response] with [LoteResponse] containing the cloudId and remote URLs.
      */
     suspend fun insertLoteGrapeCloud(
         loteRequest: BatchLoteGrapeRequest,
         imagePaths: List<String>
     ): Response<LoteResponse> = withContext(Dispatchers.IO) {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: Cloud upload skipped.")
+            return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
+        }
         val calPredictsJson = gson.toJson(loteRequest.calPredicts)
         apiService.insertBatchDetection(
             userId = loteRequest.userId.toRequestBody("text/plain".toMediaTypeOrNull()),
@@ -250,25 +254,33 @@ class LoteRepository private constructor(
     }
 
     /**
-     * Obtiene todos los lotes del usuario desde el backend.
-     * @return [Response] con lista de [LoteResponse].
+     * Retrieves all lots for the user from the backend.
+     * @return [Response] with a list of [LoteResponse].
      */
     suspend fun getLoteGrapeCloud(): Response<List<LoteResponse>> = withContext(Dispatchers.IO) {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: Cloud download skipped.")
+            return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
+        }
         apiService.getBatchsDetections()
     }
 
     /**
-     * Elimina un lote del backend por su cloudId.
-     * @param cloudID identificador remoto del lote.
-     * @return [Response] con [DeleteBatchGrapeResponse].
+     * Deletes a lot from the backend by its cloudId.
+     * @param cloudID remote identifier of the lot.
+     * @return [Response] with [DeleteBatchGrapeResponse].
      */
     suspend fun deleteLoteGrapeCloud(cloudID: String): Response<DeleteBatchGrapeResponse> = withContext(Dispatchers.IO) {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: Cloud delete skipped.")
+            return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
+        }
         apiService.deleteBatchDetection(cloudID)
     }
 
     /**
-     * Prepara las partes Multipart validando existencia física.
-     * ✅ HARDENING: No carga en RAM, usa asRequestBody para streaming.
+     * Prepares the Multipart parts by validating physical existence.
+     * HARDENING: Does not load into RAM, uses asRequestBody for streaming.
      */
     fun prepareImageParts(imagePaths: List<String>): List<MultipartBody.Part> {
         return imagePaths.mapNotNull { path ->
@@ -278,19 +290,19 @@ class LoteRepository private constructor(
                 val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("files", file.name, requestFile)
             } else {
-                Log.e(TAG, "Archivo de subida inválido: $cleanPath")
+                Log.e(TAG, "Invalid upload file: $cleanPath")
                 null
             }
         }
     }
 
     /**
-     * Tras una subida exitosa, actualiza en Room el cloudId, las rutas de imágenes
-     * remotas y marca el lote como sincronizado.
+     * After a successful upload, updates in Room the cloudId, remote image paths,
+     * and marks the lot as synchronized.
      *
-     * @param localLoteId ID local del lote en Room.
-     * @param cloudId identificador remoto asignado por el backend.
-     * @param cloudImages lista de URLs remotas de las imágenes subidas.
+     * @param localLoteId local lot ID in Room.
+     * @param cloudId remote identifier assigned by the backend.
+     * @param cloudImages list of remote URLs of the uploaded images.
      */
     suspend fun updateLoteAfterSync(localLoteId: Long, cloudId: String, cloudImages: List<String>) {
         withContext(Dispatchers.IO) {
@@ -301,10 +313,14 @@ class LoteRepository private constructor(
     }
 
     /**
-     * Descarga una imagen desde la nube y la guarda físicamente en el almacenamiento privado.
-     * @return La ruta absoluta local si tuvo éxito, null si falló.
+     * Downloads an image from the cloud and persists it physically in private storage.
+     * @return The local absolute path if successful, null if it failed.
      */
     suspend fun downloadAndPersistImage(url: String, fileName: String): String? = withContext(Dispatchers.IO) {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: Cloud image download skipped.")
+            return@withContext null
+        }
         try {
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.connectTimeout = 10000
@@ -320,17 +336,17 @@ class LoteRepository private constructor(
                     input.copyTo(output)
                 }
             }
-            Log.d(TAG, "Descarga persistente exitosa: ${file.absolutePath}")
+            Log.d(TAG, "Persistent download successful: ${file.absolutePath}")
             file.absolutePath
         } catch (e: Exception) {
-            Log.e(TAG, "Error en descarga persistente: ${e.message}")
+            Log.e(TAG, "Persistent download error: ${e.message}")
             null
         }
     }
 
     /**
-     * Actualiza la ruta local de una imagen específica dentro de un lote.
-     * Evita redescargas al transformar una URL remota en un archivo local permanente.
+     * Updates the local path of a specific image within a lot.
+     * Avoids re-downloads by converting a remote URL into a permanent local file.
      */
     suspend fun updateLocalImagePath(loteId: Long, index: Int, newPath: String) {
         withContext(Dispatchers.IO) {
@@ -346,7 +362,7 @@ class LoteRepository private constructor(
 
                 val updatedLote = lote.copy(uploadImages = updatedUploadImages)
                 loteDao.updateLote(updatedLote)
-                Log.d(TAG, "Room: Ruta local actualizada para lote $loteId en índice $index")
+                Log.d(TAG, "Room: Local path updated for lot $loteId at index $index")
             }
         }
     }

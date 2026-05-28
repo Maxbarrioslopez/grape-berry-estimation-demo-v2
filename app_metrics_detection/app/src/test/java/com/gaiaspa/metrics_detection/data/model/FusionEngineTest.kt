@@ -126,7 +126,10 @@ class FusionEngineTest {
     )
 
     private fun readOnlySampleImages(count: Int): List<File> {
-        val root = File("/home/maxi/Escritorio/modelo_nuevo/optimizacion_uvas/imagenesparatest")
+        val root = System.getenv("METRICS_SAMPLE_IMAGE_DIR")
+            ?.takeIf { it.isNotBlank() }
+            ?.let(::File)
+            ?: File("sample_images")
         assertTrue("Sample image folder must exist: ${root.absolutePath}", root.exists())
         return root.walkTopDown()
             .filter { it.isFile && it.extension.equals("jpg", ignoreCase = true) }

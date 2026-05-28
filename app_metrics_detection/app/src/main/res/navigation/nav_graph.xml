@@ -48,8 +48,8 @@
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.gaiaspa.metrics_detection.ui.history.HistoryFragment"
-        android:label="Historial">
-        <!-- Acción para ir al detalle del Lote -->
+        android:label="History">
+        <!-- Action to go to Batch detail -->
         <action
             android:id="@+id/action_historyFragment_to_loteDetailFragment"
             app:destination="@id/historyDetailFragment">

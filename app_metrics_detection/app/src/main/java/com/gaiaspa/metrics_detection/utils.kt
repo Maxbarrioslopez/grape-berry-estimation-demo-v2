@@ -3,7 +3,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 /**
- * Función para formatear el timestamp a una cadena de fecha y hora.
+ * Function to format a timestamp to a date-time string.
  */
 fun formatTimestampToDateTime(timestamp: Long): String {
     val dateFormat = SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault())

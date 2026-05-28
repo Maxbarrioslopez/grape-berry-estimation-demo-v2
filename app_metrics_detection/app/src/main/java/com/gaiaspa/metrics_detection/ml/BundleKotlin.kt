@@ -25,7 +25,7 @@ object BundleLoader {
         )
     }
 
-    /** Lee JSONArray que puede ser [1,2,3] o [[1],[2],[3]] o [[...],[...]] y lo aplana. */
+    /** Reads a JSONArray that can be [1,2,3] or [[1],[2],[3]] or [[...],[...]] and flattens it. */
     fun parse1DFloatArray(any: Any?): FloatArray {
         if (any == null) return FloatArray(0)
 
@@ -33,7 +33,7 @@ object BundleLoader {
             is JSONArray -> {
                 if (any.length() == 0) return FloatArray(0)
 
-                // Si el primer elemento es JSONArray => 2D o más: flatten
+                // If the first element is JSONArray => 2D or more: flatten
                 val first = any.opt(0)
                 if (first is JSONArray) {
                     val out = ArrayList<Float>(any.length() * (first.length().coerceAtLeast(1)))
@@ -61,7 +61,7 @@ object BundleLoader {
 
         val first = any.opt(0)
         if (first !is JSONArray) {
-            // Si viene 1D, lo tratamos como 1 fila
+            // If it comes as 1D, treat it as 1 row
             return arrayOf(parse1DFloatArray(any))
         }
 

@@ -10,7 +10,7 @@ import org.json.JSONObject
 import kotlin.math.roundToInt
 
 /**
- * MetricsPipeline — v10.0 MIGRACIÓN OVERLAY NATIVO
+ * MetricsPipeline — v10.0 NATIVE OVERLAY MIGRATION
  *
  * Bridge layer between the Kotlin/Android UI and the native C++ ML engine
  * ([grape_pipeline_jni.cpp]). Responsible for:
@@ -73,7 +73,7 @@ class MetricsPipeline(
             val regFile = File(weightsDir, regModelFile)
 
             if (!segFile.exists() || !regFile.exists()) {
-                onFailure("Modelos no encontrados en disco.")
+                onFailure("Models not found on disk.")
                 return
             }
 
@@ -91,7 +91,7 @@ class MetricsPipeline(
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error: ${e.message}")
-            onFailure(e.message ?: "Error en el pipeline")
+            onFailure(e.message ?: "Pipeline error")
         }
     }
 }
@@ -117,7 +117,7 @@ private class CppPipelineBridge(private val context: Context) {
      * @param visualOverlayPath Empty string signals that overlay generation is not requested.
      */
     fun invoke(imagePath: String, segModelPath: String, regModelPath: String, smoothEdges: Boolean, varietyId: Int?, useDepth: Boolean, providerPreference: String, visualOverlayPath: String?, onSuccess: (Success) -> Unit, onFailure: (String) -> Unit) {
-        if (!nativeLoaded) { onFailure("Libreria nativa no cargada"); return }
+        if (!nativeLoaded) { onFailure("Native library not loaded"); return }
         try {
             // ✅ Firma JNI actualizada v10.0
             val resultJson = nativeRunPipeline(
@@ -128,11 +128,11 @@ private class CppPipelineBridge(private val context: Context) {
                 providerPreference, 
                 smoothEdges, 
                 useDepth,
-                visualOverlayPath ?: "" // Nuevo parámetro
+                visualOverlayPath ?: "" // New parameter
             )
             onSuccess(parseSuccessFromJson(resultJson))
         } catch (t: Throwable) { 
-            onFailure(t.message ?: "Fallo JNI") 
+            onFailure(t.message ?: "JNI failure") 
         }
     }
 

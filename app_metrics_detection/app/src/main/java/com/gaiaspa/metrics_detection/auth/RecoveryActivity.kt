@@ -1,18 +1,23 @@
 /**
  * RecoveryActivity.kt
  *
- * Propósito: Gestionar la recuperación de acceso para usuarios que olvidaron su contraseña.
- * Responsabilidad: Realizar el cambio de contraseña en un solo paso validando Email y RUT.
- * 
- * Flujo: Validar datos locales -> Petición Directa al Backend -> Éxito/Error -> Login.
+ * Purpose: Manage access recovery for users who forgot their password.
+ * Responsibility: Perform password change in a single step by validating Email and RUT.
+ *
+ * Flow: Validate local data -> Direct Request to Backend -> Success/Error -> Login.
+ *
+ * In DEMO_MODE: The real recovery UI is preserved for architectural demonstration.
+ * Submit shows a demo message — no backend call is made.
  */
 package com.gaiaspa.metrics_detection.auth
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.ActivityRecoveryBinding
 import com.gaiaspa.metrics_detection.network.ApiClient
@@ -30,8 +35,14 @@ class RecoveryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityRecoveryBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (BuildConfig.DEMO_MODE) {
+            setupDemoMode()
+            return
+        }
 
         apiService = ApiClient.create(applicationContext)
 
@@ -45,15 +56,34 @@ class RecoveryActivity : AppCompatActivity() {
     }
 
     /**
-     * Realiza el cambio de contraseña validando Email, RUT y la nueva clave.
-     * Envía 'newContraseña' según contrato del backend.
+     * In DEMO_MODE: preserves the real password recovery UI for architectural
+     * demonstration. Submit shows an info message — no backend call is made.
+     */
+    private fun setupDemoMode() {
+        binding.btnChangePassword.setOnClickListener {
+            Toast.makeText(
+                this,
+                getString(R.string.demo_recovery_intercepted),
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        }
+
+        binding.tvBackToLogin.setOnClickListener {
+            finish()
+        }
+    }
+
+    /**
+     * Performs the password change by validating Email, RUT, and the new password.
+     * Sends 'newContraseña' according to the backend contract.
      */
     private fun performChangePassword() {
         val email = binding.etEmailRecovery.text.toString().trim().lowercase()
         val rut = binding.etRutRecovery.text.toString().trim()
         val newPassword = binding.etNewPasswordRecovery.text.toString().trim()
 
-        // Validaciones en cliente
+        // Client-side validations
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Toast.makeText(this, getString(R.string.invalid_email), Toast.LENGTH_SHORT).show()
             return
@@ -78,16 +108,16 @@ class RecoveryActivity : AppCompatActivity() {
 
                 if (response.isSuccessful) {
                     Toast.makeText(this@RecoveryActivity, 
-                        "Contraseña actualizada correctamente", 
+                        "Password updated successfully", 
                         Toast.LENGTH_LONG).show()
                     
-                    // Limpieza preventiva de sesión local
+                    // Preventive cleanup of local session
                     TokenProvider.clearSession()
-                    finish() // Regresa a LoginActivity
+                    finish() // Returns to LoginActivity
                 } else {
                     val message = when(response.code()) {
-                        404 -> "Los datos ingresados no coinciden con nuestros registros"
-                        else -> "No se pudo cambiar la contraseña (${response.code()})"
+                        404 -> "The data entered does not match our records"
+                        else -> "Could not change password (${response.code()})"
                     }
                     Toast.makeText(this@RecoveryActivity, message, Toast.LENGTH_LONG).show()
                 }

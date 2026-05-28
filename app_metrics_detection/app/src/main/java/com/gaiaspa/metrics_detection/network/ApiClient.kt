@@ -1,13 +1,13 @@
 /**
- * Cliente HTTP singleton que construye y expone la instancia de [ApiService] lista
- * para comunicarse con el backend de MetricsApp.
+ * Singleton HTTP client that builds and exposes the [ApiService] instance ready
+ * to communicate with the MetricsApp backend.
  *
- * Rol en la arquitectura: capa de red (network). Centraliza la configuración de
- * OkHttp (timeouts, interceptores, autenticador) y de Retrofit (URL base,
- * convertidor JSON) para que el resto de la app consuma un punto único de acceso.
+ * Role in the architecture: network layer. Centralizes the configuration of
+ * OkHttp (timeouts, interceptors, authenticator) and Retrofit (base URL,
+ * JSON converter) so the rest of the app consumes a single access point.
  *
- * @property BASE_URL URL base del backend (entorno de producción). Incluye el prefijo
- *                   de versión `/v1/` para versionado de API.
+ * @property BASE_URL Backend base URL (production environment). Includes the
+ *                   `/v1/` version prefix for API versioning.
  */
 package com.gaiaspa.metrics_detection.network
 
@@ -21,19 +21,21 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
+    // Placeholder URL for the public academic demo. Backend is disabled in DEMO_MODE builds.
+    // Replace with your private backend URL only when re-enabling server connectivity.
     val BASE_URL: HttpUrl =
-        "https://metricsapp.online/v1/".toHttpUrlOrNull()!!
+        "https://your-backend-url.example.com/v1/".toHttpUrlOrNull()!!
 
     /**
-     * Crea un [ApiService] completamente configurado.
+     * Creates a fully configured [ApiService].
      *
-     * - Inicializa [TokenProvider] para que los interceptores puedan leer tokens.
-     * - Adjunta [AuthInterceptor] para inyectar el header Authorization automáticamente.
-     * - Adjunta [TokenAuthenticator] para renovar tokens ante respuestas 401.
-     * - Timeouts de 300 s para tolerar subidas de imágenes en redes lentas.
+     * - Initializes [TokenProvider] so interceptors can read tokens.
+     * - Attaches [AuthInterceptor] to automatically inject the Authorization header.
+     * - Attaches [TokenAuthenticator] to renew tokens on 401 responses.
+     * - 300s timeouts to tolerate image uploads on slow networks.
      *
-     * @param context usado para inicializar TokenProvider y el autenticador de tokens.
-     * @return instancia de [ApiService] lista para realizar llamadas al backend.
+     * @param context used to initialize TokenProvider and the token authenticator.
+     * @return [ApiService] instance ready to make calls to the backend.
      */
     fun create(context: Context): ApiService {
         TokenProvider.init(context)

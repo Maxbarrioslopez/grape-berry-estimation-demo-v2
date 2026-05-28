@@ -6,23 +6,23 @@ import com.google.gson.reflect.TypeToken
 import com.gaiaspa.metrics_detection.data.model.CalPredict
 
 /**
- * Conversores de tipos para Room que serializan/deserializan listas
- * a cadenas JSON usando Gson.
+ * Type converters for Room that serialize/deserialize lists
+ * to JSON strings using Gson.
  *
- * Registrados en [AppDatabase] mediante la anotación [@TypeConverters].
- * Room invoca automáticamente el conversor adecuado según el tipo de la
- * columna y el tipo Kotlin de la propiedad.
+ * Registered in [AppDatabase] via the [@TypeConverters] annotation.
+ * Room automatically invokes the appropriate converter based on the
+ * column type and the Kotlin property type.
  *
- * Los tipos soportados son:
- * - [List]<[CalPredict]>: columna `cal_predicts` en la entidad [Lote].
- * - [List]<[String]>: columnas `source_images`, `normalized_images`,
- *   `upload_images`, `overlay_images` y `cloudImages` en la entidad [Lote].
+ * Supported types:
+ * - [List]<[CalPredict]>: `cal_predicts` column in the [Lote] entity.
+ * - [List]<[String]>: `source_images`, `normalized_images`,
+ *   `upload_images`, `overlay_images`, and `cloudImages` columns in the [Lote] entity.
  */
 class Converters {
     private val gson = Gson()
 
     /**
-     * Serializa una lista de [CalPredict] a una cadena JSON.
+     * Serializes a list of [CalPredict] to a JSON string.
      */
     @TypeConverter
     fun fromCalPredictList(calPredicts: List<CalPredict>): String {
@@ -30,7 +30,7 @@ class Converters {
     }
 
     /**
-     * Deserializa una cadena JSON en una lista de [CalPredict].
+     * Deserializes a JSON string into a list of [CalPredict].
      */
     @TypeConverter
     fun toCalPredictList(calPredictsString: String): List<CalPredict> {
@@ -39,7 +39,7 @@ class Converters {
     }
 
     /**
-     * Serializa una lista de cadenas a JSON.
+     * Serializes a list of strings to JSON.
      */
     @TypeConverter
     fun fromStringList(strings: List<String>): String {
@@ -47,7 +47,7 @@ class Converters {
     }
 
     /**
-     * Deserializa una cadena JSON en una lista de cadenas.
+     * Deserializes a JSON string into a list of strings.
      */
     @TypeConverter
     fun toStringList(stringsString: String): List<String> {

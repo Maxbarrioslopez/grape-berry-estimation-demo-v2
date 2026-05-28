@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.bumptech.glide.Glide
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.FeatureFlags
 import com.gaiaspa.metrics_detection.MainActivity
 import com.gaiaspa.metrics_detection.R
@@ -36,7 +37,7 @@ class ProfileFragment : Fragment() {
         ViewModelProvider(requireActivity()).get(HistoryViewModel::class.java)
     }
 
-    // Diálogo de progreso
+    // Progress dialog
     private var downloadDialog: AlertDialog? = null
     private enum class MessageTone { SUCCESS, WARNING, ERROR, INFO }
 
@@ -48,13 +49,13 @@ class ProfileFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        // Inicializa repositorios y ViewModel
+        // Initialize repositories and ViewModel
         val repository = ProfileRepository.getInstance(requireContext())
         val loteRepository = LoteRepository.getInstance(requireContext())
         viewModelFactory = ProfileViewModelFactory(repository, loteRepository, requireContext())
         viewModel = ViewModelProvider(this, viewModelFactory).get(ProfileViewModel::class.java)
 
-        // Observa perfil para actualizar UI
+        // Observe profile to update UI
         viewModel.profile.observe(viewLifecycleOwner) { profile ->
             profile?.let { updateUI(it) }
         }
@@ -67,7 +68,7 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        // Boton Logout
+        // Logout button
         binding.btnLogout.setOnClickListener {
             viewModel.logout()
             (activity as? MainActivity)?.logout()
@@ -75,9 +76,13 @@ class ProfileFragment : Fragment() {
 
         setupLanguageButton()
 
-        // Boton para iniciar descarga mediante Worker
-        binding.btnDownloadLotes.setOnClickListener {
-            enqueueDownloadWork()
+        // Button to start download via Worker (hidden in DEMO_MODE)
+        if (BuildConfig.DEMO_MODE) {
+            binding.btnDownloadLotes.visibility = View.GONE
+        } else {
+            binding.btnDownloadLotes.setOnClickListener {
+                enqueueDownloadWork()
+            }
         }
         binding.btnClearTemporaryFiles.setOnClickListener {
             confirmLocalCleanup(
@@ -96,7 +101,7 @@ class ProfileFragment : Fragment() {
         setupDarkModeSwitch()
         setupRotationSwitch()
 
-        // Boton para eliminar solo los datos sincronizados (Danger Zone)
+        // Button to delete only synced data (Danger Zone)
         binding.btnClearDataSynced.setOnClickListener {
             confirmLocalCleanup(
                 title = getString(R.string.delete_synced_data_title),
@@ -113,7 +118,7 @@ class ProfileFragment : Fragment() {
             )
         }
 
-        // Boton para eliminar TODOS los datos locales (Danger Zone)
+        // Button to delete ALL local data (Danger Zone)
         binding.btnClearAllData.setOnClickListener {
             confirmLocalCleanup(
                 title = getString(R.string.delete_all_local_data_title),
@@ -164,14 +169,15 @@ class ProfileFragment : Fragment() {
     }
 
     private fun enqueueDownloadWork() {
-        // Crea y encola el Worker
+        if (BuildConfig.DEMO_MODE) return
+        // Creates and enqueues the Worker
         val downloadWorkRequest = OneTimeWorkRequestBuilder<BatchDownloadWorker>().build()
         WorkManager.getInstance(requireContext()).enqueue(downloadWorkRequest)
 
-        // Muestra el diálogo de progreso
+        // Show the progress dialog
         showDownloadDialog()
 
-        // Observa el progreso del Worker
+        // Observe the Worker progress
         WorkManager.getInstance(requireContext())
             .getWorkInfoByIdLiveData(downloadWorkRequest.id)
             .observe(viewLifecycleOwner) { workInfo ->

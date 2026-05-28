@@ -3,6 +3,7 @@ package com.gaiaspa.metrics_detection.ui.profile
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.*
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.Profile
 import com.gaiaspa.metrics_detection.data.model.toLocalLote
@@ -64,7 +65,7 @@ class ProfileViewModel(
                 }
             } catch (e: Exception) {
                 _error.value = context.getString(R.string.error_loading_profile)
-                Log.e(TAG, "Error en loadProfile", e)
+                Log.e(TAG, "Error in loadProfile", e)
             } finally {
                 _isLoading.value = false
             }
@@ -80,6 +81,10 @@ class ProfileViewModel(
     }
 
     fun downloadBatchs(context: Context) {
+        if (BuildConfig.DEMO_MODE) {
+            _errorDownload.value = context.getString(R.string.cloud_disabled_message)
+            return
+        }
         if (_isDownloading.value == true) return
 
         _isDownloading.value = true
@@ -97,7 +102,7 @@ class ProfileViewModel(
                         val totalLotes = lotesResponseBody.size
 
                         for ((loteIndex, loteCloud) in lotesResponseBody.withIndex()) {
-                            _progressMessage.postValue("Descargando lote ${loteIndex + 1} de $totalLotes")
+                            _progressMessage.postValue("Downloading batch ${loteIndex + 1} of $totalLotes")
 
                             val imagePaths = loteCloud.predicts.map { it.image.imagePath }
                             val chunkSize = 10
@@ -106,8 +111,8 @@ class ProfileViewModel(
 
                             for ((chunkIndex, pathsChunk) in imagePathsChunks.withIndex()) {
                                 _progressMessage.postValue(
-                                    "Descargando lote ${loteIndex + 1}/$totalLotes | " +
-                                            "Imágenes ${chunkIndex + 1}/${imagePathsChunks.size}"
+                                    "Downloading batch ${loteIndex + 1}/$totalLotes | " +
+                                            "Images ${chunkIndex + 1}/${imagePathsChunks.size}"
                                 )
 
                                 val chunkResults = pathsChunk.map { imgUrl ->
@@ -140,7 +145,7 @@ class ProfileViewModel(
                 }
             } catch (e: Exception) {
                 _errorDownload.value = context.getString(R.string.error_downloading)
-                Log.e(TAG, "Error en downloadBatchs", e)
+                Log.e(TAG, "Error in downloadBatchs", e)
             } finally {
                 _isDownloading.value = false
             }
@@ -149,6 +154,7 @@ class ProfileViewModel(
 
     suspend fun downloadImageToCache(context: Context, imageUrl: String): String? =
         withContext(Dispatchers.IO) {
+            if (BuildConfig.DEMO_MODE) return@withContext null
             try {
                 val url = URL(imageUrl)
                 val connection = url.openConnection() as HttpURLConnection

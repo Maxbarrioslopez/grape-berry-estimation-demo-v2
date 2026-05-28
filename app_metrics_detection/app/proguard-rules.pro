@@ -1,33 +1,33 @@
-# REGLAS DE PRODUCCIÓN - MÉTRICAS DE UVA
-# Prioridad: Estabilidad sobre tamaño.
+# PRODUCTION RULES - GRAPE METRICS
+# Priority: Stability over size.
 
-# 1. Preservar JNI (Crítico para ONNX/C++)
+# 1. Preserve JNI (Critical for ONNX/C++)
 -keepclasseswithmembernames class * {
     native <methods>;
 }
 
-# 2. Preservar modelos de datos (GSON)
-# Evita que el renombrado de campos rompa la comunicación con el servidor y el pipeline
+# 2. Preserve data models (GSON)
+# Prevents field renaming from breaking communication with server and pipeline
 -keep class com.gaiaspa.metrics_detection.data.model.** { *; }
 -keep class com.gaiaspa.metrics_detection.data.model.request.** { *; }
 -keep class com.gaiaspa.metrics_detection.data.model.response.** { *; }
 
-# 3. Preservar Google Tink / Protobuf
-# Evita el error 'InvalidProtocolBufferException: invalid tag zero' en Release
+# 3. Preserve Google Tink / Protobuf
+# Prevents 'InvalidProtocolBufferException: invalid tag zero' error in Release
 -keep class com.google.crypto.tink.** { *; }
 -keep class com.google.crypto.tink.shaded.protobuf.** { *; }
 
-# 4. Preservar Room
+# 4. Preserve Room
 -keep class androidx.room.RoomDatabase { *; }
 -keep class * extends androidx.room.RoomDatabase { *; }
 
-# 5. MPAndroidChart (si se usa en release)
+# 5. MPAndroidChart (if used in release)
 -keep class com.github.mikephil.charting.** { *; }
 
-# 6. ONNX Runtime (específico para evitar stripping de métodos nativos)
+# 6. ONNX Runtime (specific to prevent native method stripping)
 -keep class ai.onnxruntime.** { *; }
-# 7. Retrofit / OkHttp / Gson - preservar genéricos y anotaciones
-# Crítico: evita ClassCastException Class -> ParameterizedType
+# 7. Retrofit / OkHttp / Gson - preserve generics and annotations
+# Critical: prevents ClassCastException Class -> ParameterizedType
 -keepattributes Signature
 -keepattributes *Annotation*
 
@@ -43,7 +43,7 @@
 -keep class com.google.gson.** { *; }
 -dontwarn com.google.gson.**
 
-# Preservar modelos reales del proyecto
+# Preserve real project models
 -keep class com.gaiaspa.metrics_detection.data.model.** { *; }
 -keep class com.gaiaspa.metrics_detection.data.remote.** { *; }
 -keep interface com.gaiaspa.metrics_detection.data.remote.** { *; }
@@ -61,7 +61,7 @@
 -keep interface retrofit2.** { *; }
 -keep class retrofit2.** { *; }
 
-# Tu API
+# Your API
 -keep interface com.gaiaspa.metrics_detection.network.ApiService { *; }
 
 # Kotlin coroutines metadata
@@ -77,7 +77,7 @@
 -keep class * extends com.google.gson.reflect.TypeToken
 
 # 8. Gson TypeToken / Room local history
-# Evita crash "Missing type parameter" al abrir historial en release
+# Prevents "Missing type parameter" crash when opening history in release
 -keepattributes Signature
 -keepattributes *Annotation*
 -keepattributes InnerClasses,EnclosingMethod
@@ -85,7 +85,7 @@
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
 
-# Preservar entidades, converters y modelos locales usados por Room/Gson
+# Preserve entities, converters, and local models used by Room/Gson
 -keep class com.gaiaspa.metrics_detection.data.local.** { *; }
 -keep class com.gaiaspa.metrics_detection.data.database.** { *; }
 -keep class com.gaiaspa.metrics_detection.data.entity.** { *; }

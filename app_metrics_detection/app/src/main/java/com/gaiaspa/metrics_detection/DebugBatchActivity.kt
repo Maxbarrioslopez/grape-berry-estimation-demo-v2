@@ -91,7 +91,7 @@ class DebugBatchActivity : AppCompatActivity() {
                 statusView.text = getString(R.string.batch_save_error)
                 Log.e(BatchProcessor.TAG, "DebugBatchActivity failure", t)
             }
-            // Eliminado finish() para que el usuario pueda ver el resultado en pantalla
+            // Removed finish() so the user can see the result on screen
         }
     }
 

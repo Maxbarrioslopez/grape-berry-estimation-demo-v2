@@ -1,20 +1,20 @@
 package com.gaiaspa.metrics_detection.ml
 
 class ScalersOriginal {
-    // Parámetros para X
-    // Mínimos de los datos originales
+    // Parameters for X
+    // Minimums of original data
     private val dataMinX = doubleArrayOf(15.0, 5290.0)
 
-    // Máximos de los datos originales
+    // Maximums of original data
     private val dataMaxX = doubleArrayOf(101.0, 16605.0)
 
-    // Factores de escalamiento (scale_)
+    // Scaling factors (scale_)
     private val scaleX = doubleArrayOf(1.16279070e-02, 8.83782589e-05)
 
-    // Transformación mínima aplicada (min_)
+    // Minimum transformation applied (min_)
     private val minX = doubleArrayOf(-0.1744186, -0.46752099)
 
-    // Parámetros para Y
+    // Parameters for Y
     private val dataMinY = doubleArrayOf(
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
@@ -38,9 +38,9 @@ class ScalersOriginal {
     // ------------------------
 
     /**
-     * Escala los datos de X usando la transformación:
+     * Scales X data using the transformation:
      * scaledValue = data[i] * scaleX[i] + minX[i]
-     * Se realizan los cálculos en doble precisión.
+     * Calculations are performed in double precision.
      */
     fun scaleX(data: FloatArray): FloatArray {
         checkXDimensions(data.size)
@@ -53,9 +53,9 @@ class ScalersOriginal {
     }
 
     /**
-     * Escala los datos de Y usando la transformación:
+     * Scales Y data using the transformation:
      * scaledValue = data[i] * scaleY[i] + minY[i]
-     * Se realizan los cálculos en doble precisión.
+     * Calculations are performed in double precision.
      */
     fun scaleY(data: FloatArray): FloatArray {
         checkYDimensions(data.size)
@@ -72,9 +72,9 @@ class ScalersOriginal {
     // ------------------------
 
     /**
-     * Aplica la transformación inversa en X:
+     * Applies the inverse transformation on X:
      * originalValue = (scaledValue - minX[i]) / scaleX[i]
-     * Se realizan los cálculos en doble precisión.
+     * Calculations are performed in double precision.
      */
     fun inverseScaleX(data: FloatArray): FloatArray {
         checkXDimensions(data.size)
@@ -87,9 +87,9 @@ class ScalersOriginal {
     }
 
     /**
-     * Aplica la transformación inversa en Y:
+     * Applies the inverse transformation on Y:
      * originalValue = (scaledValue - minY[i]) / scaleY[i]
-     * Se realizan los cálculos en doble precisión.
+     * Calculations are performed in double precision.
      */
     fun inverseScaleY(data: FloatArray): FloatArray {
         checkYDimensions(data.size)
@@ -106,13 +106,13 @@ class ScalersOriginal {
     // ------------------------
     private fun checkXDimensions(size: Int) {
         if (size != dataMinX.size || size != dataMaxX.size || size != scaleX.size || size != minX.size) {
-            throw IllegalArgumentException("Las dimensiones de los parámetros en X no coinciden.")
+            throw IllegalArgumentException("Dimensions of X parameters do not match.")
         }
     }
 
     private fun checkYDimensions(size: Int) {
         if (size != dataMinY.size || size != dataMaxY.size || size != scaleY.size || size != minY.size) {
-            throw IllegalArgumentException("Las dimensiones de los parámetros en Y no coinciden.")
+            throw IllegalArgumentException("Dimensions of Y parameters do not match.")
         }
     }
 }

@@ -59,13 +59,13 @@ fs::path ResolveOfficialBundleRoot(const fs::path& spec_path) {
     }
 
     if (!ExistsAndIsFile(spec_path.string())) {
-        throw std::runtime_error("El path del bundle oficial no existe: " + spec_path.string());
+        throw std::runtime_error("The official bundle path does not exist: " + spec_path.string());
     }
 
     const std::string file_name = spec_path.filename().string();
     if (file_name != kOfficialHistModel && file_name != kOfficialQtyModel) {
         throw std::runtime_error(
-            "El runtime oficial solo acepta el directorio de modelos o los ONNX oficiales: " +
+            "The official runtime only accepts the model directory or the official ONNX files: " +
             spec_path.string());
     }
 
@@ -81,20 +81,20 @@ BundleResolution ResolveFromDirectory(const std::string& segmentation_model_path
     bundle.qty_path = (model_root / kOfficialQtyModel).string();
 
     if (!ExistsAndIsFile(bundle.hist_path)) {
-        throw std::runtime_error("No se encontro el HIST oficial: " + bundle.hist_path);
+        throw std::runtime_error("Official HIST not found: " + bundle.hist_path);
     }
     if (!ExistsAndIsFile(bundle.qty_path)) {
-        throw std::runtime_error("No se encontro el QTY oficial: " + bundle.qty_path);
+        throw std::runtime_error("Official QTY not found: " + bundle.qty_path);
     }
 
     bundle.segmentation_path = ResolveDefaultSegmentationPath(segmentation_model_path, bundle_dir);
-    bundle.note = "Bundle oficial fijo: qty_model_rgbdt.onnx + hist_rgbdt_bimodal.onnx.";
+    bundle.note = "Fixed official bundle: qty_model_rgbdt.onnx + hist_rgbdt_bimodal.onnx.";
     return bundle;
 }
 
 BundleResolution ResolveBundle(const std::string& segmentation_model_path, const std::string& model_spec_path) {
     if (model_spec_path.empty()) {
-        throw std::runtime_error("Se requiere un path al bundle oficial de modelos.");
+        throw std::runtime_error("A path to the official model bundle is required.");
     }
 
     return ResolveFromDirectory(segmentation_model_path, fs::path(model_spec_path));
@@ -119,7 +119,7 @@ Ort::Session CreateSession(
     ProviderPreference provider_preference,
     std::string& provider_used) {
     if (!ExistsAndIsFile(model_path)) {
-        throw std::runtime_error("Modelo ONNX no encontrado: " + model_path);
+        throw std::runtime_error("ONNX model not found: " + model_path);
     }
 
     auto make_session = [&](bool try_nnapi) -> Ort::Session {
@@ -213,13 +213,13 @@ SessionMetadata InspectSession(Ort::Session& session) {
     }
 
     if (metadata.x_input_name.empty()) {
-        throw std::runtime_error("No se pudo identificar el input tensor 'x' del modelo ONNX.");
+        throw std::runtime_error("Could not identify the 'x' input tensor of the ONNX model.");
     }
     if (metadata.variety_input_name.empty()) {
-        throw std::runtime_error("No se pudo identificar el input 'variety_idx' del modelo ONNX.");
+        throw std::runtime_error("Could not identify the 'variety_idx' input of the ONNX model.");
     }
     if (metadata.main_output_name.empty()) {
-        throw std::runtime_error("No se pudo identificar la salida principal del modelo ONNX.");
+        throw std::runtime_error("Could not identify the main output of the ONNX model.");
     }
 
     return metadata;
@@ -229,17 +229,17 @@ RuntimeModelContract BuildRuntimeModelContract(
     const SessionMetadata& hist_metadata,
     const SessionMetadata& qty_metadata) {
     if (hist_metadata.x_channels <= 0 || qty_metadata.x_channels <= 0) {
-        throw std::runtime_error("No se pudo inferir el numero de canales del modelo.");
+        throw std::runtime_error("Could not infer the number of channels of the model.");
     }
     if (hist_metadata.x_channels != qty_metadata.x_channels) {
         throw std::runtime_error(
-            "HIST y QTY no usan el mismo numero de canales. HIST=" +
+            "HIST and QTY do not use the same number of channels. HIST=" +
             std::to_string(hist_metadata.x_channels) +
             " QTY=" + std::to_string(qty_metadata.x_channels));
     }
     if (hist_metadata.img_size > 0 && qty_metadata.img_size > 0 && hist_metadata.img_size != qty_metadata.img_size) {
         throw std::runtime_error(
-            "HIST y QTY no usan el mismo tamano de imagen. HIST=" +
+            "HIST and QTY do not use the same image size. HIST=" +
             std::to_string(hist_metadata.img_size) +
             " QTY=" + std::to_string(qty_metadata.img_size));
     }
@@ -251,12 +251,12 @@ RuntimeModelContract BuildRuntimeModelContract(
     contract.uses_seg_count_base = qty_metadata.has_seg_count_base;
     if (contract.input_channels != kOfficialInputChannels) {
         throw std::runtime_error(
-            "El runtime oficial solo acepta modelos RGBDT de 5 canales. Canales detectados=" +
+            "The official runtime only accepts 5-channel RGBDT models. Channels detected=" +
             std::to_string(contract.input_channels));
     }
     if (contract.output_bins != kOfficialOutputBins) {
         throw std::runtime_error(
-            "El HIST oficial debe exponer 26 bins. Bins detectados=" +
+            "The official HIST must expose 26 bins. Bins detected=" +
             std::to_string(contract.output_bins));
     }
     contract.input_mode = "rgbdt";
@@ -277,7 +277,7 @@ BundleResolution ResolveBundle(
     const std::string& segmentation_model_path,
     const std::string& model_spec_path) {
     if (model_spec_path.empty()) {
-        throw std::runtime_error("Se requiere el path del bundle oficial de modelos.");
+        throw std::runtime_error("The official model bundle path is required.");
     }
 
     return ResolveFromDirectory(segmentation_model_path, fs::path(model_spec_path));

@@ -10,7 +10,7 @@
         android:background="@color/md_background"
         android:paddingHorizontal="16dp">
 
-    <!-- ─── Toolbar con back + título + share ───────────────────────── -->
+    <!-- ─── Toolbar with back + title + share ───────────────────────── -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarDetail"
         android:layout_width="0dp"
@@ -29,7 +29,7 @@
         app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light"/>
 
 
-    <!-- ─── Card con detalles de lote ───────────────────────────────── -->
+    <!-- ─── Batch detail card ───────────────────────────────── -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardDetail"
         android:layout_width="0dp"
@@ -179,7 +179,7 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- RecyclerView de imágenes/predicciones: ocupa todo el espacio restante -->
+    <!-- Images/predictions RecyclerView: takes up all remaining space -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerDetail"
         android:layout_width="0dp"

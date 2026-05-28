@@ -1,20 +1,20 @@
 /**
- * Authenticator de OkHttp que renueva automáticamente el access token cuando el
- * backend responde con HTTP 401 (Unauthorized).
+ * OkHttp Authenticator that automatically renews the access token when the
+ * backend responds with HTTP 401 (Unauthorized).
  *
- * Flujo de renovación:
- * 1. Verifica que no se haya reintentado más de 2 veces la misma cadena de respuestas.
- * 2. Si el header Authorization coincide con el token almacenado, llama a
- *    /auth/refresh-token de forma síncrona.
- * 3. Si la renovación es exitosa, reconstruye la petición original con el nuevo token.
- *    Para /auth/logout también reemplaza el refreshToken en el body.
- * 4. Si falla, fuerza el cierre de sesión redirigiendo a LoginActivity.
+ * Renewal flow:
+ * 1. Verifies that the same response chain has not been retried more than 2 times.
+ * 2. If the Authorization header matches the stored token, calls
+ *    /auth/refresh-token synchronously.
+ * 3. If renewal is successful, rebuilds the original request with the new token.
+ *    For /auth/logout it also replaces the refreshToken in the body.
+ * 4. If it fails, forces logout by redirecting to LoginActivity.
  *
- * Crea su propio ApiService interno (sin AuthInterceptor) para evitar bucles
- * infinitos de intercepción durante la renovación.
+ * Creates its own internal ApiService (without AuthInterceptor) to avoid infinite
+ * interception loops during renewal.
  *
- * @property appContext application context usado para inicializar TokenProvider
- *                      y lanzar LoginActivity en caso de logout forzado.
+ * @property appContext application context used to initialize TokenProvider
+ *                      and launch LoginActivity in case of forced logout.
  */
 // src/main/java/com/gaiaspa/metrics_detection/network/TokenAuthenticator.kt
 package com.gaiaspa.metrics_detection.network
@@ -49,7 +49,7 @@ class TokenAuthenticator(
     init {
         TokenProvider.init(appContext)
 
-        // Creamos un OkHttpClient "limpio" (sin interceptor ni authenticator)
+        // Create a "clean" OkHttpClient (no interceptor or authenticator)
         val client = okhttp3.OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -68,13 +68,13 @@ class TokenAuthenticator(
         try {
             TokenProvider.init(appContext)
         } catch (e: Exception) {
-            Log.e(TAG, "Authenticator: no se pudo inicializar TokenProvider", e)
+            Log.e(TAG, "Authenticator: could not initialize TokenProvider", e)
             return null
         }
 
-        // 1) Si ya hemos intentado antes → abortamos para no buclear
+        // 1) If we have already tried before → abort to avoid looping
         if (responseCount(response) >= 2) {
-            Log.e(TAG, "Authenticator: demasiados reintentos")
+            Log.e(TAG, "Authenticator: too many retries")
             return null
         }
 
@@ -84,18 +84,18 @@ class TokenAuthenticator(
             val originalPath = originalRequest.url.encodedPath
             val originalBody = originalRequest.body
 
-            // 2) Si el header que falló era justamente el token guardado...
+            // 2) If the header that failed was exactly the stored token...
             if (originalRequest.header("Authorization") == "Bearer $currentToken") {
-                // 3) Intentamos refrescar
+                // 3) Try to refresh
                 if (refreshToken()) {
-                    val newAccess = TokenProvider.getToken()       // ya guardó el nuevo
+                    val newAccess = TokenProvider.getToken()       // already saved the new one
                     val newRefresh = TokenProvider.getRefreshToken()
 
-                    // 4) Reconstruimos la petición original con el access token renovado
+                    // 4) Rebuild the original request with the renewed access token
                     val newReqBuilder = originalRequest.newBuilder()
                         .header("Authorization", "Bearer $newAccess")
 
-                    // 5) Si era /auth/logout, sustituimos también el refreshToken en el body
+                    // 5) If it was /auth/logout, also replace the refreshToken in the body
                     if (originalPath.contains("/auth/logout") && originalBody != null) {
                         val updatedBody = replaceRefreshTokenInBody(originalBody, newRefresh)
                         newReqBuilder.method(originalRequest.method, updatedBody)
@@ -105,13 +105,13 @@ class TokenAuthenticator(
 
                     return newReqBuilder.build()
                 } else {
-                    // 6) Refresh falló → forzamos logout
-                    Log.e(TAG, "Authenticator: refresh fallido, cerrando sesión")
+                    // 6) Refresh failed → force logout
+                    Log.e(TAG, "Authenticator: refresh failed, logging out")
                     forceLogout()
                     return null
                 }
             } else {
-                // 7) Si el token ya fue actualizado por otro hilo, reintentamos con el último token
+                // 7) If the token was already updated by another thread, retry with the latest token
                 return originalRequest.newBuilder()
                     .header("Authorization", "Bearer ${TokenProvider.getToken()}")
                     .build()
@@ -119,7 +119,7 @@ class TokenAuthenticator(
         }
     }
 
-    /** Cuenta cuántas veces hemos recibido 401 en esta cadena de respuestas */
+    /** Counts how many times we have received 401 in this response chain */
     private fun responseCount(response: Response): Int {
         var result = 1
         var prior = response.priorResponse
@@ -130,13 +130,13 @@ class TokenAuthenticator(
     }
 
     /**
-     * Hace la llamada síncrona a /auth/refresh-token.
-     * Devuelve true si logró renovar y guardó los tokens.
+     * Makes the synchronous call to /auth/refresh-token.
+     * Returns true if it successfully renewed and saved the tokens.
      */
     private fun refreshToken(): Boolean {
         val oldRefresh = TokenProvider.getRefreshToken()
         if (oldRefresh.isBlank()) {
-            Log.e(TAG, "No hay refresh token para renovar")
+            Log.e(TAG, "No refresh token to renew")
             return false
         }
 
@@ -146,30 +146,30 @@ class TokenAuthenticator(
             if (resp.isSuccessful) {
                 val body = resp.body()
                 if (body != null) {
-                    // Guardamos siempre el nuevo par
+                    // Always save the new pair
                     TokenProvider.saveToken(body.accessToken)
                     TokenProvider.saveRefreshToken(body.refreshToken)
-                    Log.d(TAG, "Tokens renovados OK")
+                    Log.d(TAG, "Tokens renewed OK")
                     true
                 } else {
-                    Log.e(TAG, "Refresh exitoso pero body nulo")
+                    Log.e(TAG, "Refresh successful but body null")
                     false
                 }
             } else {
                 if (BuildConfig.DEBUG) {
-                    Log.e(TAG, "Refresh falló: ${resp.code()} / ${resp.errorBody()?.string()}")
+                    Log.e(TAG, "Refresh failed: ${resp.code()} / ${resp.errorBody()?.string()}")
                 } else {
-                    Log.e(TAG, "Refresh falló: código ${resp.code()}")
+                    Log.e(TAG, "Refresh failed: code ${resp.code()}")
                 }
                 false
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Excepción al refrescar token", e)
+            Log.e(TAG, "Exception refreshing token", e)
             false
         }
     }
 
-    /** Reemplaza en el JSON del body el campo refreshToken por el nuevo */
+    /** Replaces the refreshToken field in the JSON body with the new one */
     private fun replaceRefreshTokenInBody(
         originalBody: RequestBody,
         newRefreshToken: String
@@ -184,12 +184,12 @@ class TokenAuthenticator(
             )
             updatedJson.toRequestBody(originalBody.contentType())
         } catch (e: Exception) {
-            Log.e(TAG, "No se pudo reemplazar refreshToken en body", e)
+            Log.e(TAG, "Could not replace refreshToken in body", e)
             originalBody
         }
     }
 
-    /** Limpia credenciales y arranca LoginActivity limpiando la pila */
+    /** Clears credentials and launches LoginActivity, clearing the task stack */
     private fun forceLogout() {
         TokenProvider.logout()
         val intent = Intent(appContext, LoginActivity::class.java).apply {

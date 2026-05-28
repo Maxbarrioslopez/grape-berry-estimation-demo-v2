@@ -39,7 +39,7 @@ class RacimoFusionMapperTest {
             RacimoFusionMapper.buildFusedSavePayload(listOf(input("a", prediction(qty = 10))))
             throw AssertionError("Expected incomplete racimo to fail")
         } catch (e: IllegalArgumentException) {
-            assertEquals("Cada racimo debe tener Frente y Reverso", e.message)
+            assertEquals("Each bunch must have both Front and Back", e.message)
         }
     }
 
@@ -169,7 +169,7 @@ class RacimoFusionMapperTest {
             )
             throw AssertionError("Expected invalid racimo to fail")
         } catch (e: IllegalArgumentException) {
-            assertEquals("El racimo 1 no tiene detección válida", e.message)
+            assertEquals("Bunch 1 has no valid detection", e.message)
         }
     }
 
@@ -185,9 +185,9 @@ class RacimoFusionMapperTest {
         assertFalse(adapter.contains("Consistencia"))
         assertFalse(layout.contains("Consistencia"))
         assertTrue(adapter.contains("R.string.no_valid_grapes"))
-        assertTrue(strings.contains("Revisar captura"))
+        assertTrue(strings.contains("Review capture"))
         assertTrue(stringsEn.contains("Review capture"))
-        assertTrue(strings.contains("No se detectó racimo válido."))
+        assertTrue(strings.contains("No valid bunch detected."))
         assertTrue(stringsEn.contains("No valid bunch was detected."))
         assertFalse(adapter.contains("QTY Final: 0"))
     }
@@ -198,9 +198,9 @@ class RacimoFusionMapperTest {
 
         assertFalse(pdf.contains("Disagreement"))
         assertFalse(pdf.contains("disagreementUi"))
-        assertTrue(pdf.contains("Resultado Frente/Reverso"))
-        assertTrue(pdf.contains("No se detectaron uvas válidas."))
-        assertTrue(pdf.contains("Misma prioridad que Lote.images"))
+        assertTrue(pdf.contains("Front/Back Result"))
+        assertTrue(pdf.contains("No valid grapes detected."))
+        assertTrue(pdf.contains("Same priority as Lote.images"))
         assertTrue(pdf.contains("group.viewBUploadPath"))
         assertTrue(pdf.contains("group.viewAUploadPath"))
         assertTrue(pdf.contains("overlayImages.getOrNull(index)"))

@@ -113,7 +113,7 @@ PipelineResult GrapePipelineCore::Run(
         const auto prep_t1 = Clock::now();
         result.timing.preprocess_ms =
             std::chrono::duration<double, std::milli>(prep_t1 - prep_t0).count();
-        // No hay instrumentacion separada entre segmentacion y armado de tensor.
+        // No separate instrumentation between segmentation and tensor assembly.
         result.timing.segmentation_ms =
             segmentation_session_ != nullptr ? result.timing.preprocess_ms : 0.0;
 
@@ -121,12 +121,12 @@ PipelineResult GrapePipelineCore::Run(
         result.seg_count_base = inputs.seg_count_base[0];
         result.used_synthetic_fallback = inputs.used_synthetic_fallback;
 
-        // 🚀 GATE DE NEGOCIO: Mínimo 2 uvas para continuar con el análisis pesado
+        // 🚀 BUSINESS GATE: Minimum 2 grapes to continue with heavy analysis
         if (result.seg_count_base < 2.0f) {
-            result.error = "No fue posible identificar suficientes uvas para el análisis.";
-            // Saltamos cálculos de QTY y HIST para evitar métricas falsas
+            result.error = "Could not identify enough grapes for analysis.";
+            // Skip QTY and HIST calculations to avoid false metrics
         } else {
-            // --- INICIO CÁLCULOS PESADOS ---
+            // --- BEGIN HEAVY CALCULATIONS ---
             Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
             std::vector<int64_t> x_shape = {1, contract_.input_channels, contract_.img_size, contract_.img_size};
             std::vector<int64_t> scalar_shape = {1};
@@ -185,13 +185,13 @@ PipelineResult GrapePipelineCore::Run(
                     if (peak_index < result.bins.size()) result.peak_bin_mm = result.bins[peak_index];
                 }
             }
-            // --- FIN CÁLCULOS PESADOS ---
+            // --- END HEAVY CALCULATIONS ---
         }
 
         const auto post_t0 = Clock::now();
         SaveDebugArtifacts(inputs, result);
 
-        // ✅ DIBUJO VISUAL FINAL NATIVO (Siempre se ejecuta para feedback visual)
+        // ✅ FINAL NATIVE VISUAL DRAWING (Always runs for visual feedback)
         if (!visual_overlay_path.empty()) {
             SaveVisualOverlay(visual_overlay_path, inputs, result);
         }

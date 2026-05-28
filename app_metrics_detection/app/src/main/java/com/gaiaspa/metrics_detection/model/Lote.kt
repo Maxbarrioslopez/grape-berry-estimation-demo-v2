@@ -2,14 +2,14 @@ package com.gaiaspa.metrics_detection.model
 
 data class Lote(
     val loteID: String,
-    val userId: String,           // Identificador único (UUID o auto generado)
+    val userId: String,           // Unique identifier (UUID or auto-generated)
     val company: String,
     val vessel: String,
     val block: String,
-    val images: List<String>, // URIs locales de las imágenes o paths
-    val calPredicts: List<CalPredict> = emptyList(), // resultados de CalPredict
-    val calKeys: List<Double> = emptyList(), // resultados de CalPredict
-    val isSynced: Boolean = false,  // indica si el lote está sincronizado con la nube
+    val images: List<String>, // Local image URIs or paths
+    val calPredicts: List<CalPredict> = emptyList(), // CalPredict results
+    val calKeys: List<Double> = emptyList(), // CalPredict results
+    val isSynced: Boolean = false,  // indicates whether the lot is synced with the cloud
     val predictedAt: Long,
     val updatedAt: Long,
 )

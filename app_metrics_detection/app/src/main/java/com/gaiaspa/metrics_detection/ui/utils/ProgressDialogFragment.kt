@@ -7,11 +7,11 @@ import com.gaiaspa.metrics_detection.R
 class ProgressDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        // Infla el layout del diálogo
+        // Inflate the dialog layout
         val builder = AlertDialog.Builder(requireContext())
         val view = requireActivity().layoutInflater.inflate(R.layout.dialog_progress, null)
         builder.setView(view)
-            .setCancelable(false) // Evita que se cancele tocando afuera
+            .setCancelable(false) // Prevent dismissal by touching outside
 
         return builder.create()
     }

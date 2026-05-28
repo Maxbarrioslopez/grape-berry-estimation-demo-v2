@@ -4,7 +4,7 @@
     android:height="24dp"
     android:viewportWidth="24.0"
     android:viewportHeight="24.0">
-    <!-- Icono de nube con raya o cruz indicando desconexión / no sincronizado -->
+    <!-- Cloud icon with strikethrough indicating disconnected / not synced -->
     <path
         android:fillColor="#FF000000"
         android:pathData="M19.35,10.04C18.67,6.59 15.64,4 12,4c-2.05,0 -3.94,0.79 -5.34,2.07l1.46,1.46C8.89,6.66 10.37,6 12,6c2.76,0 5,2.24 5,5 0,0.39 -0.04,0.76 -0.12,1.13L19,14c0,-1.63 -0.66,-3.11 -1.65,-4.16zM2.71,2.71l-1.41,1.41l3.09,3.09C3.52,8.12 3,9.5 3,11c0,2.76 2.24,5 5,5h8c0.36,0 0.71,-0.04 1.05,-0.1l3.74,3.74 1.41,-1.41L2.71,2.71z M8,16c-1.66,0 -3,-1.34 -3,-3 0,-1.31 0.84,-2.42 2.0,-2.82L11.11,14H8z"/>

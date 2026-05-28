@@ -6,32 +6,32 @@ import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.RectF
 /**
- * Dibuja un histograma estilizado sobre un [Canvas] de PDF dentro del area delimitada
- * por ([left], [top]) y dimensiones [width]×[height].
+ * Draws a stylized histogram on a PDF [Canvas] within the area delimited
+ * by ([left], [top]) and dimensions [width]x[height].
  *
- * ## Rol en la arquitectura
- * Llamado exclusivamente desde [createLotesReportPdf] para renderizar la distribucion
- * de calibres de cada [CalPredict] en la columna derecha de la fila de prediccion.
+ * ## Architectural role
+ * Called exclusively from [createLotesReportPdf] to render the calibre
+ * distribution of each [CalPredict] in the right column of the prediction row.
  *
- * ## Parametros
- * @param canvas Lienzo del PDF sobre el que se pinta.
- * @param left   Coordenada X del borde izquierdo del area de dibujo.
- * @param top    Coordenada Y del borde superior del area de dibujo.
- * @param width  Ancho disponible para el histograma completo.
- * @param height Alto disponible para el histograma completo.
- * @param bins   Etiquetas del eje X (valores de calibre).
- * @param pred   Frecuencias correspondientes a cada bin (altura de barra).
- * @param paint  [Paint] base reutilizado del llamador; su estado se restaura al final
- *               para no afectar dibujos posteriores.
+ * ## Parameters
+ * @param canvas PDF canvas on which to paint.
+ * @param left   X coordinate of the left edge of the drawing area.
+ * @param top    Y coordinate of the top edge of the drawing area.
+ * @param width  Available width for the complete histogram.
+ * @param height Available height for the complete histogram.
+ * @param bins   X-axis labels (calibre values).
+ * @param pred   Frequencies corresponding to each bin (bar height).
+ * @param paint  Base [Paint] reused from the caller; its state is restored at the end
+ *               so as not to affect subsequent drawings.
  *
- * ## Comportamiento
- * - Si [bins] o [pred] estan vacios, o sus tamanos no coinciden, la funcion retorna
- *   inmediatamente sin dibujar nada.
- * - Si todos los valores de [pred] son ≤ 0, se usa 1 como maximo para evitar division
- *   por cero.
- * - Las etiquetas del eje X se rotan −45° para evitar solapamiento.
- * - El [Paint] recibido se modifica temporalmente; su estado original se guarda al
- *   inicio y se restaura al final del metodo.
+ * ## Behavior
+ * - If [bins] or [pred] are empty, or their sizes do not match, the function returns
+ *   immediately without drawing anything.
+ * - If all values in [pred] are <= 0, 1 is used as the maximum to avoid division
+ *   by zero.
+ * - X-axis labels are rotated -45 to avoid overlapping.
+ * - The received [Paint] is temporarily modified; its original state is saved at
+ *   the beginning and restored at the end of the method.
  */
 fun drawModernHistogram(
     canvas: Canvas,
@@ -41,31 +41,31 @@ fun drawModernHistogram(
     height: Float,
     bins:  List<Float>,
     pred:  List<Int>,
-    paint: Paint          // reutilizamos el mismo Paint que ya trae el caller
+    paint: Paint          // reuse the same Paint already provided by the caller
 ) {
     if (bins.isEmpty() || pred.isEmpty() || bins.size != pred.size) return
 
-    /* ─── Colores de la paleta ───────────────────────────── */
+    /* ─── Palette colors ───────────────────────────── */
     val cPrimary        = Color.parseColor("#2E7D32")
     val cPrimaryLight   = Color.parseColor("#F3F8F3")
     val cTextSecondary  = Color.parseColor("#5F6B5F")
     val cOutline        = Color.parseColor("#DDE5DD")
 
-    /* ─── Guardar estado original del Paint ──────────────── */
+    /* ─── Save original Paint state ──────────────── */
     val oColor  = paint.color
     val oSize   = paint.textSize
     val oAlign  = paint.textAlign
     val oStyle  = paint.style
     val oEffect = paint.pathEffect
 
-    /* ─── Fondo ──────────────────────────────────────────── */
+    /* ─── Background ──────────────────────────────────────── */
     paint.style = Paint.Style.FILL
     paint.color = cPrimaryLight
     canvas.drawRoundRect(RectF(left, top, left + width, top + height), 10f, 10f, paint)
 
-    /* ─── Preparar área de gráfico ───────────────────────── */
-    val mX        = 8f
-    val mY        = 8f       // un poco menos alto que antes
+    /* ─── Prepare graph area ───────────────────────── */
+        val mX        = 8f
+        val mY        = 8f       // a bit less tall than before
     val gLeft     = left + mX
     val gTop      = top  + mY
     val gRight    = left + width  - mX
@@ -76,14 +76,14 @@ fun drawModernHistogram(
     val maxVal    = pred.maxOrNull()?.takeIf { it > 0 } ?: 1
     val barWidth  = gWidth / bins.size
 
-    /* ─── Ejes ───────────────────────────────────────────── */
+    /* ─── Axes ───────────────────────────────────────────── */
     paint.color = cTextSecondary
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = 1.2f
-    canvas.drawLine(gLeft,  gTop,    gLeft,  gBottom, paint)   // eje Y
-    canvas.drawLine(gLeft,  gBottom, gRight, gBottom, paint)   // eje X
+    canvas.drawLine(gLeft,  gTop,    gLeft,  gBottom, paint)   // Y axis
+    canvas.drawLine(gLeft,  gBottom, gRight, gBottom, paint)   // X axis
 
-    /* ─── Grid horizontal ───────────────────────────────── */
+    /* ─── Horizontal grid ───────────────────────────────── */
     val gridLines    = 5
     val stepHeight   = gHeight / gridLines
     paint.pathEffect = DashPathEffect(floatArrayOf(4f, 4f), 0f)
@@ -94,7 +94,7 @@ fun drawModernHistogram(
     }
     paint.pathEffect = null
 
-    /* ─── Barras ────────────────────────────────────────── */
+    /* ─── Bars ────────────────────────────────────────── */
     paint.style = Paint.Style.FILL
     paint.color = cPrimary
     for (i in bins.indices) {
@@ -105,7 +105,7 @@ fun drawModernHistogram(
         canvas.drawRoundRect(RectF(bLeft, bTop, bRight, gBottom), 4f, 4f, paint)
     }
 
-    /* ─── Etiquetas eje Y (valores) ─────────────────────── */
+    /* ─── Y-axis labels (values) ─────────────────────── */
     paint.color     = cTextSecondary
     paint.textSize  = 10f
     paint.textAlign = Paint.Align.RIGHT
@@ -115,7 +115,7 @@ fun drawModernHistogram(
         canvas.drawText(String.format("%.0f", yVal), gLeft - 6f, y, paint)
     }
 
-    /* ─── Etiquetas eje X (bins) ────────────────────────── */
+    /* ─── X-axis labels (bins) ────────────────────────── */
     paint.textAlign = Paint.Align.LEFT
     for ((i, bin) in bins.withIndex()) {
         val x = gLeft + i * barWidth + barWidth / 2
@@ -127,7 +127,7 @@ fun drawModernHistogram(
         canvas.restore()
     }
 
-    /* ─── Restaurar Paint ───────────────────────────────── */
+    /* ─── Restore Paint ───────────────────────────────── */
     paint.color       = oColor
     paint.textSize    = oSize
     paint.textAlign   = oAlign

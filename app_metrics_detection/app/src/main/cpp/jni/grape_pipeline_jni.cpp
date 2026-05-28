@@ -179,7 +179,7 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
             context.hist_provider);
 
         const auto run_t0 = Clock::now();
-        // ✅ EJECUCIÓN INTEGRADA: Se incluye visual_p para activar el overlay nativo
+        // ✅ INTEGRATED EXECUTION: visual_p is included to activate the native overlay
         grape::PipelineResult result = core.Run(
             image_path,
             static_cast<int>(varietyId),

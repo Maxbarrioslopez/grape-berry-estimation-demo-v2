@@ -1,18 +1,18 @@
 /**
- * Interceptor OkHttp que inyecta el header `Authorization: Bearer <token>` en
- * cada petición saliente, excepto en los endpoints públicos de autenticación.
+ * OkHttp Interceptor that injects the header `Authorization: Bearer <token>` into
+ * every outgoing request, except for public authentication endpoints.
  *
- * Endpoints excluidos (no requieren token):
- * - `/auth/login` — el usuario aún no tiene token.
- * - `/auth/refresh-token` — evita bucles durante la renovación; el
- *   [TokenAuthenticator] usa su propio cliente sin este interceptor.
+ * Excluded endpoints (do not require token):
+ * - `/auth/login` — the user does not yet have a token.
+ * - `/auth/refresh-token` — prevents loops during renewal; the
+ *   [TokenAuthenticator] uses its own client without this interceptor.
  *
- * NOTA: `/auth/logout` NO se excluye intencionalmente porque el backend requiere
- * el access token vigente para invalidar la sesión.
+ * NOTE: `/auth/logout` is INTENTIONALLY NOT excluded because the backend requires
+ * the current access token to invalidate the session.
  *
- * Si [TokenProvider] no está inicializado o el token está vacío, la petición
- * prosigue sin el header (el backend devolverá 401, lo que disparará al
- * [TokenAuthenticator] si está configurado).
+ * If [TokenProvider] is not initialized or the token is empty, the request
+ * proceeds without the header (the backend will return 401, which will trigger
+ * the [TokenAuthenticator] if configured).
  */
 package com.gaiaspa.metrics_detection.network
 
@@ -28,11 +28,11 @@ class AuthInterceptor : Interceptor {
     }
 
     /**
-     * Intercepta la petición saliente e inyecta el header Authorization si
-     * corresponde.
+     * Intercepts the outgoing request and injects the Authorization header if
+     * appropriate.
      *
-     * @param chain la cadena de interceptores de OkHttp.
-     * @return la respuesta del servidor tras procesar la petición (posiblemente modificada).
+     * @param chain the OkHttp interceptor chain.
+     * @return the server response after processing the (possibly modified) request.
      */
     override fun intercept(chain: Interceptor.Chain): Response {
 
@@ -40,11 +40,11 @@ class AuthInterceptor : Interceptor {
         val path = originalRequest.url.encodedPath
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Petición interceptada: $path")
+            Log.d(TAG, "Intercepted request: $path")
         }
 
-        // No añadir Authorization para login y refresh-token
-        // (NO excluir logout)
+        // Do not add Authorization for login and refresh-token
+        // (DO NOT exclude logout)
         if (path.equals("/auth/login", ignoreCase = true) ||
             path.equals("/auth/refresh-token", ignoreCase = true)
         ) {
@@ -54,17 +54,17 @@ class AuthInterceptor : Interceptor {
         val accessToken = try {
             TokenProvider.getToken()
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "TokenProvider no está inicializado; continuando sin Authorization", e)
+            Log.e(TAG, "TokenProvider not initialized; proceeding without Authorization", e)
             ""
         }
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Access token presente: ${accessToken.isNotBlank()}")
+            Log.d(TAG, "Access token present: ${accessToken.isNotBlank()}")
         }
 
         if (accessToken.isBlank()) {
             if (BuildConfig.DEBUG) {
-                Log.w(TAG, "Access token vacío; enviando request sin Authorization")
+                Log.w(TAG, "Empty access token; sending request without Authorization")
             }
             return chain.proceed(originalRequest)
         }
@@ -74,7 +74,7 @@ class AuthInterceptor : Interceptor {
             .build()
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Cabecera Authorization inyectada")
+            Log.d(TAG, "Authorization header injected")
         }
 
         return chain.proceed(newRequest)

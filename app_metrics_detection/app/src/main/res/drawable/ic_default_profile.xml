@@ -8,7 +8,7 @@
         </shape>
     </item>
 
-    <!-- Ícono -->
+    <!-- Icon -->
     <item>
         <bitmap
             android:gravity="center"

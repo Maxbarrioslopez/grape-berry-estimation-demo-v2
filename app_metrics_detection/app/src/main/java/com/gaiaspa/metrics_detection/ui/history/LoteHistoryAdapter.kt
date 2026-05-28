@@ -27,8 +27,8 @@ class LoteHistoryAdapter(
         private set
 
     /**
-     * Sustituye al antiguo submitList(newList, startIndex).
-     * Actualiza la lista y el índice de inicio de página.
+     * Replaces the old submitList(newList, startIndex).
+     * Updates the list and the page start index.
      */
     fun updateData(newList: List<Lote>, startIndex: Int) {
         val sorted = newList
@@ -73,8 +73,8 @@ class LoteHistoryAdapter(
             val bunchCount = lote.calPredicts.size
             if (qty != null && qty > 0) {
                 b.tvQty.text = when {
-                    bunchCount > 1 -> "${qty} uvas · ${bunchCount} racimos"
-                    else -> "${qty} uvas"
+                    bunchCount > 1 -> "${qty} berries · ${bunchCount} bunches"
+                    else -> "${qty} berries"
                 }
                 b.tvQty.visibility = android.view.View.VISIBLE
             } else {

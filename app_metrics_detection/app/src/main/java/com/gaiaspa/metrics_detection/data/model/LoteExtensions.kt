@@ -7,22 +7,22 @@ import com.gaiaspa.metrics_detection.ml.RuntimeVarietyCatalog
 import java.time.Instant
 
 /**
- * Funciones de extensión para mapeo entre modelos de dominio, DTOs de red
- * y respuestas del backend.
+ * Extension functions for mapping between domain models, network DTOs,
+ * and backend responses.
  *
- * Centralizan la lógica de conversión evitando esparcirla en ViewModels o
- * repositorios. Las reglas de normalización de variedades se delegan en
+ * Centralizes conversion logic, avoiding scattering it across ViewModels or
+ * repositories. Variety normalization rules are delegated to
  * [RuntimeVarietyCatalog].
  */
 
 /**
- * Convierte un [Lote] local en el DTO [BatchLoteGrapeRequest] requerido
- * por el endpoint de envío al backend.
+ * Converts a local [Lote] into the [BatchLoteGrapeRequest] DTO required
+ * by the backend upload endpoint.
  *
- * La variedad se normaliza a través de [RuntimeVarietyCatalog.normalize];
- * si no se encuentra en el catálogo, se utiliza el nombre crudo recortado.
+ * The variety is normalized through [RuntimeVarietyCatalog.normalize];
+ * if not found in the catalog, the raw trimmed name is used.
  *
- * @return DTO listo para serializar y enviar al backend.
+ * @return DTO ready to serialize and send to the backend.
  */
 fun Lote.toBatchLoteGrapeRequest(): BatchLoteGrapeRequest {
     val normalizedVariety = RuntimeVarietyCatalog.normalize(this.varietyName)
@@ -42,15 +42,15 @@ fun Lote.toBatchLoteGrapeRequest(): BatchLoteGrapeRequest {
 }
 
 /**
- * Convierte una respuesta [LoteResponse] del backend en la entidad local [Lote].
+ * Converts a backend [LoteResponse] into the local [Lote] entity.
  *
- * La variedad se infiere del campo `variety` del lote o, si está ausente, del
- * `bunchColor` de la primera predicción. En ambos casos se normaliza a través
- * de [RuntimeVarietyCatalog] para obtener un identificador canónico.
+ * The variety is inferred from the lot's `variety` field or, if absent, from
+ * the `bunchColor` of the first prediction. In both cases it is normalized
+ * through [RuntimeVarietyCatalog] to obtain a canonical identifier.
  *
- * @param downloadedImages Lista de rutas locales de imágenes ya descargadas
- *                         desde las URLs provistas por el backend.
- * @return Entidad [Lote] lista para insertar en la base de datos local.
+ * @param downloadedImages List of local paths of images already downloaded
+ *                         from the URLs provided by the backend.
+ * @return [Lote] entity ready to insert into the local database.
  */
 fun LoteResponse.toLocalLote(downloadedImages: List<String>): Lote {
     val rawVariety = variety?.takeIf { it.isNotBlank() }
@@ -78,20 +78,20 @@ fun LoteResponse.toLocalLote(downloadedImages: List<String>): Lote {
         synced = true,
         toDelete = false,
         toUpdate = false,
-        normalizedImages = downloadedImages, // Cambiado de images a normalizedImages
+        normalizedImages = downloadedImages, // Changed from images to normalizedImages
         varietyId = varietyId,
         varietyName = varietyName
     )
 }
 
 /**
- * Convierte un DTO [CalPredictResponse] del backend en el modelo de dominio [CalPredict].
+ * Converts a backend [CalPredictResponse] DTO into the [CalPredict] domain model.
  *
- * Los campos opcionales de la respuesta se reemplazan por valores por defecto seguros
- * (cadena vacía para `error`, `"Unknown Color"` para `bunchColor`, 0 para `qty`, etc.)
- * para garantizar que la entidad local siempre sea válida.
+ * Optional fields in the response are replaced with safe default values
+ * (empty string for `error`, `"Unknown Color"` for `bunchColor`, 0 for `qty`, etc.)
+ * to guarantee the local entity is always valid.
  *
- * @return [CalPredict] con valores por defecto aplicados donde la respuesta es nula.
+ * @return [CalPredict] with default values applied where the response is null.
  */
 fun CalPredictResponse.toCalpredicts(): CalPredict {
     return CalPredict(

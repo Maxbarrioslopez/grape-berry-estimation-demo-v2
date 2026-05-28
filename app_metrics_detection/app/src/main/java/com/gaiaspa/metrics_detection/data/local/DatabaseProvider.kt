@@ -4,29 +4,28 @@ import android.content.Context
 import androidx.room.Room
 
 /**
- * Proveedor singleton de la instancia de [AppDatabase].
+ * Singleton provider for the [AppDatabase] instance.
  *
- * Implementa el patrón double-checked locking para garantizar una única
- * instancia en memoria. Utiliza [fallbackToDestructiveMigration] por lo que
- * los cambios de esquema que no tengan una migración explícita provocarán
- * la destrucción y recreación de la base de datos, perdiendo los datos locales
- * no sincronizados.
+ * Implements the double-checked locking pattern to guarantee a single
+ * instance in memory. Uses [fallbackToDestructiveMigration], so schema
+ * changes without an explicit migration will cause the database to be
+ * destroyed and recreated, losing any unsynchronized local data.
  *
- * La migración explícita (comentada) se puede activar cuando se requiera
- * preservar datos entre versiones de esquema.
+ * The explicit migration (commented) can be enabled when data preservation
+ * across schema versions is required.
  */
 object DatabaseProvider {
     @Volatile
     private var INSTANCE: AppDatabase? = null
 
     /**
-     * Retorna la instancia única de [AppDatabase], creándola si no existe.
+     * Returns the unique [AppDatabase] instance, creating it if it does not exist.
      *
-     * Utiliza [Context.applicationContext] para evitar fugas de memoria
-     * asociadas a Activities o Services.
+     * Uses [Context.applicationContext] to avoid memory leaks
+     * associated with Activities or Services.
      *
-     * @param context Contexto de la aplicación (normalmente desde un Activity o Application).
-     * @return La instancia singleton de la base de datos.
+     * @param context Application context (typically from an Activity or Application).
+     * @return The singleton database instance.
      */
     fun getDatabase(context: Context): AppDatabase {
         return INSTANCE ?: synchronized(this) {
@@ -36,7 +35,7 @@ object DatabaseProvider {
                 "metrics_detection_db"
             )
                 .fallbackToDestructiveMigration()
-                //.addMigrations(MIGRATION_1_2, MIGRATION_2_3,MIGRATION_3_4) // Maneja migraciones adecuadamente
+                //.addMigrations(MIGRATION_1_2, MIGRATION_2_3,MIGRATION_3_4) // Handle migrations properly
                 .build()
             INSTANCE = instance
             instance

@@ -17,22 +17,23 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.data.model.toLocalLote
 import com.gaiaspa.metrics_detection.data.repository.LoteRepository
 
 /**
- * [CoroutineWorker] que descarga lotes desde la API remota y los persiste localmente.
+ * [CoroutineWorker] that downloads lots from the remote API and persists them locally.
  *
- * ## Rol en la arquitectura
- * Complemento de [SyncWorker] para la dirección servidor → dispositivo. Obtiene la
- * lista completa de lotes disponibles en el backend mediante [LoteRepository.getLoteGrapeCloud],
- * descarga las imágenes de cada predicción en paralelo con un semáforo de 4 permisos,
- * y las inserta localmente a través de [LoteRepository.verifyAndInsertLoteFromCloud].
+ * ## Role in the architecture
+ * Complement to [SyncWorker] for the server-to-device direction. Retrieves the
+ * complete list of lots available on the backend via [LoteRepository.getLoteGrapeCloud],
+ * downloads the images for each prediction in parallel with a semaphore of 4 permits,
+ * and inserts them locally via [LoteRepository.verifyAndInsertLoteFromCloud].
  *
- * ## Concurrencia
- * Las imágenes se procesan en chunks de 10 para evitar saturar la conexión.
- * Un [Semaphore](4) limita las descargas simultáneas a 4 hilos de IO, y se intercalan
- * llamadas a [yield] para mantener la equidad entre corrutinas.
+ * ## Concurrency
+ * Images are processed in chunks of 10 to avoid saturating the connection.
+ * A [Semaphore](4) limits simultaneous downloads to 4 IO threads, and calls
+ * to [yield] are interspersed to maintain fairness between coroutines.
  */
 class BatchDownloadWorker(
     context: Context,
@@ -43,43 +44,48 @@ class BatchDownloadWorker(
         private const val TAG = "BatchDownloadWorker"
     }
 
-    private val loteRepository = LoteRepository.getInstance(context)
+    private val loteRepository by lazy { LoteRepository.getInstance(applicationContext) }
     private val downloadSemaphore = Semaphore(4)
 
     /**
-     * Obtiene la lista de lotes del backend, descarga sus imágenes y los persiste.
+     * Retrieves the lot list from the backend, downloads their images, and persists them.
      *
-     * Emite progreso mediante [setProgress] con una clave `"progress"` en el [Data]
-     * de salida, permitiendo a la UI mostrar el avance de la descarga.
+     * Emits progress via [setProgress] with a `"progress"` key in the output [Data],
+     * allowing the UI to display download progress.
      *
-     * @return [Result.success] con el conteo de lotes descargados,
-     *         [Result.failure] si la respuesta del servidor no es exitosa o está vacía.
+     * @return [Result.success] with the count of downloaded lots,
+     *         [Result.failure] if the server response is not successful or is empty.
      */
     override suspend fun doWork(): Result = coroutineScope {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: batch download skipped, cloud operations disabled.")
+            return@coroutineScope Result.success(createProgressData("Cloud download disabled in demo mode."))
+        }
+
         try {
             val lotesResponse = loteRepository.getLoteGrapeCloud()
             
             if (!lotesResponse.isSuccessful) {
-                Log.e(TAG, "Respuesta no exitosa: ${lotesResponse.code()}")
-                return@coroutineScope Result.failure(createProgressData("Error en el servidor: ${lotesResponse.code()}"))
+                Log.e(TAG, "Unsuccessful response: ${lotesResponse.code()}")
+                return@coroutineScope Result.failure(createProgressData("Server error: ${lotesResponse.code()}"))
             }
 
             val lotesResponseBody = lotesResponse.body()
             if (lotesResponseBody.isNullOrEmpty()) {
-                return@coroutineScope Result.failure(createProgressData("No hay lotes disponibles."))
+                return@coroutineScope Result.failure(createProgressData("No lots available."))
             }
 
             val totalLotes = lotesResponseBody.size
             var count = 0
 
             for ((loteIndex, loteCloud) in lotesResponseBody.withIndex()) {
-                val progressMsg = "Descargando lote ${loteIndex + 1} de $totalLotes"
+                val progressMsg = "Downloading lot ${loteIndex + 1} of $totalLotes"
                 setProgress(createProgressData(progressMsg))
                 
                 val imagePaths = loteCloud.predicts.map { it.image.imagePath }
                 val downloadedImages = mutableListOf<String>()
 
-                // Procesar imágenes en trozos para evitar saturación
+                // Process images in chunks to avoid saturation
                 for (chunk in imagePaths.chunked(10)) {
                     val deferreds = chunk.map { url ->
                         async(Dispatchers.IO) {
@@ -97,20 +103,20 @@ class BatchDownloadWorker(
                 yield()
             }
 
-            Result.success(createProgressData("Descarga completa: $count lotes"))
+            Result.success(createProgressData("Download complete: $count lots"))
         } catch (e: Exception) {
-            Log.e(TAG, "Error en BatchDownloadWorker", e)
+            Log.e(TAG, "Error in BatchDownloadWorker", e)
             Result.failure(createProgressData("Error: ${e.localizedMessage}"))
         }
     }
 
     /**
-     * Descarga una imagen desde [imageUrl] al directorio de caché de la aplicación.
+     * Downloads an image from [imageUrl] to the application's cache directory.
      *
-     * Los timeouts de conexión y lectura están fijados a 15 s. Si la respuesta no es
-     * 200 OK o cualquier etapa falla, se devuelve `null` y la imagen simplemente se omite.
+     * Connection and read timeouts are fixed at 15 s. If the response is not
+     * 200 OK or any stage fails, `null` is returned and the image is simply skipped.
      *
-     * @return Ruta absoluta del archivo descargado, o `null` en caso de error.
+     * @return Absolute path of the downloaded file, or `null` on error.
      */
     private suspend fun downloadImage(imageUrl: String): String? = withContext(Dispatchers.IO) {
         try {
@@ -130,7 +136,7 @@ class BatchDownloadWorker(
     }
 
     /**
-     * Construye un [Data] con la clave `"progress"` para alimentar [setProgress].
+     * Builds a [Data] with the `"progress"` key for [setProgress].
      */
     private fun createProgressData(message: String) = Data.Builder().putString("progress", message).build()
 }

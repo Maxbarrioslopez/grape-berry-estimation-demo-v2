@@ -103,7 +103,7 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- ─── Controles de paginación ───────────────────────────────── -->
+    <!-- ─── Pagination controls ───────────────────────────────── -->
     <LinearLayout
         android:id="@+id/paginationControls"
         android:layout_width="0dp"

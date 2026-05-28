@@ -29,7 +29,7 @@ class MetricsDetectionApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("es"))
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
         applyDefaultLightMode()
         TokenProvider.init(this)
 
@@ -94,7 +94,7 @@ class MetricsDetectionApp : Application() {
             }
             // Atomic rename: the file is only visible once fully written.
             if (tempFile.renameTo(targetFile)) {
-                Log.d("App", "Modelo listo: $fileName")
+                Log.d("App", "Model ready: $fileName")
             }
         } catch (e: Exception) {
             // Expected for optional .data files that don't exist in assets.

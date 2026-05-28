@@ -1,10 +1,10 @@
 /**
- * Utilidad para verificar la disponibilidad de conectividad de red.
+ * Utility for checking network connectivity availability.
  *
- * Usa [ConnectivityManager] con [NetworkCapabilities] (API 21+) para determinar
- * si el dispositivo tiene acceso a internet vía WiFi, datos móviles o Ethernet.
- * No verifica conectividad real a un host externo; solo chequea que la interfaz
- * de red esté activa.
+ * Uses [ConnectivityManager] with [NetworkCapabilities] (API 21+) to determine
+ * whether the device has internet access via WiFi, mobile data, or Ethernet.
+ * Does not verify actual connectivity to an external host; only checks that the
+ * network interface is active.
  */
 // NetworkUtils.kt
 package com.gaiaspa.metrics_detection.utils
@@ -16,10 +16,10 @@ import android.net.NetworkCapabilities
 object NetworkUtils {
 
     /**
-     * Verifica si el dispositivo tiene conectividad de red activa.
+     * Checks if the device has active network connectivity.
      *
-     * @param context cualquier contexto (se usa para obtener el servicio de conectividad).
-     * @return true si hay al menos una red activa con transporte WiFi, celular o Ethernet.
+     * @param context any context (used to obtain the connectivity service).
+     * @return true if there is at least one active network with WiFi, cellular, or Ethernet transport.
      */
     fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager =

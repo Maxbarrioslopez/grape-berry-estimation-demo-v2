@@ -6,14 +6,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // Agregar la nueva columna 'toDelete' con valor por defecto 0 (false)
+        // Add new column 'toDelete' with default value 0 (false)
         database.execSQL("ALTER TABLE Lote ADD COLUMN toDelete INTEGER NOT NULL DEFAULT 0")
     }
 }
 
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(database: SupportSQLiteDatabase) {
-        // Crear la tabla 'profile'
+        // Create the 'profile' table
         database.execSQL(
             """
             CREATE TABLE IF NOT EXISTS `profile` (
@@ -37,7 +37,7 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
 //    override fun migrate(database: SupportSQLiteDatabase) {
 //        database.beginTransaction()
 //        try {
-//            // Sentencias SQL de migración
+//            // SQL migration statements
 //            database.execSQL("ALTER TABLE Lote ADD COLUMN userId TEXT NOT NULL DEFAULT ''")
 //            database.execSQL("ALTER TABLE Lote ADD COLUMN userId TEXT NOT NULL DEFAULT ''")
 //            database.setTransactionSuccessful()
@@ -51,17 +51,17 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.beginTransaction()
         try {
-            // Añadir la columna 'userId' a la tabla 'Lote' con valor por defecto ''
+            // Add 'userId' column to 'Lote' table with default value ''
             database.execSQL(
                 "ALTER TABLE Lote ADD COLUMN userId TEXT NOT NULL DEFAULT 'undefined'"
             )
 
-            // Añadir la columna 'userId' a la tabla 'Profile' con valor por defecto ''
+            // Add 'userId' column to 'Profile' table with default value ''
             database.execSQL(
                 "ALTER TABLE Profile ADD COLUMN userId TEXT NOT NULL DEFAULT 'undefined'"
             )
 
-            // Crear el índice único en 'userId' en la tabla 'Profile'
+            // Create unique index on 'userId' in 'Profile' table
             //database.execSQL(
             //    "CREATE UNIQUE INDEX IF NOT EXISTS index_profile_userId ON Profile(userId ASC)"
             //)

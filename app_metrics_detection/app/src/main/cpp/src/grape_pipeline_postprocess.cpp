@@ -203,7 +203,7 @@ cv::Mat MergeInstanceMasksForOverlay(
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// VISUAL-ONLY OVERLAY PIPELINE — helpers modulares
+// VISUAL-ONLY OVERLAY PIPELINE — modular helpers
 // ══════════════════════════════════════════════════════════════════════════════
 
 namespace ov = overlay_visual;
@@ -494,15 +494,15 @@ AuxBerryStats BuildAuxiliaryBerryPoints(
             if (val <= 0.0f) continue;               // background
             stats.raw_candidates++;
 
-            if (val < ov::kAuxDtMinRadius) continue;  // demasiado pequeno
-            if (val > ov::kAuxDtMaxRadius) continue;  // tallo/blob grande
+            if (val < ov::kAuxDtMinRadius) continue;  // too small
+            if (val > ov::kAuxDtMaxRadius) continue;  // large stem/blob
 
             if (val < peak_min) {
                 stats.rejected_low_dt++;
                 continue;
             }
 
-            if (val != dil_row[x]) continue;           // no es maximo local
+            if (val != dil_row[x]) continue;           // not a local maximum
 
             if (has_pingpong && pingpong_mask.at<uchar>(y, x) > 0) continue;
 
@@ -548,7 +548,7 @@ AuxBerryStats BuildAuxiliaryBerryPoints(
             continue;
         }
 
-        // Refinar centro: buscar maximo local DT en ventana pequeña
+        // Refine center: find local DT maximum in small window
         constexpr int rhw = ov::kAuxRefineHalfWin;
         int best_x = static_cast<int>(pt.x);
         int best_y = static_cast<int>(pt.y);
@@ -628,7 +628,7 @@ void RenderVisualOverlayLayers(
 
     if (!has_bg && !has_pp) return;
 
-    // Capa 1: Fill suave bunch+grape
+    // Layer 1: Soft fill bunch+grape
     if (has_bg) {
         cv::Mat color_layer(canvas.size(), canvas.type(), ov::kColorFillBunchGrape);
         cv::Mat blended;
@@ -648,7 +648,7 @@ void RenderVisualOverlayLayers(
         blended.copyTo(canvas, pingpong_mask);
     }
 
-    // Capa 3: Contorno pingpong
+    // Layer 3: Pingpong contour
     if (has_pp) {
         std::vector<std::vector<cv::Point>> pp_contours;
         cv::findContours(pingpong_mask.clone(), pp_contours,
@@ -664,7 +664,7 @@ void RenderVisualOverlayLayers(
         }
     }
 
-    // Capa 4: Contorno externo bunch+grape (cyan, simplificado)
+    // Layer 4: Outer bunch+grape contour (cyan, simplified)
     if (has_bg) {
         std::vector<std::vector<cv::Point>> bg_contours;
         cv::findContours(bunch_grape_mask.clone(), bg_contours,

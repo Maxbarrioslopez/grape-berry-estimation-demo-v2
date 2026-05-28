@@ -39,7 +39,7 @@ class HistoryFragment : Fragment() {
     private val viewModel: HistoryViewModel by activityViewModels()
     private lateinit var adapter: LoteHistoryAdapter
 
-    // Enum para representar la opción de filtro
+    // Enum representing the filter option
     enum class FilterOption { ALL, SYNCED, NOT_SYNCED }
     private var selectedFilter: FilterOption = FilterOption.ALL
     private lateinit var filterLabels: Array<String>
@@ -67,13 +67,13 @@ class HistoryFragment : Fragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         // ─── Toolbar ───────────────────────────────────────────────
-        // 2) Atender clicks en los action items
+        // 2) Handle clicks on action items
         binding.toolbarDetail.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_reload -> {
-                    // 1) Obtengo la view que renderiza ese item en el Toolbar
+                    // 1) Get the view rendering that item in the Toolbar
                     val reloadView = binding.toolbarDetail.findViewById<View>(R.id.action_reload)
-                    // 2) Giro 360º el icono
+                    // 2) Rotate the icon 360°
                     reloadView?.animate()
                         ?.rotationBy(360f)
                         ?.setDuration(600)
@@ -90,9 +90,9 @@ class HistoryFragment : Fragment() {
                     true
                 }
                 R.id.action_share -> {
-                    // 1) Obtengo la view del botón compartir
+                    // 1) Get the share button view
                     val shareView = binding.toolbarDetail.findViewById<View>(R.id.action_share)
-                    // 2) Le hago un pequeño «pop» escalandolo
+                    // 2) Apply a small "pop" scaling animation
                     shareView?.animate()
                         ?.scaleX(1.2f)?.scaleY(1.2f)
                         ?.setDuration(150)
@@ -101,7 +101,7 @@ class HistoryFragment : Fragment() {
                                 .scaleX(1f)?.scaleY(1f)
                                 ?.setDuration(150)
                                 ?.start()
-                            // 3) Llamo a tu función de compartir
+                            // 3) Call the share function
                             shareSelectedLotesPdf()
                         }
                         ?.start()
@@ -122,7 +122,7 @@ class HistoryFragment : Fragment() {
         binding.recyclerHistory.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerHistory.adapter = adapter
 
-        // 3) Filtro
+        // 3) Filter
         filterLabels = resources.getStringArray(R.array.filter_options)
         val autoAdapter = ArrayAdapter(
             requireContext(),
@@ -148,7 +148,7 @@ class HistoryFragment : Fragment() {
             refreshCurrentPage()
         }
 
-        // 4) Datos + paginación
+        // 4) Data + pagination
         viewModel.lotes.observe(viewLifecycleOwner) { refreshCurrentPage() }
         binding.btnPreviousPage.setOnClickListener {
             viewModel.loadPreviousPage()
@@ -161,7 +161,7 @@ class HistoryFragment : Fragment() {
     }
 
     /**
-     * Aplica el filtro seleccionado a una lista local de lotes.
+     * Applies the selected filter to a local list of batches.
      */
     private fun filterLotes(lotes: List<Lote>): List<Lote> {
         return when (selectedFilter) {
@@ -172,11 +172,11 @@ class HistoryFragment : Fragment() {
     }
 
     /**
-     * Toma TODOS los lotes que el usuario marcó (en varias páginas),
-     * genera y comparte el PDF con esos lotes.
+     * Takes ALL batches the user checked (across multiple pages),
+     * generates and shares a PDF with those batches.
      */
     private fun shareSelectedLotesPdf() {
-        // Lotes marcados en el ViewModel
+        // Lotes checked in the ViewModel
         val selectedLotes = viewModel.getSelectedLotes()
 
         if (selectedLotes.isEmpty()) {
@@ -210,8 +210,8 @@ class HistoryFragment : Fragment() {
     }
 
     /**
-     * Genera un PDF con la información de múltiples lotes (los marcados),
-     * dibujando histogramas para cada CalPredict (si corresponde).
+     * Generates a PDF with information for multiple batches (the selected ones),
+     * drawing histograms for each CalPredict (when applicable).
      */
     private fun generateAllLotesPdf(lotes: List<Lote>): File? {
         val pdfDocument = PdfDocument()
@@ -246,23 +246,23 @@ class HistoryFragment : Fragment() {
             }
         }
 
-        // Título principal
-        canvas.drawText("Lotes Seleccionados (${lotes.size})", marginLeft, currentY, paint)
+        // Main title
+        canvas.drawText("Selected Batches (${lotes.size})", marginLeft, currentY, paint)
         currentY += 30f
 
         lotes.forEachIndexed { index, lote ->
             checkPageSpace(200f)
 
             paint.textSize = 13f
-            canvas.drawText("Lote ${index + 1}: ${if (lote.synced) "(Sincronizado)" else "(Local)"}", marginLeft, currentY, paint)
+            canvas.drawText("Batch ${index + 1}: ${if (lote.synced) "(Synced)" else "(Local)"}", marginLeft, currentY, paint)
             currentY += 20f
             paint.textSize = 12f
 
-            canvas.drawText(" - LoteID: ${lote.id}", marginLeft, currentY, paint)
+            canvas.drawText(" - Batch ID: ${lote.id}", marginLeft, currentY, paint)
             currentY += 15f
-            canvas.drawText(" - UserID: ${lote.userId}", marginLeft, currentY, paint)
+            canvas.drawText(" - User ID: ${lote.userId}", marginLeft, currentY, paint)
             currentY += 15f
-            canvas.drawText(" - Compañía: ${lote.company}", marginLeft, currentY, paint)
+            canvas.drawText(" - Company: ${lote.company}", marginLeft, currentY, paint)
             currentY += 15f
             canvas.drawText(" - Vessel: ${lote.vessel}", marginLeft, currentY, paint)
             currentY += 15f
@@ -270,14 +270,14 @@ class HistoryFragment : Fragment() {
             currentY += 15f
 
             canvas.drawText(
-                " - Fecha Predicción: ${formatTimestampToDateTime(lote.predictedAt)}",
+                " - Predicted At: ${formatTimestampToDateTime(lote.predictedAt)}",
                 marginLeft, currentY, paint
             )
             currentY += 25f
 
-            // CalPredicts con histograma
+            // CalPredicts with histogram
             if (lote.calPredicts.isEmpty()) {
-                canvas.drawText("   No hay CalPredicts", marginLeft, currentY, paint)
+                canvas.drawText("   No CalPredicts", marginLeft, currentY, paint)
                 currentY += 30f
             } else {
                 lote.calPredicts.forEachIndexed { cpIndex, cp ->
@@ -285,7 +285,7 @@ class HistoryFragment : Fragment() {
                     canvas.drawText("   CalPredict ${cpIndex + 1}:", marginLeft, currentY, paint)
                     currentY += 15f
                     canvas.drawText(
-                        "   - Estado: ${cp.status}, Error: ${cp.error}, Color: ${cp.bunchColor}",
+                        "   - Status: ${cp.status}, Error: ${cp.error}, Color: ${cp.bunchColor}",
                         marginLeft, currentY, paint
                     )
                     currentY += 15f
@@ -295,7 +295,7 @@ class HistoryFragment : Fragment() {
                     )
                     currentY += 20f
 
-                    // Solo dibujamos histograma si el cp.status es true, por ejemplo
+                    // Only draw histogram if cp.status is true, for example
                     if (cp.status) {
                         val adjustedPred = cp.pred.map { pVal -> max(0, pVal) }
 
@@ -304,7 +304,7 @@ class HistoryFragment : Fragment() {
                         val histWidth = usableWidth * 0.75f
                         val histHeight = 150f
 
-                        // Usamos alguna función de histograma (drawModernHistogram)
+                        // Use the histogram function (drawModernHistogram)
                         drawModernHistogram(
                             canvas = canvas,
                             left = histX,
@@ -313,7 +313,7 @@ class HistoryFragment : Fragment() {
                             height = histHeight,
                             bins = cp.bins,
                             pred = adjustedPred,
-                            title = "Cantidad por Bin",
+                            title = "Quantity per Bin",
                             paint = paint
                         )
                         currentY += histHeight + 40f
@@ -321,14 +321,14 @@ class HistoryFragment : Fragment() {
                 }
             }
 
-            // Separador
+            // Separator
             canvas.drawLine(marginLeft, currentY, marginLeft + usableWidth, currentY, paint)
             currentY += 40f
         }
 
         pdfDocument.finishPage(page)
 
-        val pdfFile = File(requireContext().cacheDir, "Lotes_Seleccionados.pdf")
+        val pdfFile = File(requireContext().cacheDir, "Selected_Batches.pdf")
         return try {
             pdfFile.outputStream().use { output ->
                 pdfDocument.writeTo(output)
@@ -364,7 +364,7 @@ class HistoryFragment : Fragment() {
     }
 
     /**
-     * Ejemplo de función para dibujar un histograma "moderno".
+     * Example function for drawing a "modern" histogram.
      */
     private fun drawModernHistogram(
         canvas: Canvas,
@@ -400,7 +400,7 @@ class HistoryFragment : Fragment() {
         val graphWidth = graphRight - graphLeft
         val graphHeight = graphBottom - graphTop
 
-        // Ejes
+        // Axes
         paint.color = Color.DKGRAY
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.5f
@@ -419,7 +419,7 @@ class HistoryFragment : Fragment() {
             canvas.drawLine(graphLeft, yPos, graphRight, yPos, paint)
         }
 
-        // Barras
+        // Bars
         paint.pathEffect = null
         paint.style = Paint.Style.FILL
         paint.color = Color.BLUE
@@ -438,7 +438,7 @@ class HistoryFragment : Fragment() {
             canvas.drawRect(bLeft, bTop, bRight, bBottom, paint)
         }
 
-        // Etiquetas eje Y
+        // Y-axis labels
         paint.color = Color.BLACK
         paint.textSize = 10f
         paint.textAlign = Paint.Align.RIGHT
@@ -448,7 +448,7 @@ class HistoryFragment : Fragment() {
             canvas.drawText(String.format("%.0f", yVal), graphLeft - 5f, yPos + 4f, paint)
         }
 
-        // Etiquetas eje X (bins) rotadas -45°
+        // X-axis labels (bins) rotated -45°
         paint.textAlign = Paint.Align.LEFT
         bins.forEachIndexed { i, binVal ->
             val barCenterX = graphLeft + i * barWidth + (barWidth / 2)
@@ -462,7 +462,7 @@ class HistoryFragment : Fragment() {
             canvas.restore()
         }
 
-        // Leyenda
+        // Legend
         val legendX = graphRight - 80f
         val legendY = graphTop - 20f
         paint.color = Color.BLUE

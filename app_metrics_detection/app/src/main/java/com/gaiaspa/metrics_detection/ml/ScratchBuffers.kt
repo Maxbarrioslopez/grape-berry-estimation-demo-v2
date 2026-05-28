@@ -1,4 +1,4 @@
-// ScratchBuffers.kt (o dentro de ImageUtils como private object)
+// ScratchBuffers.kt (or inside ImageUtils as private object)
 package com.gaiaspa.metrics_detection.ml
 
 import kotlin.math.max
@@ -8,7 +8,7 @@ internal object ScratchBuffers {
     private var h: Int = 0
     private var n: Int = 0
 
-    // Reutilizables
+    // Reusable
     var tmpIntA: IntArray = IntArray(1)
         private set
     var tmpIntB: IntArray = IntArray(1)

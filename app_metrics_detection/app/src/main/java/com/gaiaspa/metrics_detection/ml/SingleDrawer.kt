@@ -32,7 +32,7 @@ class SingleImageDrawer {
      *         and watermark.
      */
     fun draw(original: Bitmap, results: List<SegmentationResult>, scaleX: Float, scaleY: Float): Bitmap {
-        Log.d("SingleDrawer_TRACE", "[D] Iniciando dibujo. Bitmap: ${original.width}x${original.height}. Detecciones: ${results.size}")
+        Log.d("SingleDrawer_TRACE", "[D] Starting drawing. Bitmap: ${original.width}x${original.height}. Detections: ${results.size}")
         
         val out = original.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(out)
@@ -44,7 +44,7 @@ class SingleImageDrawer {
             isAntiAlias = true
         }
 
-        // 1. Calcular centros y radios para separación visual
+        // 1. Calculate centers and radii for visual separation
         data class OvalCenter(val cx: Float, val cy: Float, val rx: Float, val ry: Float)
         val ovals = results.map { result ->
             val rect = RectF(
@@ -56,7 +56,7 @@ class SingleImageDrawer {
             OvalCenter(rect.centerX(), rect.centerY(), rect.width() / 2f, rect.height() / 2f)
         }
 
-        // 2. Ajustar radio si hay vecinos cercanos (visual-only)
+        // 2. Adjust radius if there are close neighbors (visual-only)
         val clamped = ovals.mapIndexed { index, o ->
             var minDist = Float.MAX_VALUE
             ovals.forEachIndexed { otherIdx, other ->
@@ -71,25 +71,25 @@ class SingleImageDrawer {
             RectF(o.cx - crx, o.cy - cry, o.cx + crx, o.cy + cry)
         }
 
-        // 3. Dibujar óvalos con radio ajustado
+        // 3. Draw ovals with adjusted radius
         clamped.forEachIndexed { index, rect ->
             canvas.drawOval(rect, paint)
-            if (index == 0) Log.d("SingleDrawer_TRACE", "[D.1] Primer óvalo en: $rect")
+            if (index == 0) Log.d("SingleDrawer_TRACE", "[D.1] First oval at: $rect")
         }
 
-        // 🚨 MARCA DE AGUA PARA VALIDACIÓN ABSOLUTA
-        Log.d("SingleDrawer_TRACE", "[D.2] Dibujando OVAL_TEST (Marca de agua azul)")
+        // 🚨 WATERMARK FOR ABSOLUTE VALIDATION
+        Log.d("SingleDrawer_TRACE", "[D.2] Drawing OVAL_TEST (Blue watermark)")
         val testPaint = Paint().apply {
             color = Color.BLUE
             style = Paint.Style.FILL
             textSize = out.width / 12f
             isFakeBoldText = true
         }
-        // Círculo azul en esquina y texto gigante
+        // Blue circle in corner and large text
         canvas.drawCircle(out.width - 80f, 80f, 50f, testPaint)
         canvas.drawText("OVAL_TEST", 40f, 120f, testPaint)
 
-        Log.d("SingleDrawer_TRACE", "[D.3] Dibujo finalizado")
+        Log.d("SingleDrawer_TRACE", "[D.3] Drawing finished")
         return out
     }
 }

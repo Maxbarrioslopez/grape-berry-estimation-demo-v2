@@ -1,8 +1,8 @@
 /**
  * ApiService.kt
  *
- * Propósito: Definir los contratos de comunicación con el Backend.
- * Responsabilidad: Declarar los endpoints de autenticación y gestión de lotes (Batch).
+ * Purpose: Define the communication contracts with the Backend.
+ * Responsibility: Declare the authentication and batch management endpoints.
  */
 package com.gaiaspa.metrics_detection.network
 
@@ -26,51 +26,51 @@ interface ApiService {
     // ── Auth ─────────────────────────────────────────────────────────────────
 
     /**
-     * Autentica al usuario con email y contraseña.
-     * @param loginRequest cuerpo con credenciales de inicio de sesión.
-     * @return [Response] con [LoginResponse] que incluye accessToken, refreshToken, userId y roles.
+     * Authenticates the user with email and password.
+     * @param loginRequest body with login credentials.
+     * @return [Response] with [LoginResponse] including accessToken, refreshToken, userId, and roles.
      */
     @POST("auth/login")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
 
-    /** 
-     * Registro corporativo por invitación.
-     * El backend valida el token de invitación embebido en CompanyRegisterRequest.
+    /**
+     * Corporate registration by invitation.
+     * The backend validates the invitation token embedded in CompanyRegisterRequest.
      */
     @POST("auth/company-registration")
     suspend fun registerCompany(@Body request: CompanyRegisterRequest): Response<Void>
 
     /**
-     * Obtiene el perfil del usuario autenticado usando el access token actual.
-     * @return [Response] con [ProfileResponse] conteniendo nombre, email, empresa y rol.
+     * Retrieves the authenticated user's profile using the current access token.
+     * @return [Response] with [ProfileResponse] containing name, email, company, and role.
      */
     @GET("auth/profile")
     suspend fun getProfile(): Response<ProfileResponse>
 
     /**
-     * Cierra la sesión en el backend invalidando el refresh token activo.
-     * @param refreshTokenRequest contiene el refresh token a invalidar.
+     * Closes the session on the backend by invalidating the active refresh token.
+     * @param refreshTokenRequest contains the refresh token to invalidate.
      */
     @POST("auth/logout")
     suspend fun logout(@Body refreshTokenRequest: RefreshTokenRequest): Response<LogoutResponse>
 
     /**
-     * Renueva el par de tokens de forma síncrona (usado por OkHttp Authenticator,
-     * que no soporta llamadas suspend).
-     * @param refreshTokenRequest contiene el refresh token actual.
-     * @return [Call] síncrono con [LoginResponse] portando el nuevo accessToken y refreshToken.
+     * Renews the token pair synchronously (used by OkHttp Authenticator,
+     * which does not support suspend calls).
+     * @param refreshTokenRequest contains the current refresh token.
+     * @return Synchronous [Call] with [LoginResponse] carrying the new accessToken and refreshToken.
      * @see TokenAuthenticator
      */
     @POST("auth/refresh-token")
     fun refreshTokenSync(@Body refreshTokenRequest: RefreshTokenRequest): Call<LoginResponse>
 
-    /**  
-     * RECOVERY (Proceso Simplificado v2)
-     * Antes: Flujo de 2 pasos con token por correo.
-     * Ahora: Cambio de contraseña directo mediante validación de Email + RUT.
-     * Motivo: Simplificación de UX y eliminación de dependencia de envío de correos.
+    /**
+     * RECOVERY (Simplified v2 Process)
+     * Before: 2-step flow with emailed token.
+     * Now: Direct password change via Email + RUT validation.
+     * Reason: UX simplification and removal of email sending dependency.
      *
-     * @param request contiene email, RUT y la nueva contraseña.
+     * @param request contains email, RUT, and the new password.
      */
     @POST("auth/password-recovery/change")
     suspend fun changePassword(@Body request: PasswordChangeRequest): Response<Void>
@@ -78,20 +78,20 @@ interface ApiService {
     // ── Lote APIs ────────────────────────────────────────────────────────────
 
     /**
-     * Sube un nuevo lote de detección al backend con imágenes como partes multipart.
-     * Los campos @Part textuales se envían como RequestBody con media type text/plain
-     * o application/json según corresponda.
+     * Uploads a new detection lot to the backend with images as multipart parts.
+     * Textual @Part fields are sent as RequestBody with media type text/plain
+     * or application/json as appropriate.
      *
-     * @param userId identificador del usuario propietario del lote.
-     * @param company nombre o ID de la empresa.
-     * @param vessel identificador del navío/barco.
-     * @param block bloque del viñedo.
-     * @param variety variedad de uva.
-     * @param predictedAt timestamp Unix de predicción.
-     * @param calPredictsJson JSON serializado del array de calibres predichos.
-     * @param files array de partes multipart con las imágenes JPEG asociadas.
-     * @return [Response] con [LoteResponse] que incluye el cloudId asignado y las URLs
-     *         de las imágenes subidas a S3.
+     * @param userId identifier of the user owning the lot.
+     * @param company company name or ID.
+     * @param vessel vessel/ship identifier.
+     * @param block vineyard block.
+     * @param variety grape variety.
+     * @param predictedAt Unix prediction timestamp.
+     * @param calPredictsJson JSON-serialized array of predicted calibers.
+     * @param files array of multipart parts with the associated JPEG images.
+     * @return [Response] with [LoteResponse] including the assigned cloudId and
+     *         the URLs of the images uploaded to S3.
      */
     @Multipart
     @POST("batch-predictions-grape")
@@ -107,16 +107,16 @@ interface ApiService {
     ): Response<LoteResponse>
 
     /**
-     * Elimina un lote del backend por su cloudId.
-     * @param loteId identificador remoto del lote (cloudId).
-     * @return [Response] con [DeleteBatchGrapeResponse] indicando si se eliminó correctamente.
+     * Deletes a lot from the backend by its cloudId.
+     * @param loteId remote lot identifier (cloudId).
+     * @return [Response] with [DeleteBatchGrapeResponse] indicating whether deletion was successful.
      */
     @DELETE("batch-predictions-grape/{id}")
     suspend fun deleteBatchDetection(@Path("id") loteId: String): Response<DeleteBatchGrapeResponse>
 
     /**
-     * Obtiene todos los lotes del usuario autenticado desde el backend.
-     * @return [Response] con lista de [LoteResponse] ordenados por fecha de predicción descendente.
+     * Retrieves all lots for the authenticated user from the backend.
+     * @return [Response] with a list of [LoteResponse] sorted by descending prediction date.
      */
     @GET("batch-predictions-grape")
     suspend fun getBatchsDetections(): Response<List<LoteResponse>>

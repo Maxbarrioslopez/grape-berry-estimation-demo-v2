@@ -1,573 +1,573 @@
-# Vistas de la aplicación
+# Application Views
 
-## Objetivo
+## Objective
 
-Este documento registra las principales vistas de la aplicación Android Metrics Detection.
+This document records the main views of the Android Metrics Detection application.
 
-## Flujo general capturado
+## Captured General Flow
 
 1. Login
-2. Registro
-3. Recuperacion de contrasena
-4. Creacion de lote
-5. Seleccion de variedad
-6. Captura/carga de imagenes del racimo
-7. Selector de origen de imagen
-8. Galeria del sistema
-9. Resultado de racimo e histograma compacto
-10. Detalle del racimo
-11. Guardado de lote
-12. Historial
-13. Filtro de historial
-14. Detalle de lote
-15. Imagen en pantalla completa
-16. Exportacion/compartir PDF
-17. Perfil y configuracion
-18. Soporte y FAQ
+2. Registration
+3. Password Recovery
+4. Batch Creation
+5. Variety Selection
+6. Bunch Image Capture/Loading
+7. Image Source Selector
+8. System Gallery
+9. Bunch Result and Compact Histogram
+10. Bunch Detail
+11. Save Batch
+12. History
+13. History Filter
+14. Batch Detail
+15. Full-Screen Image
+16. PDF Export/Share
+17. Profile and Settings
+18. Support and FAQ
 
-## Capturas
+## Screenshots
 
-La primera serie corresponde al flujo principal capturado inicialmente.
+The first series corresponds to the main flow initially captured.
 
 ### 01. Login
 
-**Archivo:** `capturas_vistas_app/01_login.png`
+**File:** `capturas_vistas_app/01_login.png`
 
-**Descripcion:**  
-Pantalla inicial de acceso con campos de email, contrasena, recuperacion y acceso a registro.
+**Description:**
+Initial login screen with email, password, recovery, and registration access fields.
 
 ![Login](capturas_vistas_app/01_login.png)
 
 ---
 
-### 02. Registro
+### 02. Registration
 
-**Archivo:** `capturas_vistas_app/02_registro.png`
+**File:** `capturas_vistas_app/02_registro.png`
 
-**Descripcion:**  
-Pantalla de registro en etapa inicial, con email y codigo de invitacion.
+**Description:**
+Registration screen in initial stage, with email and invitation code.
 
-![Registro](capturas_vistas_app/02_registro.png)
-
----
-
-### 03. Recuperacion
-
-**Archivo:** `capturas_vistas_app/03_recuperacion.png`
-
-**Descripcion:**  
-Pantalla para recuperacion/cambio de contrasena mediante email, RUT y nueva clave.
-
-![Recuperacion](capturas_vistas_app/03_recuperacion.png)
+![Registration](capturas_vistas_app/02_registro.png)
 
 ---
 
-### 04. Crear lote
+### 03. Recovery
 
-**Archivo:** `capturas_vistas_app/04_crear_lote.png`
+**File:** `capturas_vistas_app/03_recuperacion.png`
 
-**Descripcion:**  
-Vista inicial posterior al login para ingresar Company, Vessel, Block y Variety.
+**Description:**
+Screen for password recovery/change via email, tax ID, and new password.
 
-![Crear lote](capturas_vistas_app/04_crear_lote.png)
-
----
-
-### 05. Selector de variedad
-
-**Archivo:** `capturas_vistas_app/05_selector_variedad.png`
-
-**Descripcion:**  
-Menu desplegable de variedades disponibles para asociar al lote.
-
-![Selector de variedad](capturas_vistas_app/05_selector_variedad.png)
+![Recovery](capturas_vistas_app/03_recuperacion.png)
 
 ---
 
-### 06. Datos de lote completos
+### 04. Create Batch
 
-**Archivo:** `capturas_vistas_app/06_lote_datos_completos.png`
+**File:** `capturas_vistas_app/04_crear_lote.png`
 
-**Descripcion:**  
-Formulario de lote completo con variedad seleccionada y boton de inicio habilitado.
+**Description:**
+Initial view after login to enter Company, Vessel, Block, and Variety.
 
-![Datos de lote completos](capturas_vistas_app/06_lote_datos_completos.png)
-
----
-
-### 07. Captura de racimos
-
-**Archivo:** `capturas_vistas_app/07_captura_racimos.png`
-
-**Descripcion:**  
-Vista de procesamiento/captura de racimos con estado vacio y accion para crear un nuevo racimo.
-
-![Captura de racimos](capturas_vistas_app/07_captura_racimos.png)
+![Create batch](capturas_vistas_app/04_crear_lote.png)
 
 ---
 
-### 08. Selector de origen de imagen
+### 05. Variety Selector
 
-**Archivo:** `capturas_vistas_app/08_selector_origen_imagen.png`
+**File:** `capturas_vistas_app/05_selector_variedad.png`
 
-**Descripcion:**  
-Bottom sheet para seleccionar captura por camara o carga desde galeria.
+**Description:**
+Dropdown menu of available varieties to associate with the batch.
 
-![Selector de origen de imagen](capturas_vistas_app/08_selector_origen_imagen.png)
-
----
-
-### 09. Galeria del sistema
-
-**Archivo:** `capturas_vistas_app/09_galeria_picker.png`
-
-**Descripcion:**  
-Photo picker del sistema Android abierto desde la app para seleccionar imagen.
-
-![Galeria del sistema](capturas_vistas_app/09_galeria_picker.png)
+![Variety selector](capturas_vistas_app/05_selector_variedad.png)
 
 ---
 
-### 10. Imagen seleccionada en galeria
+### 06. Complete Batch Data
 
-**Archivo:** `capturas_vistas_app/10_galeria_imagen_seleccionada.png`
+**File:** `capturas_vistas_app/06_lote_datos_completos.png`
 
-**Descripcion:**  
-Estado del picker con una imagen seleccionada y accion Listo disponible.
+**Description:**
+Complete batch form with selected variety and start button enabled.
 
-![Imagen seleccionada en galeria](capturas_vistas_app/10_galeria_imagen_seleccionada.png)
-
----
-
-### 11. Captura de reverso
-
-**Archivo:** `capturas_vistas_app/11_frente_cargado.png`
-
-**Descripcion:**  
-Bottom sheet mostrado tras cargar el Frente, solicitando la imagen de Reverso.
-
-![Captura de reverso](capturas_vistas_app/11_frente_cargado.png)
+![Complete batch data](capturas_vistas_app/06_lote_datos_completos.png)
 
 ---
 
-### 12. Resultado y resumen
+### 07. Bunch Capture
 
-**Archivo:** `capturas_vistas_app/12_procesamiento_resultado.png`
+**File:** `capturas_vistas_app/07_captura_racimos.png`
 
-**Descripcion:**  
-Resultado calculado para el racimo con cantidad estimada, metricas y mini histograma de calibres.
+**Description:**
+Bunch processing/capture view with empty state and action to create a new bunch.
 
-![Resultado y resumen](capturas_vistas_app/12_procesamiento_resultado.png)
-
----
-
-### 13. Detalle del racimo
-
-**Archivo:** `capturas_vistas_app/13_resultado_detalle_racimo.png`
-
-**Descripcion:**  
-Detalle del racimo en vista de resumen, con metricas consolidadas Frente/Reverso.
-
-![Detalle del racimo](capturas_vistas_app/13_resultado_detalle_racimo.png)
+![Bunch capture](capturas_vistas_app/07_captura_racimos.png)
 
 ---
 
-### 14. Imagenes del racimo
+### 08. Image Source Selector
 
-**Archivo:** `capturas_vistas_app/14_racimo_imagenes.png`
+**File:** `capturas_vistas_app/08_selector_origen_imagen.png`
 
-**Descripcion:**  
-Pestana de imagenes del racimo con Frente y Reverso cargados como imagenes validas.
+**Description:**
+Bottom sheet to select capture by camera or load from gallery.
 
-![Imagenes del racimo](capturas_vistas_app/14_racimo_imagenes.png)
-
----
-
-### 15. Confirmar guardado de lote
-
-**Archivo:** `capturas_vistas_app/15_confirmar_guardar_lote.png`
-
-**Descripcion:**  
-Dialogo de confirmacion antes de guardar el lote con las fotos actuales.
-
-![Confirmar guardado de lote](capturas_vistas_app/15_confirmar_guardar_lote.png)
+![Image source selector](capturas_vistas_app/08_selector_origen_imagen.png)
 
 ---
 
-### 16. Lote guardado
+### 09. System Gallery
 
-**Archivo:** `capturas_vistas_app/16_lote_guardado_home.png`
+**File:** `capturas_vistas_app/09_galeria_picker.png`
 
-**Descripcion:**  
-Retorno al formulario inicial luego de guardar el lote correctamente.
+**Description:**
+Android system Photo Picker opened from the app to select an image.
 
-![Lote guardado](capturas_vistas_app/16_lote_guardado_home.png)
-
----
-
-### 17. Historial
-
-**Archivo:** `capturas_vistas_app/17_historial.png`
-
-**Descripcion:**  
-Listado de lotes con tarjeta de lote, estado de sincronizacion, seleccion para PDF y acceso a detalle.
-
-![Historial](capturas_vistas_app/17_historial.png)
+![System gallery](capturas_vistas_app/09_galeria_picker.png)
 
 ---
 
-### 18. Filtro de historial
+### 10. Image Selected in Gallery
 
-**Archivo:** `capturas_vistas_app/18_historial_filtro.png`
+**File:** `capturas_vistas_app/10_galeria_imagen_seleccionada.png`
 
-**Descripcion:**  
-Filtro desplegable del historial con opciones Todos, Sincronizados y No sincronizados.
+**Description:**
+Picker state with one image selected and Done action available.
 
-![Filtro de historial](capturas_vistas_app/18_historial_filtro.png)
-
----
-
-### 19. Detalle de lote
-
-**Archivo:** `capturas_vistas_app/19_detalle_lote.png`
-
-**Descripcion:**  
-Detalle del lote guardado con metadata, fecha, imagen, prediccion y accion de compartir PDF visible.
-
-![Detalle de lote](capturas_vistas_app/19_detalle_lote.png)
+![Image selected in gallery](capturas_vistas_app/10_galeria_imagen_seleccionada.png)
 
 ---
 
-### 20. Imagen en pantalla completa
+### 11. Back Capture
 
-**Archivo:** `capturas_vistas_app/20_imagen_pantalla_completa.png`
+**File:** `capturas_vistas_app/11_frente_cargado.png`
 
-**Descripcion:**  
-Vista ampliada de imagen/prediccion abierta desde el detalle del lote.
+**Description:**
+Bottom sheet shown after loading the Front, requesting the Back image.
 
-![Imagen en pantalla completa](capturas_vistas_app/20_imagen_pantalla_completa.png)
-
----
-
-### 21. Exportar PDF
-
-**Archivo:** `capturas_vistas_app/21_exportar_pdf_compartir.png`
-
-**Descripcion:**  
-Hoja del sistema Android para compartir el PDF generado desde el detalle del lote.
-
-![Exportar PDF](capturas_vistas_app/21_exportar_pdf_compartir.png)
+![Back capture](capturas_vistas_app/11_frente_cargado.png)
 
 ---
 
-### 22. Perfil y configuracion
+### 12. Result and Summary
 
-**Archivo:** `capturas_vistas_app/22_perfil_configuracion.png`
+**File:** `capturas_vistas_app/12_procesamiento_resultado.png`
 
-**Descripcion:**  
-Perfil del usuario administrador, estado disponible, descarga de lotes, cierre de sesion y controles de configuracion visibles.
+**Description:**
+Computed result for the bunch with estimated quantity, metrics, and compact caliber histogram.
 
-![Perfil y configuracion](capturas_vistas_app/22_perfil_configuracion.png)
-
----
-
-### 23. Configuracion y almacenamiento
-
-**Archivo:** `capturas_vistas_app/23_configuracion_almacenamiento.png`
-
-**Descripcion:**  
-Seccion de almacenamiento local, modo oscuro y zona de peligro visibles. No se ejecuto ninguna accion destructiva.
-
-![Configuracion y almacenamiento](capturas_vistas_app/23_configuracion_almacenamiento.png)
+![Result and summary](capturas_vistas_app/12_procesamiento_resultado.png)
 
 ---
 
-### 24. Soporte
+### 13. Bunch Detail
 
-**Archivo:** `capturas_vistas_app/24_soporte.png`
+**File:** `capturas_vistas_app/13_resultado_detalle_racimo.png`
 
-**Descripcion:**  
-Centro de soporte con informacion de contacto y preguntas frecuentes.
+**Description:**
+Bunch detail in summary view, with consolidated Front/Back metrics.
 
-![Soporte](capturas_vistas_app/24_soporte.png)
-
----
-
-### 25. FAQ de soporte
-
-**Archivo:** `capturas_vistas_app/25_soporte_faq.png`
-
-**Descripcion:**  
-Pregunta frecuente expandida dentro del centro de soporte.
-
-![FAQ de soporte](capturas_vistas_app/25_soporte_faq.png)
+![Bunch detail](capturas_vistas_app/13_resultado_detalle_racimo.png)
 
 ---
 
-## Capturas en modo claro
+### 14. Bunch Images
 
-Serie adicional capturada tras desactivar Modo oscuro desde Perfil. El orden siguiente es logico de flujo; los archivos conservan el prefijo `claro_XX` segun el momento real de captura.
+**File:** `capturas_vistas_app/14_racimo_imagenes.png`
 
-### Claro 01. Login
+**Description:**
+Bunch images tab with Front and Back loaded as valid images.
 
-**Archivo:** `capturas_vistas_app/claro_22_login.png`
-
-**Descripcion:**  
-Pantalla inicial de acceso en modo claro, con campos de email y contrasena.
-
-![Login modo claro](capturas_vistas_app/claro_22_login.png)
+![Bunch images](capturas_vistas_app/14_racimo_imagenes.png)
 
 ---
 
-### Claro 02. Registro
+### 15. Confirm Save Batch
 
-**Archivo:** `capturas_vistas_app/claro_23_registro.png`
+**File:** `capturas_vistas_app/15_confirmar_guardar_lote.png`
 
-**Descripcion:**  
-Pantalla de registro en modo claro con email y codigo de invitacion.
+**Description:**
+Confirmation dialog before saving the batch with the current photos.
 
-![Registro modo claro](capturas_vistas_app/claro_23_registro.png)
-
----
-
-### Claro 03. Recuperacion
-
-**Archivo:** `capturas_vistas_app/claro_24_recuperacion.png`
-
-**Descripcion:**  
-Pantalla de recuperacion/cambio de contrasena en modo claro.
-
-![Recuperacion modo claro](capturas_vistas_app/claro_24_recuperacion.png)
+![Confirm save batch](capturas_vistas_app/15_confirmar_guardar_lote.png)
 
 ---
 
-### Claro 04. Crear lote
+### 16. Batch Saved
 
-**Archivo:** `capturas_vistas_app/claro_04_crear_lote.png`
+**File:** `capturas_vistas_app/16_lote_guardado_home.png`
 
-**Descripcion:**  
-Formulario inicial de lote en modo claro posterior al login administrador.
+**Description:**
+Return to the initial form after successfully saving the batch.
 
-![Crear lote modo claro](capturas_vistas_app/claro_04_crear_lote.png)
-
----
-
-### Claro 05. Selector de variedad
-
-**Archivo:** `capturas_vistas_app/claro_05_selector_variedad.png`
-
-**Descripcion:**  
-Selector desplegable de variedades disponible durante la creacion del lote.
-
-![Selector de variedad modo claro](capturas_vistas_app/claro_05_selector_variedad.png)
+![Batch saved](capturas_vistas_app/16_lote_guardado_home.png)
 
 ---
 
-### Claro 06. Datos de lote completos
+### 17. History
 
-**Archivo:** `capturas_vistas_app/claro_06_lote_datos_completos.png`
+**File:** `capturas_vistas_app/17_historial.png`
 
-**Descripcion:**  
-Formulario completo con Company, Vessel, Block y Variety listos para iniciar lote.
+**Description:**
+List of batches with batch card, sync status, PDF selection, and detail access.
 
-![Datos de lote modo claro](capturas_vistas_app/claro_06_lote_datos_completos.png)
-
----
-
-### Claro 07. Captura de racimos
-
-**Archivo:** `capturas_vistas_app/claro_07_captura_racimos.png`
-
-**Descripcion:**  
-Vista de procesamiento de racimos en estado inicial, sin racimos cargados.
-
-![Captura de racimos modo claro](capturas_vistas_app/claro_07_captura_racimos.png)
+![History](capturas_vistas_app/17_historial.png)
 
 ---
 
-### Claro 08. Selector de origen de imagen
+### 18. History Filter
 
-**Archivo:** `capturas_vistas_app/claro_08_selector_origen_imagen.png`
+**File:** `capturas_vistas_app/18_historial_filtro.png`
 
-**Descripcion:**  
-Bottom sheet para elegir entre camara y galeria en modo claro.
+**Description:**
+History dropdown filter with All, Synced, and Not synced options.
 
-![Selector de origen modo claro](capturas_vistas_app/claro_08_selector_origen_imagen.png)
-
----
-
-### Claro 09. Galeria del sistema
-
-**Archivo:** `capturas_vistas_app/claro_09_galeria_picker.png`
-
-**Descripcion:**  
-Photo Picker del sistema Android abierto desde el flujo en modo claro.
-
-![Galeria modo claro](capturas_vistas_app/claro_09_galeria_picker.png)
+![History filter](capturas_vistas_app/18_historial_filtro.png)
 
 ---
 
-### Claro 10. Imagen seleccionada en galeria
+### 19. Batch Detail
 
-**Archivo:** `capturas_vistas_app/claro_10_galeria_imagen_seleccionada.png`
+**File:** `capturas_vistas_app/19_detalle_lote.png`
 
-**Descripcion:**  
-Estado del Photo Picker con una imagen seleccionada antes de confirmar.
+**Description:**
+Saved batch detail with metadata, date, image, prediction, and visible share PDF action.
 
-![Imagen seleccionada modo claro](capturas_vistas_app/claro_10_galeria_imagen_seleccionada.png)
-
----
-
-### Claro 11. Captura de reverso
-
-**Archivo:** `capturas_vistas_app/claro_11_frente_cargado.png`
-
-**Descripcion:**  
-Estado posterior a cargar Frente, solicitando la imagen de Reverso.
-
-![Captura de reverso modo claro](capturas_vistas_app/claro_11_frente_cargado.png)
+![Batch detail](capturas_vistas_app/19_detalle_lote.png)
 
 ---
 
-### Claro 12. Resultado y resumen
+### 20. Full-Screen Image
 
-**Archivo:** `capturas_vistas_app/claro_12_resultado_resumen.png`
+**File:** `capturas_vistas_app/20_imagen_pantalla_completa.png`
 
-**Descripcion:**  
-Resultado calculado en modo claro con cantidad, metricas e histograma compacto.
+**Description:**
+Enlarged image/prediction view opened from the batch detail.
 
-![Resultado modo claro](capturas_vistas_app/claro_12_resultado_resumen.png)
-
----
-
-### Claro 13. Detalle del racimo
-
-**Archivo:** `capturas_vistas_app/claro_13_resultado_detalle_racimo.png`
-
-**Descripcion:**  
-Detalle de racimo en modo claro con resumen, metricas consolidadas e histograma.
-
-![Detalle de racimo modo claro](capturas_vistas_app/claro_13_resultado_detalle_racimo.png)
+![Full-screen image](capturas_vistas_app/20_imagen_pantalla_completa.png)
 
 ---
 
-### Claro 14. Imagenes del racimo
+### 21. Export PDF
 
-**Archivo:** `capturas_vistas_app/claro_14_racimo_imagenes.png`
+**File:** `capturas_vistas_app/21_exportar_pdf_compartir.png`
 
-**Descripcion:**  
-Pestana de imagenes con Frente y Reverso validos en modo claro.
+**Description:**
+Android system share sheet for the PDF generated from the batch detail.
 
-![Imagenes del racimo modo claro](capturas_vistas_app/claro_14_racimo_imagenes.png)
-
----
-
-### Claro 15. Confirmar guardado de lote
-
-**Archivo:** `capturas_vistas_app/claro_15_confirmar_guardar_lote.png`
-
-**Descripcion:**  
-Dialogo de confirmacion para guardar el lote con las fotos actuales.
-
-![Confirmacion guardado modo claro](capturas_vistas_app/claro_15_confirmar_guardar_lote.png)
+![Export PDF](capturas_vistas_app/21_exportar_pdf_compartir.png)
 
 ---
 
-### Claro 16. Lote guardado
+### 22. Profile and Settings
 
-**Archivo:** `capturas_vistas_app/claro_16_lote_guardado_home.png`
+**File:** `capturas_vistas_app/22_perfil_configuracion.png`
 
-**Descripcion:**  
-Retorno al formulario inicial con confirmacion de lote guardado localmente.
+**Description:**
+Admin user profile, available status, batch download, logout, and visible settings controls.
 
-![Lote guardado modo claro](capturas_vistas_app/claro_16_lote_guardado_home.png)
-
----
-
-### Claro 17. Historial
-
-**Archivo:** `capturas_vistas_app/claro_17_historial.png`
-
-**Descripcion:**  
-Listado de lotes en modo claro con estado de sincronizacion y acceso a detalle.
-
-![Historial modo claro](capturas_vistas_app/claro_17_historial.png)
+![Profile and settings](capturas_vistas_app/22_perfil_configuracion.png)
 
 ---
 
-### Claro 18. Filtro de historial
+### 23. Settings and Storage
 
-**Archivo:** `capturas_vistas_app/claro_18_historial_filtro.png`
+**File:** `capturas_vistas_app/23_configuracion_almacenamiento.png`
 
-**Descripcion:**  
-Filtro desplegable del historial visible en modo claro.
+**Description:**
+Local storage section, dark mode, and danger zone visible. No destructive action was performed.
 
-![Filtro historial modo claro](capturas_vistas_app/claro_18_historial_filtro.png)
-
----
-
-### Claro 19. Detalle de lote
-
-**Archivo:** `capturas_vistas_app/claro_19_detalle_lote.png`
-
-**Descripcion:**  
-Detalle de lote en modo claro con metadata, prediccion, histograma y acciones visibles.
-
-![Detalle de lote modo claro](capturas_vistas_app/claro_19_detalle_lote.png)
+![Settings and storage](capturas_vistas_app/23_configuracion_almacenamiento.png)
 
 ---
 
-### Claro 20. Imagen en pantalla completa
+### 24. Support
 
-**Archivo:** `capturas_vistas_app/claro_20_imagen_pantalla_completa.png`
+**File:** `capturas_vistas_app/24_soporte.png`
 
-**Descripcion:**  
-Vista ampliada de la imagen/prediccion abierta desde el detalle del lote.
+**Description:**
+Support center with contact information and frequently asked questions.
 
-![Imagen completa modo claro](capturas_vistas_app/claro_20_imagen_pantalla_completa.png)
-
----
-
-### Claro 21. Exportar PDF
-
-**Archivo:** `capturas_vistas_app/claro_21_exportar_pdf_compartir.png`
-
-**Descripcion:**  
-Hoja del sistema Android para compartir el PDF generado desde el detalle.
-
-![Exportar PDF modo claro](capturas_vistas_app/claro_21_exportar_pdf_compartir.png)
+![Support](capturas_vistas_app/24_soporte.png)
 
 ---
 
-### Claro 22. Perfil y configuracion
+### 25. Support FAQ
 
-**Archivo:** `capturas_vistas_app/claro_01_perfil_configuracion.png`
+**File:** `capturas_vistas_app/25_soporte_faq.png`
 
-**Descripcion:**  
-Perfil del administrador en modo claro con estado, descarga de lotes, cierre de sesion y controles visibles.
+**Description:**
+Expanded FAQ within the support center.
 
-![Perfil modo claro](capturas_vistas_app/claro_01_perfil_configuracion.png)
-
----
-
-### Claro 23. Soporte
-
-**Archivo:** `capturas_vistas_app/claro_02_soporte.png`
-
-**Descripcion:**  
-Centro de soporte en modo claro con informacion de contacto y acceso a FAQ.
-
-![Soporte modo claro](capturas_vistas_app/claro_02_soporte.png)
+![Support FAQ](capturas_vistas_app/25_soporte_faq.png)
 
 ---
 
-### Claro 24. FAQ de soporte
+## Light Mode Screenshots
 
-**Archivo:** `capturas_vistas_app/claro_03_soporte_faq.png`
+Additional series captured after deactivating Dark Mode from Profile. The order below follows the logical flow; files retain the `claro_XX` prefix according to the actual capture time.
 
-**Descripcion:**  
-Pregunta frecuente expandida dentro del centro de soporte en modo claro.
+### Light 01. Login
 
-![FAQ modo claro](capturas_vistas_app/claro_03_soporte_faq.png)
+**File:** `capturas_vistas_app/claro_22_login.png`
+
+**Description:**
+Initial login screen in light mode, with email and password fields.
+
+![Login light mode](capturas_vistas_app/claro_22_login.png)
+
+---
+
+### Light 02. Registration
+
+**File:** `capturas_vistas_app/claro_23_registro.png`
+
+**Description:**
+Registration screen in light mode with email and invitation code.
+
+![Registration light mode](capturas_vistas_app/claro_23_registro.png)
+
+---
+
+### Light 03. Recovery
+
+**File:** `capturas_vistas_app/claro_24_recuperacion.png`
+
+**Description:**
+Password recovery/change screen in light mode.
+
+![Recovery light mode](capturas_vistas_app/claro_24_recuperacion.png)
+
+---
+
+### Light 04. Create Batch
+
+**File:** `capturas_vistas_app/claro_04_crear_lote.png`
+
+**Description:**
+Initial batch form in light mode after admin login.
+
+![Create batch light mode](capturas_vistas_app/claro_04_crear_lote.png)
+
+---
+
+### Light 05. Variety Selector
+
+**File:** `capturas_vistas_app/claro_05_selector_variedad.png`
+
+**Description:**
+Dropdown variety selector available during batch creation.
+
+![Variety selector light mode](capturas_vistas_app/claro_05_selector_variedad.png)
+
+---
+
+### Light 06. Complete Batch Data
+
+**File:** `capturas_vistas_app/claro_06_lote_datos_completos.png`
+
+**Description:**
+Complete form with Company, Vessel, Block, and Variety ready to start batch.
+
+![Complete batch data light mode](capturas_vistas_app/claro_06_lote_datos_completos.png)
+
+---
+
+### Light 07. Bunch Capture
+
+**File:** `capturas_vistas_app/claro_07_captura_racimos.png`
+
+**Description:**
+Bunch processing view in initial state, with no bunches loaded.
+
+![Bunch capture light mode](capturas_vistas_app/claro_07_captura_racimos.png)
+
+---
+
+### Light 08. Image Source Selector
+
+**File:** `capturas_vistas_app/claro_08_selector_origen_imagen.png`
+
+**Description:**
+Bottom sheet to choose between camera and gallery in light mode.
+
+![Image source light mode](capturas_vistas_app/claro_08_selector_origen_imagen.png)
+
+---
+
+### Light 09. System Gallery
+
+**File:** `capturas_vistas_app/claro_09_galeria_picker.png`
+
+**Description:**
+Android system Photo Picker opened from the flow in light mode.
+
+![Gallery light mode](capturas_vistas_app/claro_09_galeria_picker.png)
+
+---
+
+### Light 10. Image Selected in Gallery
+
+**File:** `capturas_vistas_app/claro_10_galeria_imagen_seleccionada.png`
+
+**Description:**
+Photo Picker state with one image selected before confirming.
+
+![Image selected light mode](capturas_vistas_app/claro_10_galeria_imagen_seleccionada.png)
+
+---
+
+### Light 11. Back Capture
+
+**File:** `capturas_vistas_app/claro_11_frente_cargado.png`
+
+**Description:**
+State after loading Front, requesting the Back image.
+
+![Back capture light mode](capturas_vistas_app/claro_11_frente_cargado.png)
+
+---
+
+### Light 12. Result and Summary
+
+**File:** `capturas_vistas_app/claro_12_resultado_resumen.png`
+
+**Description:**
+Computed result in light mode with quantity, metrics, and compact histogram.
+
+![Result light mode](capturas_vistas_app/claro_12_resultado_resumen.png)
+
+---
+
+### Light 13. Bunch Detail
+
+**File:** `capturas_vistas_app/claro_13_resultado_detalle_racimo.png`
+
+**Description:**
+Bunch detail in light mode with summary, consolidated metrics, and histogram.
+
+![Bunch detail light mode](capturas_vistas_app/claro_13_resultado_detalle_racimo.png)
+
+---
+
+### Light 14. Bunch Images
+
+**File:** `capturas_vistas_app/claro_14_racimo_imagenes.png`
+
+**Description:**
+Images tab with valid Front and Back in light mode.
+
+![Bunch images light mode](capturas_vistas_app/claro_14_racimo_imagenes.png)
+
+---
+
+### Light 15. Confirm Save Batch
+
+**File:** `capturas_vistas_app/claro_15_confirmar_guardar_lote.png`
+
+**Description:**
+Confirmation dialog to save the batch with the current photos.
+
+![Save confirmation light mode](capturas_vistas_app/claro_15_confirmar_guardar_lote.png)
+
+---
+
+### Light 16. Batch Saved
+
+**File:** `capturas_vistas_app/claro_16_lote_guardado_home.png`
+
+**Description:**
+Return to the initial form with confirmation of locally saved batch.
+
+![Batch saved light mode](capturas_vistas_app/claro_16_lote_guardado_home.png)
+
+---
+
+### Light 17. History
+
+**File:** `capturas_vistas_app/claro_17_historial.png`
+
+**Description:**
+Batch list in light mode with sync status and detail access.
+
+![History light mode](capturas_vistas_app/claro_17_historial.png)
+
+---
+
+### Light 18. History Filter
+
+**File:** `capturas_vistas_app/claro_18_historial_filtro.png`
+
+**Description:**
+History dropdown filter visible in light mode.
+
+![History filter light mode](capturas_vistas_app/claro_18_historial_filtro.png)
+
+---
+
+### Light 19. Batch Detail
+
+**File:** `capturas_vistas_app/claro_19_detalle_lote.png`
+
+**Description:**
+Batch detail in light mode with metadata, prediction, histogram, and visible actions.
+
+![Batch detail light mode](capturas_vistas_app/claro_19_detalle_lote.png)
+
+---
+
+### Light 20. Full-Screen Image
+
+**File:** `capturas_vistas_app/claro_20_imagen_pantalla_completa.png`
+
+**Description:**
+Enlarged view of the image/prediction opened from the batch detail.
+
+![Full image light mode](capturas_vistas_app/claro_20_imagen_pantalla_completa.png)
+
+---
+
+### Light 21. Export PDF
+
+**File:** `capturas_vistas_app/claro_21_exportar_pdf_compartir.png`
+
+**Description:**
+Android system share sheet for the PDF generated from the detail.
+
+![Export PDF light mode](capturas_vistas_app/claro_21_exportar_pdf_compartir.png)
+
+---
+
+### Light 22. Profile and Settings
+
+**File:** `capturas_vistas_app/claro_01_perfil_configuracion.png`
+
+**Description:**
+Admin profile in light mode with status, batch download, logout, and visible controls.
+
+![Profile light mode](capturas_vistas_app/claro_01_perfil_configuracion.png)
+
+---
+
+### Light 23. Support
+
+**File:** `capturas_vistas_app/claro_02_soporte.png`
+
+**Description:**
+Support center in light mode with contact information and FAQ access.
+
+![Support light mode](capturas_vistas_app/claro_02_soporte.png)
+
+---
+
+### Light 24. Support FAQ
+
+**File:** `capturas_vistas_app/claro_03_soporte_faq.png`
+
+**Description:**
+Expanded FAQ within the support center in light mode.
+
+![FAQ light mode](capturas_vistas_app/claro_03_soporte_faq.png)
 
 ---

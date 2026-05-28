@@ -1,16 +1,16 @@
 package com.gaiaspa.metrics_detection.data.model
 
 /**
- * Metadatos agregados del proceso de fusión multivista A/B.
+ * Aggregated metadata of the A/B multi-view fusion process.
  *
- * Describe la versión del algoritmo de fusión, la regla de agrupamiento usada
- * y los resultados por cada par de vistas (Foto A / Foto B). Se incrusta en
- * cada [CalPredict] fusionado para trazabilidad completa.
+ * Describes the fusion algorithm version, the grouping rule used, and the
+ * results for each pair of views (Photo A / Photo B). Embedded in each fused
+ * [CalPredict] for full traceability.
  *
- * @property fusionVersion Identificador de la versión del motor de fusión.
- * @property groupingRule Regla aplicada para emparejar las vistas (siempre
- *                        `pairwise_chronological` en la implementación actual).
- * @property groups Metadatos individuales por cada racimo fusionado.
+ * @property fusionVersion Identifier for the fusion engine version.
+ * @property groupingRule Rule applied to pair the views (always
+ *                        `pairwise_chronological` in the current implementation).
+ * @property groups Individual metadata per fused cluster.
  */
 data class FusionMetadata(
     val fusionVersion: String = "multiview_v1",
@@ -19,39 +19,39 @@ data class FusionMetadata(
 )
 
 /**
- * Metadatos por cada racimo procesado durante la fusión A/B.
+ * Metadata per cluster processed during A/B fusion.
  *
- * Registra los valores originales de cada vista, el resultado fusionado y las
- * rutas de las imágenes fuente/subida/overlay para depuración y auditoría.
+ * Records the original values of each view, the fused result, and the paths
+ * of the source/upload/overlay images for debugging and auditing.
  *
- * @property racimoIndex Índice 1-based del racimo dentro del lote.
- * @property viewAImageIndex Índice de la imagen correspondiente a la Foto A.
- * @property viewBImageIndex Índice de la imagen correspondiente a la Foto B.
- * @property fusedPredictionIndex Índice de la predicción fusionada resultante.
- * @property qtyA Cantidad de bayas estimadas por la Foto A.
- * @property qtyB Cantidad de bayas estimadas por la Foto B.
- * @property qtyFinal Cantidad fusionada (promedio redondeado de A y B).
- * @property disagreement Desacuerdo bruto entre A y B (valor absoluto / qtyFinal).
- * @property disagreementUi Desacuerdo acotado a [0,1] para presentación en UI.
- * @property meanA Mean del histograma de la Foto A.
- * @property meanB Mean del histograma de la Foto B.
- * @property meanFinal Mean fusionada (promedio de A y B).
- * @property modeA Moda del histograma de la Foto A.
- * @property modeB Moda del histograma de la Foto B.
- * @property modeFinal Moda fusionada (promedio de A y B).
- * @property stdA Desviación estándar de la Foto A.
- * @property stdB Desviación estándar de la Foto B.
- * @property stdFinal Desviación estándar fusionada (promedio de A y B).
- * @property warning Advertencia generada durante la fusión (ej. histogramas incompatibles).
- * @property originalViewAImageIndex Índice original de la Foto A antes de reordenamiento.
- * @property originalViewBImageIndex Índice original de la Foto B antes de reordenamiento.
- * @property selectedImageRole Rol de la imagen seleccionada para representación visual.
- * @property viewASourcePath Ruta local del archivo fuente de la Foto A.
- * @property viewBSourcePath Ruta local del archivo fuente de la Foto B.
- * @property viewAUploadPath Ruta de subida de la Foto A.
- * @property viewBUploadPath Ruta de subida de la Foto B.
- * @property viewAOverlayPath Ruta del overlay visual generado para la Foto A.
- * @property viewBOverlayPath Ruta del overlay visual generado para la Foto B.
+ * @property racimoIndex 1-based index of the cluster within the lot.
+ * @property viewAImageIndex Index of the image corresponding to Photo A.
+ * @property viewBImageIndex Index of the image corresponding to Photo B.
+ * @property fusedPredictionIndex Index of the resulting fused prediction.
+ * @property qtyA Estimated berry count by Photo A.
+ * @property qtyB Estimated berry count by Photo B.
+ * @property qtyFinal Fused quantity (rounded average of A and B).
+ * @property disagreement Raw disagreement between A and B (absolute value / qtyFinal).
+ * @property disagreementUi Disagreement clamped to [0,1] for UI display.
+ * @property meanA Mean of the Photo A histogram.
+ * @property meanB Mean of the Photo B histogram.
+ * @property meanFinal Fused mean (average of A and B).
+ * @property modeA Mode of the Photo A histogram.
+ * @property modeB Mode of the Photo B histogram.
+ * @property modeFinal Fused mode (average of A and B).
+ * @property stdA Standard deviation of Photo A.
+ * @property stdB Standard deviation of Photo B.
+ * @property stdFinal Fused standard deviation (average of A and B).
+ * @property warning Warning generated during fusion (e.g., incompatible histograms).
+ * @property originalViewAImageIndex Original index of Photo A before reordering.
+ * @property originalViewBImageIndex Original index of Photo B before reordering.
+ * @property selectedImageRole Role of the selected image for visual representation.
+ * @property viewASourcePath Local path of the Photo A source file.
+ * @property viewBSourcePath Local path of the Photo B source file.
+ * @property viewAUploadPath Upload path of Photo A.
+ * @property viewBUploadPath Upload path of Photo B.
+ * @property viewAOverlayPath Path of the visual overlay generated for Photo A.
+ * @property viewBOverlayPath Path of the visual overlay generated for Photo B.
  */
 data class FusionGroupMetadata(
     val racimoIndex: Int,

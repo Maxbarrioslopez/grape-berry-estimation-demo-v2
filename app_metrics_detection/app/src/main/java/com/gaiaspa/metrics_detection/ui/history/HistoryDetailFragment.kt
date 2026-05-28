@@ -165,7 +165,7 @@ class HistoryDetailFragment : Fragment() {
                 .actionLoteDetailFragmentToFullscreenImageFragment(uri)
             findNavController().navigate(action)
         }.onFailure {
-            Log.e("Fullscreen_SAFE", "No se pudo abrir fullscreen", it)
+            Log.e("Fullscreen_SAFE", "Could not open fullscreen", it)
             showDetailMessage(getString(R.string.preview_generation_error), MessageTone.ERROR)
         }
     }

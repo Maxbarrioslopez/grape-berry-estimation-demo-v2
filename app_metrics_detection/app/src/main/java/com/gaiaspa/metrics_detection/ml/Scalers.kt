@@ -13,18 +13,18 @@ class Scalers {
     private var kind: String = ""
     private var sp: JSONObject? = null
 
-    // Para robust/power
+    // For robust/power
     private var centerX: FloatArray = floatArrayOf()
     private var scaleX: FloatArray = floatArrayOf()
 
-    // Para power (Yeo-Johnson) + standard scaler interno
+    // For power (Yeo-Johnson) + internal standard scaler
     private var lambdas: FloatArray = floatArrayOf()
     private var mean: FloatArray = floatArrayOf()
     private var std: FloatArray = floatArrayOf()
 
-    // Para quantile
-    private var quantileX: Array<FloatArray> = emptyArray() // por feature: valores X
-    private var quantileQ: Array<FloatArray> = emptyArray() // por feature: refs Q (mismo largo)
+    // For quantile
+    private var quantileX: Array<FloatArray> = emptyArray() // per feature: X values
+    private var quantileQ: Array<FloatArray> = emptyArray() // per feature: Q refs (same length)
 
     fun loadFromBundle(context: Context, assetBundleJson: String) {
         val bundle = BundleLoader.loadFromAssets(context, assetBundleJson)
@@ -44,7 +44,7 @@ class Scalers {
             }
 
             "quantile" -> {
-                // quantile_x: lista de arrays por feature
+                // quantile_x: list of arrays per feature
                 val qx = sp!!.getJSONArray("quantile_x")
                 val qq = sp!!.getJSONArray("quantile_q")
 
@@ -60,7 +60,7 @@ class Scalers {
         }
     }
 
-    /** Aplica scaler X según kind */
+    /** Applies scaler X according to kind */
     fun scaleX(x: FloatArray): FloatArray {
         return when (kind) {
             "robust" -> robustScale(x, centerX, scaleX)
@@ -71,21 +71,21 @@ class Scalers {
     }
 
     /**
-     * Si tu modelo devuelve y ya en escala final, esto puede ser identidad.
-     * Si tu bundle tiene scaler para Y, aquí aplicas el inverso correspondiente.
+     * If your model returns y already in final scale, this can be identity.
+     * If your bundle has a scaler for Y, apply the corresponding inverse here.
      *
-     * Por tu código: scaler.inverseScaleY(yPred).
-     * Si tu "regresor.tflite" ya devuelve en bins/espacio final -> devuelve igual.
+     * From your code: scaler.inverseScaleY(yPred).
+     * If your "regresor.tflite" already returns in bins/final space -> return as-is.
      *
-     * Si NO, ajusta acá con el inverso real que uses en Python.
+     * If NOT, adjust here with the actual inverse used in Python.
      */
     fun inverseScaleY(y: FloatArray): FloatArray {
-        // <- Deja identity si tu TFLite ya está “desescalado”.
+        // <- Leave identity if your TFLite is already "descaled".
         return y
     }
 
     // -------------------------
-    // Implementaciones
+    // Implementations
     // -------------------------
     private fun robustScale(x: FloatArray, center: FloatArray, scale: FloatArray): FloatArray {
         val out = FloatArray(x.size)
@@ -98,7 +98,7 @@ class Scalers {
     }
 
     private fun powerScale(x: FloatArray, lambdas: FloatArray, mean: FloatArray, std: FloatArray): FloatArray {
-        // Asume Yeo-Johnson por feature y luego standardize: (t - mean)/std
+        // Assumes Yeo-Johnson per feature and then standardize: (t - mean)/std
         val out = FloatArray(x.size)
         for (i in x.indices) {
             val lam = lambdas.getOrNull(i) ?: 1f
@@ -126,7 +126,7 @@ class Scalers {
         qx: Array<FloatArray>,
         qq: Array<FloatArray>
     ): FloatArray {
-        // Mapea por feature interpolando entre quantiles_x (valores) y quantiles_q (refs 0..1)
+        // Maps per feature by interpolating between quantiles_x (values) and quantiles_q (refs 0..1)
         val out = FloatArray(x.size)
         for (i in x.indices) {
             val xs = qx.getOrNull(i) ?: floatArrayOf()

@@ -9,16 +9,16 @@
 
 namespace grape {
 
-// Contrato ONNX oficial del runtime nuevo:
+// Official ONNX contract of the new runtime:
 // - QTY RGBDT: x[1,5,512,512] float + variety_idx[1] int64 + seg_count_base[1] float -> count_total[1] float
 // - HIST RGBDT: x[1,5,512,512] float + variety_idx[1] int64 -> hist_probs[1,26] float
 //
-// El runtime Android nuevo reutiliza el segmentador legacy como proveedor de:
+// The new Android runtime reuses the legacy segmenter as provider of:
 // - seg_count_base
-// - DT de uvas
-// - DT de pingpong
+// - DT for grapes
+// - DT for pingpong
 //
-// y deja fuera el unified_runtime.onnx antiguo.
+// and leaves out the old unified_runtime.onnx.
 
 ProviderPreference ParseProviderPreference(const std::string& raw_value);
 

@@ -25,12 +25,12 @@ class SupportFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Datos de contacto
+        // Contact info
         binding.tvEmail.text = getString(R.string.support_email)
         binding.tvPhone.text = getString(R.string.support_phone)
         binding.tvHours.text = getString(R.string.contact_hours)
 
-        // Preguntas & respuestas (FAQ tradicionales)
+        // Traditional FAQ questions & answers
         binding.faq1Question.text = getString(R.string.faq_password_recovery)
         binding.faq1Answer.text = getString(R.string.faq_password_recovery_answer)
 
@@ -40,7 +40,7 @@ class SupportFragment : Fragment() {
         binding.faq3Question.text = getString(R.string.faq_contact)
         binding.faq3Answer.text = getString(R.string.faq_contact_answer)
 
-        // Función helper para toggle
+        // Toggle helper function
         fun setupToggle(container: View, answer: View, icon: ImageView) {
             container.setOnClickListener {
                 val open = answer.visibility == View.VISIBLE
@@ -52,7 +52,7 @@ class SupportFragment : Fragment() {
             }
         }
 
-        // Configuramos toggles
+        // Set up toggles
         setupToggle(binding.faq1Header, binding.faq1Answer, binding.faq1Icon)
         setupToggle(binding.faq3Header, binding.faq3Answer, binding.faq3Icon)
         setupToggle(binding.faq2Header, binding.faq2Answer, binding.faq2Icon)

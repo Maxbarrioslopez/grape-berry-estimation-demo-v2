@@ -1,0 +1,132 @@
+Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)
+
+=======================================================================
+
+PROJECT-SPECIFIC PUBLICATION NOTICE
+
+This repository is provided as a source-available academic demonstration
+associated with the research paper [PAPER_TITLE]. It is intended for
+review, reproducibility, and non-commercial academic evaluation only.
+
+The public version is local-only: backend services, cloud synchronization,
+remote storage, user authentication, and credential-based login are disabled.
+No username or password is required in the public demo build.
+
+Commercial use, production deployment, and commercial redistribution require
+prior written permission from the authors. Academic use should cite the
+associated research paper.
+
+This license notice should be reviewed by the project owner or legal advisor
+before formal publication. Creative Commons licenses are not always ideal for
+source code.
+
+=======================================================================
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives
+4.0 International License.
+
+To view a copy of this license, visit:
+  http://creativecommons.org/licenses/by-nc-nd/4.0/
+
+or send a letter to:
+  Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+=======================================================================
+
+You are free to:
+
+  Share — copy and redistribute the material in any medium or format.
+
+The licensor cannot revoke these freedoms as long as you follow the license terms.
+
+=======================================================================
+
+Under the following terms:
+
+  Attribution — You must give appropriate credit, provide a link to the license,
+  and indicate if changes were made. You may do so in any reasonable manner, but
+  not in any way that suggests the licensor endorses you or your use.
+
+  NonCommercial — You may not use the material for commercial purposes.
+
+  NoDerivatives — If you remix, transform, or build upon the material, you may
+  not distribute the modified material.
+
+  No additional restrictions — You may not apply legal terms or technological
+  measures that legally restrict others from doing anything the license permits.
+
+=======================================================================
+
+Notices:
+
+You do not have to comply with the license for elements of the material in the
+public domain or where your use is permitted by an applicable exception or
+limitation.
+
+No warranties are given. The license may not give you all of the permissions
+necessary for your intended use. For example, other rights such as publicity,
+privacy, or moral rights may limit how you use the material.
+
+=======================================================================
+
+ADDITIONAL TERMS FOR THIS SPECIFIC WORK:
+
+1. ACADEMIC CITATION REQUIRED
+
+   If you use this software or the accompanying research in any academic context,
+   you must cite the corresponding research paper:
+
+     [AUTHOR_NAME]. "[PAPER_TITLE]". [INSTITUTION_OR_AFFILIATION], [YEAR].
+
+2. NON-COMMERCIAL USE ONLY
+
+   Commercial use of this software, in whole or in part, requires prior written
+   permission from the authors.
+
+3. NO PRODUCTION DEPLOYMENT
+
+   This software is an academic research prototype. It is not intended for
+   production deployment in agricultural, commercial, or mission-critical
+   environments.
+
+4. NO WARRANTY
+
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+   ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+   CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+   SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+   INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+   CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+   POSSIBILITY OF SUCH DAMAGE.
+
+5. INTELLECTUAL AND RESEARCH RIGHTS
+
+   The authors retain all intellectual and research rights over the project,
+   including but not limited to the methodology, models, algorithms,
+   architecture, and datasets described in the associated research paper.
+
+6. MODIFIED COMMERCIAL REDISTRIBUTION PROHIBITED
+
+   Redistribution of modified commercial versions of this software is
+   prohibited under the CC BY-NC-ND 4.0 license terms.
+
+7. SOURCE-AVAILABLE ACADEMIC DEMONSTRATION
+
+   This is a source-available academic demonstration, not a production release.
+   The code is provided for academic review, reproducibility, and demonstration
+   related to the research paper.
+
+=======================================================================
+
+For commercial licensing inquiries, contact:
+
+  [CONTACT_EMAIL]
+
+=======================================================================
+
+This license notice must be included in all copies or substantial portions
+of the Software.

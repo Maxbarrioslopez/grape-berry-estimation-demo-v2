@@ -5,16 +5,16 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * Motor de fusión multivista para predicciones de calibre A/B.
+ * Multi-view fusion engine for A/B caliber predictions.
  *
- * Toma dos predicciones [CalPredict] (Foto A y Foto B del mismo racimo) y
- * las combina en una única predicción fusionada promediando cantidades,
- * estadísticas e histogramas. El desacuerdo entre vistas se calcula como métrica
- * de calidad interna.
+ * Takes two [CalPredict] predictions (Photo A and Photo B of the same cluster)
+ * and combines them into a single fused prediction by averaging counts,
+ * statistics, and histograms. Disagreement between views is calculated as an
+ * internal quality metric.
  *
- * El flujo típico de uso es invocar [fusePairwise] con una lista plana de
- * predicciones donde cada par consecutivo corresponde a las dos vistas de un
- * mismo racimo.
+ * The typical usage flow is to invoke [fusePairwise] with a flat list of
+ * predictions where each consecutive pair corresponds to the two views of
+ * the same cluster.
  */
 object FusionEngine {
     /**
@@ -34,27 +34,27 @@ object FusionEngine {
     }
 
     /**
-     * Fusiona dos predicciones A y B del mismo racimo en una única predicción.
+     * Fuses two predictions A and B from the same cluster into a single prediction.
      *
-     * Promedia cantidades (`qty`), estadísticas (`mean`, `std`, `mode`) e
-     * histogramas (`pred`, `bins`). El desacuerdo se calcula como la diferencia
-     * absoluta entre las cantidades dividida por el máximo entre `qtyFinal` y 1.
+     * Averages quantities (`qty`), statistics (`mean`, `std`, `mode`), and
+     * histograms (`pred`, `bins`). Disagreement is calculated as the absolute
+     * difference between quantities divided by the maximum of `qtyFinal` and 1.
      *
-     * Si los histogramas no son compatibles (distinto tamaño, bins divergentes
-     * por más de 0.0001f, o listas vacías), `pred` y `bins` se vacían en el
-     * resultado y se emite una advertencia. La cantidad fusionada y las
-     * estadísticas se preservan incluso en este caso.
+     * If histograms are incompatible (different size, bin boundaries diverging
+     * by more than 0.0001f, or empty lists), `pred` and `bins` are emptied in the
+     * result and a warning is emitted. The fused quantity and statistics are
+     * preserved even in this case.
      *
-     * @param a Predicción de la Foto A. No debe ser nula y debe tener `status = true`.
-     * @param b Predicción de la Foto B. No debe ser nula y debe tener `status = true`.
-     * @return [Result] con la predicción fusionada, el desacuerdo y una advertencia opcional.
-     * @throws IllegalArgumentException si alguna predicción es nula o tiene `status = false`.
+     * @param a Prediction from Photo A. Must not be null and must have `status = true`.
+     * @param b Prediction from Photo B. Must not be null and must have `status = true`.
+     * @return [Result] with the fused prediction, disagreement, and an optional warning.
+     * @throws IllegalArgumentException if any prediction is null or has `status = false`.
      */
     fun fuse(a: CalPredict?, b: CalPredict?): Result {
-        requireNotNull(a) { "Prediccion A nula" }
-        requireNotNull(b) { "Prediccion B nula" }
-        require(a.status) { a.error.ifBlank { "Prediccion A con error" } }
-        require(b.status) { b.error.ifBlank { "Prediccion B con error" } }
+        requireNotNull(a) { "Null prediction A" }
+        requireNotNull(b) { "Null prediction B" }
+        require(a.status) { a.error.ifBlank { "Prediction A with error" } }
+        require(b.status) { b.error.ifBlank { "Prediction B with error" } }
 
         val qtyFinal = ((a.qty + b.qty) / 2f).roundToInt().coerceAtLeast(0)
         val disagreement = abs(a.qty - b.qty).toFloat() / max(qtyFinal, 1)
@@ -77,7 +77,7 @@ object FusionEngine {
                     bins = emptyList()
                 ),
                 disagreement = disagreement,
-                warning = "Histograma insuficiente o incompatible; se conserva qtyFinal y se usa fallback de stats"
+                warning = "Insufficient or incompatible histogram; qtyFinal preserved and stats fallback used"
             )
         }
 
@@ -101,11 +101,11 @@ object FusionEngine {
     }
 
     /**
-     * Resultado individual de la fusión de un racimo dentro de un lote.
+     * Individual fusion result for a cluster within a lot.
      *
-     * @property prediction Predicción fusionada lista para almacenar/visualizar.
-     * @property group Metadatos detallados del par fusionado.
-     * @property fusionResult Resultado crudo de [fuse] con el desacuerdo y la advertencia.
+     * @property prediction Fused prediction ready for storage/display.
+     * @property group Detailed metadata of the fused pair.
+     * @property fusionResult Raw result from [fuse] with disagreement and warning.
      */
     data class PairwiseResult(
         val prediction: CalPredict,
@@ -114,31 +114,31 @@ object FusionEngine {
     )
 
     /**
-     * Fusiona una lista plana de predicciones emparejándolas secuencialmente de a dos.
+     * Fuses a flat list of predictions by pairing them sequentially in twos.
      *
-     * Cada par (índices 0-1, 2-3, ...) se interpreta como las vistas A y B de un mismo
-     * racimo. La lista de entrada debe tener longitud par.
+     * Each pair (indices 0-1, 2-3, ...) is interpreted as views A and B of the same
+     * cluster. The input list must have an even length.
      *
-     * @param predictions Lista plana de predicciones a fusionar por pares consecutivos.
-     * @return Lista de [PairwiseResult], uno por cada racimo fusionado.
-     * @throws IllegalArgumentException si la lista tiene longitud impar.
+     * @param predictions Flat list of predictions to fuse in consecutive pairs.
+     * @return List of [PairwiseResult], one per fused cluster.
+     * @throws IllegalArgumentException if the list has an odd length.
      */
     fun fusePairwise(predictions: List<CalPredict>): List<PairwiseResult> {
-        require(predictions.size % 2 == 0) { "Cada racimo debe tener Foto A y Foto B" }
+        require(predictions.size % 2 == 0) { "Each cluster must have Photo A and Photo B" }
 
-        val partial = predictions.chunked(2).mapIndexed { racimoIndex, pair ->
-            require(pair.size == 2) { "Cada racimo debe tener Foto A y Foto B" }
+        val partial = predictions.chunked(2).mapIndexed { clusterIndex, pair ->
+            require(pair.size == 2) { "Each cluster must have Photo A and Photo B" }
             val predA = pair[0]
             val predB = pair[1]
-            require(predA.status) { predA.error.ifBlank { "La Foto A del racimo ${racimoIndex + 1} tiene error" } }
-            require(predB.status) { predB.error.ifBlank { "La Foto B del racimo ${racimoIndex + 1} tiene error" } }
+            require(predA.status) { predA.error.ifBlank { "Photo A of cluster ${clusterIndex + 1} has an error" } }
+            require(predB.status) { predB.error.ifBlank { "Photo B of cluster ${clusterIndex + 1} has an error" } }
 
             val result = fuse(predA, predB)
             val group = FusionGroupMetadata(
-                racimoIndex = racimoIndex + 1,
-                viewAImageIndex = racimoIndex * 2,
-                viewBImageIndex = racimoIndex * 2 + 1,
-                fusedPredictionIndex = racimoIndex,
+                racimoIndex = clusterIndex + 1,
+                viewAImageIndex = clusterIndex * 2,
+                viewBImageIndex = clusterIndex * 2 + 1,
+                fusedPredictionIndex = clusterIndex,
                 qtyA = predA.qty,
                 qtyB = predB.qty,
                 qtyFinal = result.fused.qty,

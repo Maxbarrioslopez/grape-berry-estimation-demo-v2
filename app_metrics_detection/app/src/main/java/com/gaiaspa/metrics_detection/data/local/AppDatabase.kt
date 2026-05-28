@@ -8,8 +8,8 @@ import com.gaiaspa.metrics_detection.data.model.Profile
 
 /**
  * AppDatabase - v12 FIXED
- * Versión 12: Sincronizada con Profile (rut nullable) y Lote (upload_images).
- * Utiliza fallbackToDestructiveMigration en DatabaseProvider para resolver conflictos de esquema.
+ * Version 12: Synchronized with Profile (rut nullable) and Lote (upload_images).
+ * Uses fallbackToDestructiveMigration in DatabaseProvider to resolve schema conflicts.
  */
 @Database(
     entities = [Profile::class, Lote::class],
@@ -19,12 +19,12 @@ import com.gaiaspa.metrics_detection.data.model.Profile
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     /**
-     * DAO para operaciones CRUD y de sincronización sobre la entidad [Lote].
+     * DAO for CRUD and synchronization operations on the [Lote] entity.
      */
     abstract fun loteDao(): LoteDao
 
     /**
-     * DAO para operaciones sobre la entidad [Profile] (datos del usuario).
+     * DAO for operations on the [Profile] entity (user data).
      */
     abstract fun profileDao(): ProfileDao
 }

@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 /**
  * Profile - v8.7 FIXED (Null rut crash)
- * Se hace 'rut' opcional (String?) para evitar crashes por NullPointerException
- * durante el mapeo de la respuesta del servidor o inserción en Room.
+ * 'rut' is made optional (String?) to avoid NullPointerException crashes
+ * during server response mapping or Room insertion.
  */
 @Entity(tableName = "profile")
 data class Profile(
@@ -17,7 +17,7 @@ data class Profile(
     val name: String,
     val lastname: String,
     val role: String,
-    val rut: String? = null, // ✅ FIXED: Hecho opcional para evitar NPE
+    val rut: String? = null, // FIXED: Made optional to avoid NPE
     val isVerified: Boolean,
     val isAvailable: Boolean,
     val createdAt: Long = System.currentTimeMillis(),

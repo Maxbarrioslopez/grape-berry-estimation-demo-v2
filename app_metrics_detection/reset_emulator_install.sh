@@ -2,37 +2,38 @@
 set -euo pipefail
 
 APP_ID="com.gaiaspa.metrics_detection"
-PROJECT_DIR="/home/maxi/Escritorio/modelo_nuevo/optimizacion_uvas/app_metrics_detection"
-IMG_DIR="/home/maxi/Escritorio/images"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="${PROJECT_DIR:-$SCRIPT_DIR}"
+IMG_DIR="${IMG_DIR:-$PROJECT_DIR/images}"
 EMU_DIR="/sdcard/Pictures/MetricsTest"
 
-echo "== Verificando ADB =="
+echo "== Checking ADB =="
 adb devices
 
-echo "== Borrando app anterior del emulador =="
+echo "== Removing previous app from emulator =="
 adb uninstall "$APP_ID" || true
 
-echo "== Limpiando carpetas seguras de imágenes en emulador =="
+echo "== Cleaning secure image folders on emulator =="
 adb shell rm -rf "$EMU_DIR"
 adb shell mkdir -p "$EMU_DIR"
 
-echo "== Copiando imágenes nuevas al emulador =="
+echo "== Copying new images to emulator =="
 adb push "$IMG_DIR"/. "$EMU_DIR"/
 
-echo "== Limpiando builds locales del proyecto =="
+echo "== Cleaning local project builds =="
 cd "$PROJECT_DIR"
 rm -rf app/build app/.cxx .gradle
 find . -name "*.apk" -path "*/build/*" -delete || true
 find . -name "*.aab" -path "*/build/*" -delete || true
 
-echo "== Compilando Debug nuevo =="
+echo "== Building new Debug =="
 ./gradlew :app:assembleDebug --rerun-tasks
 
-echo "== Instalando APK nuevo =="
+echo "== Installing new APK =="
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-echo "== Abriendo app =="
+echo "== Opening app =="
 adb shell monkey -p "$APP_ID" -c android.intent.category.LAUNCHER 1
 
-echo "== Listo =="
-echo "Imágenes copiadas en: $EMU_DIR"
+echo "== Done =="
+echo "Images copied to: $EMU_DIR"

@@ -1,9 +1,12 @@
 /**
  * RegisterActivity.kt
  *
- * Propósito: Gestionar el alta de nuevos usuarios invitados en el sistema.
- * Responsabilidad: Recolectar datos del usuario en dos etapas (Invitación -> Perfil),
- * validar reglas de negocio locales y procesar el registro corporativo.
+ * Purpose: Manage new guest user sign-up in the system.
+ * Responsibility: Collect user data in two stages (Invitation -> Profile),
+ * validate local business rules, and process company registration.
+ *
+ * In DEMO_MODE: The real registration UI is preserved for architectural demonstration.
+ * Stage transitions are visual-only. Submit shows a demo message — no backend call.
  */
 package com.gaiaspa.metrics_detection.auth
 
@@ -16,6 +19,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.databinding.ActivityRegisterBinding
 import com.gaiaspa.metrics_detection.network.ApiClient
@@ -33,8 +37,14 @@ class RegisterActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        if (BuildConfig.DEMO_MODE) {
+            setupDemoMode()
+            return
+        }
 
         apiService = ApiClient.create(applicationContext)
 
@@ -52,7 +62,34 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     /**
-     * Valida la etapa 1 (Email e Invitación) y muestra el resto del formulario.
+     * In DEMO_MODE: preserves the real two-stage registration UI for architectural
+     * demonstration. Stage 1→2 transition works visually. Submit shows info message.
+     */
+    private fun setupDemoMode() {
+        binding.btnRegister.setOnClickListener {
+            if (currentStage == 1) {
+                currentStage = 2
+                binding.layoutStage1.visibility = View.GONE
+                binding.layoutStage2.visibility = View.VISIBLE
+                binding.btnRegister.text = getString(R.string.register_final_button)
+            } else {
+                hideKeyboard()
+                Toast.makeText(
+                    this,
+                    getString(R.string.demo_register_intercepted),
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+            }
+        }
+
+        binding.tvLogin.setOnClickListener {
+            finish()
+        }
+    }
+
+    /**
+     * Validates stage 1 (Email and Invitation) and shows the rest of the form.
      */
     private fun proceedToStage2() {
         val email = binding.etEmailRegister.text.toString().trim()
@@ -68,7 +105,7 @@ class RegisterActivity : AppCompatActivity() {
             return
         }
 
-        // Transición visual
+        // Visual transition
         binding.layoutStage1.visibility = View.GONE
         binding.layoutStage2.visibility = View.VISIBLE
         binding.btnRegister.text = getString(R.string.register_final_button)
@@ -82,11 +119,11 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     /**
-     * Procesa la solicitud final de registro usando el DTO CompanyRegisterRequest.
+     * Processes the final registration request using the CompanyRegisterRequest DTO.
      *
-     * La validación de consentimiento de datos (cbConsent) es local.
-     * El backend no tiene campo de consentimiento; si se requiere validación
-     * del lado del servidor, debe agregarse en CompanyRegisterRequest y ApiService.
+     * Data consent validation (cbConsent) is local only.
+     * The backend has no consent field; if server-side validation is required,
+     * it must be added to CompanyRegisterRequest and ApiService.
      */
     private fun performRegister() {
         val name = binding.etNameRegister.text.toString().trim()

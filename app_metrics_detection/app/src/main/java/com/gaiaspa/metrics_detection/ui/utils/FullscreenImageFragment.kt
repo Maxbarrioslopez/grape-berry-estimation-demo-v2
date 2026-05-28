@@ -89,7 +89,7 @@ class FullscreenImageFragment : Fragment() {
         Log.w("FullscreenImage", "Fragment not attached when loading bitmap")
         null
     } catch (e: Exception) {
-        Log.e("FullscreenImage", "No se pudo abrir la imagen", e)
+        Log.e("FullscreenImage", "Could not open image", e)
         null
     }
 

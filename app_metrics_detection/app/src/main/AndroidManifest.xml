@@ -4,35 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="NotificationPermission">
 
-    <!-- Permisos de red: necesarios para sincronización con backend y detección de conectividad -->
+    <!-- Network permissions: required for backend sync and connectivity detection -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Permiso de cámara: necesario para capturar imágenes de racimos -->
+    <!-- Camera permission: required to capture bunch images -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <!-- Permisos legacy: se mantienen solo para compatibilidad con Android antiguos -->
+    <!-- Legacy permissions: kept only for compatibility with older Android versions -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <!--
-        Configuración principal de la aplicación.
+        Main application configuration.
 
-        Mejoras aplicadas:
+        Improvements applied:
         - allowBackup=false:
-          evita backup automático de base local, imágenes, preferencias y credenciales.
+          prevents automatic backup of local database, images, preferences, and credentials.
         - networkSecurityConfig:
-          usa política de red definida en res/xml/network_security_config.xml.
-        - dataExtractionRules/fullBackupContent eliminados:
-          ya no son necesarios porque allowBackup está desactivado.
+          uses network policy defined in res/xml/network_security_config.xml.
+        - dataExtractionRules/fullBackupContent removed:
+          no longer needed because allowBackup is disabled.
 
-        Nota legacy:
-        - READ_EXTERNAL_STORAGE se mantiene por compatibilidad (maxSdk=32).
-        - WRITE_EXTERNAL_STORAGE eliminado: cámara usa FileProvider + cache, galería usa GetContent.
+        Legacy notes:
+        - READ_EXTERNAL_STORAGE kept for compatibility (maxSdk=32).
+        - WRITE_EXTERNAL_STORAGE removed: camera uses FileProvider + cache, gallery uses GetContent.
     -->
     <application
         android:name=".MetricsDetectionApp"
@@ -47,12 +47,12 @@
 
         <!--
             FileProvider:
-            permite compartir archivos internos de forma controlada con cámara,
-            visor PDF u otros componentes autorizados.
+            allows controlled sharing of internal files with camera,
+            PDF viewer, or other authorized components.
 
-            Seguridad:
-            - exported=false evita exposición externa directa.
-            - grantUriPermissions=true permite entregar permisos temporales por URI.
+            Security:
+            - exported=false prevents direct external exposure.
+            - grantUriPermissions=true allows granting temporary per-URI permissions.
         -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -65,7 +65,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Launcher principal de la app -->
+        <!-- Main app launcher -->
         <activity
             android:name=".LauncherActivity"
             android:exported="true">
@@ -77,24 +77,24 @@
 
         </activity>
 
-        <!-- Flujo de autenticación -->
+        <!-- Authentication flow -->
         <activity android:name=".auth.LoginActivity" />
         <activity android:name=".auth.RegisterActivity" />
         <activity android:name=".auth.RecoveryActivity" />
 
-        <!-- Actividad principal -->
+        <!-- Main activity -->
         <activity android:name=".MainActivity" />
 
         <!--
-            Actividad de debug/batch.
+            Debug/batch activity.
 
-            Se conserva por compatibilidad con herramientas internas/forenses,
-            pero queda protegida con exported=false para impedir apertura desde otras apps.
+            Kept for compatibility with internal/forensic tools,
+            but protected with exported=false to prevent opening from other apps.
 
-            No borrar sin revisar:
+            Do not remove without reviewing:
             - BatchProcessor
-            - flujos de pruebas internas
-            - generación de reportes o procesamiento masivo
+            - internal test flows
+            - report generation or batch processing
         -->
         <activity
             android:name=".DebugBatchActivity"

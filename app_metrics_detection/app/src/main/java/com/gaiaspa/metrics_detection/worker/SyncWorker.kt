@@ -14,22 +14,22 @@ import java.io.File
 import java.io.IOException
 
 /**
- * [CoroutineWorker] responsable de subir lotes locales pendientes al backend y eliminar
- * lotes marcados para borrado.
+ * [CoroutineWorker] responsible for uploading pending local lots to the backend and deleting
+ * lots marked for deletion.
  *
- * ## Rol en la arquitectura
- * Es el componente central de la sincronización offline-first. Se instancia desde
- * [SyncManager] periódicamente o bajo demanda, y recorre los lotes no sincronizados en
- * [LoteRepository] decidiendo por cada uno si debe subirse (insert) o eliminarse del
- * servidor (delete).
+ * ## Role in the architecture
+ * It is the core component of offline-first synchronization. It is instantiated from
+ * [SyncManager] periodically or on demand, and iterates over the unsynchronized lots in
+ * [LoteRepository], deciding for each one whether it should be uploaded (insert) or deleted from
+ * the server (delete).
  *
- * ## Clasificación de errores
- * - Errores 4xx (excepto 401) se tratan como **terminales** para ese lote: se marca
- *   como atendido para no bloquear la cola con reintentos inútiles.
- * - Errores 5xx, IOException, y 401 provocan [Result.retry] para que WorkManager
- *   reintente más tarde con backoff exponencial.
- * - Si tras filtrar archivos en disco ninguna imagen es válida, el lote se marca como
- *   error terminal y se devuelve `true` (atendido) igualmente.
+ * ## Error classification
+ * - 4xx errors (excluding 401) are treated as **terminal** for that lot: it is marked
+ *   as handled to avoid blocking the queue with useless retries.
+ * - 5xx errors, IOException, and 401 trigger [Result.retry] so WorkManager
+ *   retries later with exponential backoff.
+ * - If after filtering files on disk no image is valid, the lot is marked as
+ *   terminal error and `true` (handled) is returned regardless.
  */
 class SyncWorker(
     appContext: Context,
@@ -41,15 +41,20 @@ class SyncWorker(
     }
 
     /**
-     * Itera los lotes pendientes de sincronización mediante [synchronizeLotes].
+     * Iterates over lots pending synchronization via [synchronizeLotes].
      *
-     * @return [Result.success] si todos los lotes se procesaron sin error;
-     *         [Result.retry] si algún lote falló de forma transitoria (5xx, IOException);
-     *         [Result.failure] solo ante errores críticos inesperados.
+     * @return [Result.success] if all lots were processed without error;
+     *         [Result.retry] if any lot failed transiently (5xx, IOException);
+     *         [Result.failure] only for unexpected critical errors.
      */
     override suspend fun doWork(): Result {
+        if (BuildConfig.DEMO_MODE) {
+            Log.d(TAG, "DEMO_MODE: Sync skipped, cloud operations disabled.")
+            return Result.success()
+        }
+
         val repository = LoteRepository.getInstance(applicationContext)
-        Log.d(TAG, "--- INICIO SYNC WORKER ---")
+        Log.d(TAG, "--- SYNC WORKER START ---")
         
         return try {
             val allProcessedSuccessfully = withContext(Dispatchers.IO) {
@@ -57,34 +62,34 @@ class SyncWorker(
             }
             
             if (allProcessedSuccessfully) {
-                Log.d(TAG, "--- SYNC FINALIZADO: SUCCESS ---")
+                Log.d(TAG, "--- SYNC FINISHED: SUCCESS ---")
                 Result.success()
             } else {
-                Log.w(TAG, "--- SYNC FINALIZADO: REINTENTO REQUERIDO (Fallo parcial) ---")
+                Log.w(TAG, "--- SYNC FINISHED: RETRY REQUIRED (Partial failure) ---")
                 Result.retry()
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Error de red durante la sincronización", e)
+            Log.e(TAG, "Network error during synchronization", e)
             Result.retry()
         } catch (e: Exception) {
-            Log.e(TAG, "Error crítico en SyncWorker", e)
+            Log.e(TAG, "Critical error in SyncWorker", e)
             Result.failure()
         }
     }
 
     /**
-     * Recorre [LoteRepository.getNotSynced] y despacha cada lote a [processUpload]
-     * o [processDeletion] según su marca [Lote.toDelete].
+     * Iterates over [LoteRepository.getNotSynced] and dispatches each lot to [processUpload]
+     * or [processDeletion] according to its [Lote.toDelete] flag.
      *
-     * @param repository instancia única del repositorio local.
-     * @return `true` si **todos** los lotes se procesaron exitosamente;
-     *         `false` si al menos uno requirió reintento.
+     * @param repository unique instance of the local repository.
+     * @return `true` if **all** lots were processed successfully;
+     *         `false` if at least one required a retry.
      */
     private suspend fun synchronizeLotes(repository: LoteRepository): Boolean {
         val unsyncedLotes = repository.getNotSynced()
         if (unsyncedLotes.isEmpty()) return true
 
-        Log.d(TAG, "Lotes pendientes encontrados: ${unsyncedLotes.size}")
+        Log.d(TAG, "Pending lots found: ${unsyncedLotes.size}")
         var overallSuccess = true
 
         for (lote in unsyncedLotes) {
@@ -97,35 +102,35 @@ class SyncWorker(
                 if (!success) overallSuccess = false
             } catch (e: Exception) {
                 overallSuccess = false
-                Log.e(TAG, "Fallo inesperado lote ${lote.id}: ${e.message}")
-                repository.updateSyncError(lote.id, e.message ?: "Fallo inesperado")
+                Log.e(TAG, "Unexpected failure lot ${lote.id}: ${e.message}")
+                repository.updateSyncError(lote.id, e.message ?: "Unexpected failure")
             }
         }
         return overallSuccess
     }
 
     /**
-     * Sube un lote al backend tras validar que los archivos de imagen existen en disco.
+     * Uploads a lot to the backend after validating that image files exist on disk.
      *
-     * ## Flujo
-     * 1. Filtra [Lote.uploadImages] descartando paths que no apunten a un archivo real
-     *    y no vacío. Si el filtro produce la misma cantidad de paths que
-     *    [Lote.normalizedImages] (y no está vacío), se usan los upload filtrados;
-     *    en caso contrario se usan los normalized filtrados.
-     * 2. Si tras el filtro no queda ninguna imagen válida se marca error **terminal**
-     *    (el lote no podrá subirse nunca) y se devuelve `true` para no bloquear la cola.
-     * 3. Si el número de imágenes no coincide con [Lote.calPredicts] se registra un
-     *    warning como posible incumplimiento de contrato con el backend.
-     * 4. Llama a [LoteRepository.insertLoteGrapeCloud] y clasifica la respuesta HTTP:
-     *    - 2xx con body no nulo → éxito, se actualiza el lote y se borran los archivos locales.
-     *    - 2xx con body nulo → reintento.
-     *    - 4xx (≠401) → error terminal.
-     *    - Resto → reintento.
+     * ## Flow
+     * 1. Filters [Lote.uploadImages] discarding paths that do not point to a real,
+     *    non-empty file. If the filter yields the same number of paths as
+     *    [Lote.normalizedImages] (and is not empty), the filtered upload paths are used;
+     *    otherwise the filtered normalized paths are used.
+     * 2. If after filtering no valid image remains, a **terminal** error is marked
+     *    (the lot will never be uploadable) and `true` is returned to avoid blocking the queue.
+     * 3. If the number of images does not match [Lote.calPredicts], a warning is logged
+     *    as a possible backend contract mismatch.
+     * 4. Calls [LoteRepository.insertLoteGrapeCloud] and classifies the HTTP response:
+     *    - 2xx with non-null body → success, lot is updated and local files are deleted.
+     *    - 2xx with null body → retry.
+     *    - 4xx (≠401) → terminal error.
+     *    - Rest → retry.
      *
-     * @return `true` si el lote fue atendido (éxito o error terminal), `false` si debe reintentarse.
+     * @return `true` if the lot was handled (success or terminal error), `false` if it must be retried.
      */
     private suspend fun processUpload(repository: LoteRepository, lote: Lote): Boolean {
-        // 1. Validar archivos físicos reales
+        // 1. Validate real physical files
         val uploadPaths = lote.uploadImages.filter { path ->
             val f = File(path.replace("file://", ""))
             f.exists() && f.length() > 0
@@ -141,23 +146,23 @@ class SyncWorker(
         }
 
         val logFinalPaths = finalPaths.joinToString(", ") { p -> p.substringAfterLast('/') }
-        Log.d("SYNC_IMAGE_SOURCE", "Lote ${lote.id}: overlayCount=${lote.overlayImages.size} uploadCount=${lote.uploadImages.size} finalPaths=[$logFinalPaths]")
+        Log.d("SYNC_IMAGE_SOURCE", "Lot ${lote.id}: overlayCount=${lote.overlayImages.size} uploadCount=${lote.uploadImages.size} finalPaths=[$logFinalPaths]")
 
-        // ✅ AJUSTE ROBUSTEZ: Si tras filtrar no hay nada, es un error TERMINAL.
+        // ROBUSTNESS: If after filtering there is nothing, it is a TERMINAL error.
         if (finalPaths.isEmpty()) {
-            Log.e("SYNC_IMAGE_SOURCE", "Lote ${lote.id} sin archivos válidos en disco para subir")
-            repository.updateSyncError(lote.id, "TERMINAL: Archivos no encontrados")
-            return true // Marcamos como 'atendido' para no bloquear la cola con reintentos inútiles
+            Log.e("SYNC_IMAGE_SOURCE", "Lot ${lote.id} has no valid files on disk to upload")
+            repository.updateSyncError(lote.id, "TERMINAL: Files not found")
+            return true // Mark as 'handled' to avoid blocking the queue with useless retries
         }
 
-        Log.d("SYNC_IMAGE_SOURCE", "Lote ${lote.id} enviando ${finalPaths.size} archivos (uploadImages limpias)")
+        Log.d("SYNC_IMAGE_SOURCE", "Lot ${lote.id} sending ${finalPaths.size} files (clean uploadImages)")
         if (finalPaths.size != lote.calPredicts.size) {
-            val message = "Posible contrato backend pendiente: ${finalPaths.size} imagenes y ${lote.calPredicts.size} predicciones"
-            Log.w("SYNC_IMAGE_SOURCE", "Lote ${lote.id}: $message")
+            val message = "Possible backend contract pending: ${finalPaths.size} images and ${lote.calPredicts.size} predictions"
+            Log.w("SYNC_IMAGE_SOURCE", "Lot ${lote.id}: $message")
             repository.updateSyncError(lote.id, message)
         }
 
-        // 2. Llamada al Backend
+        // 2. Backend call
         val response = repository.insertLoteGrapeCloud(
             loteRequest = lote.toBatchLoteGrapeRequest(),
             imagePaths = finalPaths
@@ -193,25 +198,25 @@ class SyncWorker(
                 Log.e(TAG, "API FAILURE Lote ${lote.id}: $safeError")
             }
 
-            // Clasificación: Errores 4xx (negocio/contrato) son terminales para este lote.
+            // Classification: 4xx errors (business/contract) are terminal for this lot.
             if (code in 400..499 && code != 401) {
                 repository.updateSyncError(lote.id, "TERMINAL ($code): $syncErrorToStore")
-                true // No bloquear cola
+                true // Do not block queue
             } else {
                 repository.updateSyncError(lote.id, "RETRY ($code): $syncErrorToStore")
-                false // Reintentar (Error 5xx o similar)
+                false // Retry (5xx error or similar)
             }
         }
     }
 
     /**
-     * Elimina un lote del servidor y posteriormente del almacenamiento local.
+     * Deletes a lot from the server and subsequently from local storage.
      *
-     * Si [cloudId] está vacío se asume que el lote nunca llegó a subirse y se borra
-     * solo localmente. Un HTTP 404 del servidor se interpreta como éxito (el recurso
-     * ya no existe). Cualquier otro error produce [Result.retry].
+     * If [cloudId] is empty, it is assumed the lot was never uploaded and it is
+     * deleted only locally. An HTTP 404 from the server is interpreted as success
+     * (the resource no longer exists). Any other error triggers [Result.retry].
      *
-     * @return `true` si la eliminación (local o remota) fue exitosa, `false` si debe reintentarse.
+     * @return `true` if deletion (local or remote) was successful, `false` if it must be retried.
      */
     private suspend fun processDeletion(repository: LoteRepository, localId: Long, cloudId: String): Boolean {
         return try {
@@ -222,7 +227,7 @@ class SyncWorker(
                     true
                 } else {
                     val message = "DELETE RETRY (${deleteResponse.code()})"
-                    Log.w(TAG, "No se pudo borrar cloudId $cloudId: $message")
+                    Log.w(TAG, "Could not delete cloudId $cloudId: $message")
                     repository.updateSyncError(localId, message)
                     false
                 }
@@ -231,11 +236,11 @@ class SyncWorker(
                 true
             }
         } catch (e: IOException) {
-            Log.e(TAG, "Error de red eliminando lote $localId cloudId=$cloudId", e)
+            Log.e(TAG, "Network error deleting lot $localId cloudId=$cloudId", e)
             repository.updateSyncError(localId, "DELETE RETRY: ${e.message}")
             false
         } catch (e: Exception) {
-            Log.e(TAG, "Error eliminando lote $localId cloudId=$cloudId", e)
+            Log.e(TAG, "Error deleting lot $localId cloudId=$cloudId", e)
             repository.updateSyncError(localId, "DELETE ERROR: ${e.message}")
             false
         }

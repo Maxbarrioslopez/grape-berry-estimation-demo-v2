@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/surface">
 
-    <!-- Toolbar con título centrado -->
+    <!-- Toolbar with centered title -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topAppBar"
         android:layout_width="0dp"
@@ -145,7 +145,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Botón Next Step anclado al fondo -->
+    <!-- Next Step button pinned to bottom -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNext"
         style="@style/Widget.Metrics.Button.Primary"

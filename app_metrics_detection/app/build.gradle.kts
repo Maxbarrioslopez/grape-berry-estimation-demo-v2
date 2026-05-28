@@ -49,8 +49,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // MEJORA: Se expande el soporte de ABIs para mayor compatibilidad en Google Play.
-            // Nota: Asegúrate de que las librerías en third_party tengan los .so correspondientes.
+            // IMPROVEMENT: Expanded ABI support for greater compatibility on Google Play.
+            // Note: Ensure libraries in third_party have the corresponding .so files.
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
 
@@ -85,9 +85,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Academic public demo: no backend, no auth, local-only.
+            buildConfigField("boolean", "DEMO_MODE", "true")
+        }
         release {
-            signingConfig = signingConfigs.getByName("release")
-            // MEJORA: Se activa R8 para ofuscación y reducción de tamaño del AAB.
+            if (keystoreProperties.isNotEmpty()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            // Public academic demo release: no backend, no auth, local-only.
+            // Set this to false only in a private/production build configuration.
+            buildConfigField("boolean", "DEMO_MODE", "true")
+            // IMPROVEMENT: R8 enabled for obfuscation and AAB size reduction.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -159,7 +168,7 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
-    // LIMPIEZA: Se han eliminado las dependencias de TensorFlow Lite por ser código legacy.
+    // CLEANUP: TensorFlow Lite dependencies removed as legacy code.
 
     implementation("com.github.haifengl:smile-core:2.6.0")
     implementation("org.boofcv:boofcv-android:0.40")

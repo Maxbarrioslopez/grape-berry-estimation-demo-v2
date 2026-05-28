@@ -18,10 +18,10 @@ DebugArtifacts BuildDefaultDebugArtifacts(const std::string& image_path, bool en
 void SaveDebugArtifacts(const PipelineInputs& inputs, PipelineResult& result);
 
 /**
- * Genera el overlay visual final del usuario sobre una imagen base.
- * @param path Ruta del archivo base (se sobreescribirá con el overlay).
- * @param inputs Entradas del pipeline (contiene máscaras y originales).
- * @param result Resultados del pipeline (contiene detecciones).
+ * Generates the user's final visual overlay on a base image.
+ * @param path Base file path (will be overwritten with the overlay).
+ * @param inputs Pipeline inputs (contains masks and originals).
+ * @param result Pipeline results (contains detections).
  */
 void SaveVisualOverlay(const std::string& path, const PipelineInputs& inputs, const PipelineResult& result);
 

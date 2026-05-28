@@ -31,11 +31,13 @@ app_metrics_detection/app/release/
 # Android Studio / IntelliJ
 # =========================================================
 .idea/
+.vscode/
 *.iml
 .DS_Store
+nul
 
 # =========================================================
-# Logs / temporales
+# Logs / temporary files
 # =========================================================
 *.log
 *.tmp
@@ -46,7 +48,7 @@ app_metrics_detection/app/release/
 Thumbs.db
 
 # =========================================================
-# Imágenes de prueba / datasets / resultados pesados
+# Test images / datasets / heavy results
 # =========================================================
 images/
 imagenesparatest/
@@ -70,7 +72,7 @@ app_metrics_detection/debug/
 **/reportes_test/
 **/reports_test/
 
-# Ignorar imágenes sueltas pesadas fuera de recursos Android/assets permitidos
+# Ignore loose heavy images outside allowed Android resource/assets
 *.jpg
 *.jpeg
 *.png
@@ -81,22 +83,21 @@ app_metrics_detection/debug/
 *.bmp
 *.gif
 
-# Permitir imágenes necesarias de Android res
+# Allow required Android res images
 !app_metrics_detection/app/src/main/res/**/*.png
 !app_metrics_detection/app/src/main/res/**/*.jpg
 !app_metrics_detection/app/src/main/res/**/*.jpeg
 !app_metrics_detection/app/src/main/res/**/*.webp
 !app_metrics_detection/app/src/main/res/**/*.xml
 
-# Permitir imágenes necesarias dentro de assets reales
+# Allow required assets images
 !app_metrics_detection/app/src/main/assets/**/*.png
 !app_metrics_detection/app/src/main/assets/**/*.jpg
 !app_metrics_detection/app/src/main/assets/**/*.jpeg
 !app_metrics_detection/app/src/main/assets/**/*.webp
 
 # =========================================================
-# Modelos ML reales necesarios para la app
-# NO ignorar modelos dentro de src/main/assets
+# ML models needed by the app
 # =========================================================
 !app_metrics_detection/app/src/main/assets/**/*.onnx
 !app_metrics_detection/app/src/main/assets/**/*.onnx.data
@@ -104,28 +105,25 @@ app_metrics_detection/debug/
 !app_metrics_detection/app/src/main/assets/**/*.bin
 !app_metrics_detection/app/src/main/assets/**/*.json
 
-# Evitar subir modelos copiados por build/intermediates
+# Avoid uploading models copied by build/intermediates
 app_metrics_detection/app/build/
 **/build/intermediates/
 **/build/outputs/
 
 # =========================================================
-# Third party pesado / SDKs locales
+# Third-party heavy / local SDKs
 # =========================================================
 app_metrics_detection/third_party/opencv/OpenCV-android-sdk/samples/
 
 # =========================================================
-# Signing keys / release keys
-# En este repo privado SÍ se versionarán las keys necesarias.
+# SIGNING KEYS / CREDENTIALS — EXCLUDED FROM PUBLIC REPO
 # =========================================================
-!keystore.properties
-!app_metrics_detection/keystore.properties
-!keystores/*.jks
-!*.jks
-!*.keystore
-!*.p12
-
-# Mantener fuera llaves/certificados sueltos no necesarios
+keystore.properties
+app_metrics_detection/keystore.properties
+keystores/
+*.jks
+*.keystore
+*.p12
 *.pem
 *.key
 *.crt
@@ -134,10 +132,15 @@ app_metrics_detection/third_party/opencv/OpenCV-android-sdk/samples/
 # Google / Firebase secrets
 google-services.json
 service-account.json
+*service-account*.json
 firebase-adminsdk*.json
 
+# Private / sensitive folders
+_not_for_public_repo/
+capturas_vistas_app/
+
 # =========================================================
-# Node / frontend si existiera
+# Node / frontend if present
 # =========================================================
 node_modules/
 dist/
@@ -145,7 +148,7 @@ dist/
 .vercel/
 
 # =========================================================
-# Python / entornos auxiliares
+# Python / auxiliary environments
 # =========================================================
 __pycache__/
 *.pyc
@@ -153,27 +156,6 @@ __pycache__/
 venv/
 .env
 .env.*
-
-# =========================================================
-# Release APK folders / zip backups
-# =========================================================
-app/release/
-app_metrics_detection/app/release/
-*.zip
-
-# =========================================================
-# Release APK folders / zip backups
-# =========================================================
-app/release/
-app_metrics_detection/app/release/
-*.zip
-
-# =========================================================
-# Release APK folders / zip backups
-# =========================================================
-app/release/
-app_metrics_detection/app/release/
-*.zip
 
 # =========================================================
 # Gradle user home / wrapper download cache

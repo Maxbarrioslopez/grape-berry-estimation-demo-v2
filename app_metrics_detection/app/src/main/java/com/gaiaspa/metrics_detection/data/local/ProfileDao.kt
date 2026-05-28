@@ -10,21 +10,21 @@ import com.gaiaspa.metrics_detection.data.model.Profile
 interface ProfileDao {
 
     /**
-     * Inserta o actualiza el perfil. Siempre habrá solo un perfil.
+     * Inserts or updates the profile. There will always be only one profile.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertProfile(profile: Profile)
 
     /**
-     * Obtiene el perfil existente.
+     * Retrieves the existing profile.
      *
-     * @return El perfil o null si no existe.
+     * @return The profile or null if it does not exist.
      */
     @Query("SELECT * FROM profile LIMIT 1")
     fun getProfile(): Profile?
 
     /**
-     * Elimina el perfil existente.
+     * Deletes the existing profile.
      */
     @Query("DELETE FROM profile")
     fun deleteProfile()

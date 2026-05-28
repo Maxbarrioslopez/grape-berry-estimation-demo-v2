@@ -34,7 +34,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     private var totalLotesCount = 0
 
     // Multi-page selection persists across pagination boundaries
-    private val selectedLoteIds = mutableSetOf<Long>() // or Int/String, según sea tu ID
+    private val selectedLoteIds = mutableSetOf<Long>() // using Long IDs
 
     /** Result of a delete operation reported back to the UI. */
     data class DeleteUiResult(
@@ -80,7 +80,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     /** @return all currently selected Lotes from the full list. */
     fun getSelectedLotes(): List<Lote> {
-        // Filtra los lotes globales
+        // Filter the global batches
         return allLotes.filter { selectedLoteIds.contains(it.id) }
     }
 
@@ -159,7 +159,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                     lotes.postValue(emptyList())
                 }
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Error refrescando historial", e)
+                Log.e("HistoryViewModel", "Error refreshing history", e)
             }
         }
     }
@@ -191,7 +191,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
             } else {
                 loteRepository.deleteLocalLote(lote.id)
             }
-            // Refrescar
+            // Refresh
             refreshLotes()
         }
     }
@@ -210,7 +210,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                     onResult(localResult.toUiResult())
                 }
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Error eliminando solo local", e)
+                Log.e("HistoryViewModel", "Error deleting local only", e)
                 withContext(Dispatchers.Main) {
                     onResult(DeleteUiResult(success = false))
                 }
@@ -245,7 +245,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                     onResult(result)
                 }
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Error eliminando local y nube", e)
+                Log.e("HistoryViewModel", "Error deleting local and cloud", e)
                 withContext(Dispatchers.Main) {
                     onResult(DeleteUiResult(success = false))
                 }

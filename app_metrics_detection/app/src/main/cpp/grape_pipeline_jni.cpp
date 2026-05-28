@@ -1,6 +1,6 @@
 /**
- * grape_pipeline_jni.cpp - v10.0 MIGRACIÓN OVERLAY NATIVO
- * Motor optimizado para reutilizar el asset de subida como base visual.
+ * grape_pipeline_jni.cpp - v10.0 NATIVE OVERLAY MIGRATION
+ * Optimized engine to reuse the upload asset as visual base.
  */
 #include <jni.h>
 #include <algorithm>
@@ -69,7 +69,7 @@ namespace {
         oss << "\"std\":" << safe_f(result.std) << ",";
         oss << "\"seg_count_base\":" << safe_f(result.seg_count_base) << ",";
 
-        // ✅ NUEVA ESTRUCTURA: pro ahora apunta al res_ visual final generado en C++
+        // ✅ NEW STRUCTURE: pro now points to the final visual result generated in C++
         oss << "\"jni_paths\":{";
         oss << "\"pro\":\"" << json_escape(visual_p) << "\",";
         oss << "\"debug_overlay\":\"" << json_escape(result.debug.overlay_path) << "\"";
@@ -77,7 +77,7 @@ namespace {
 
         oss << "\"inf_ms\":" << inf << ",";
 
-        // Detecciones para fallback en Kotlin si fuera necesario
+        // Detections for fallback in Kotlin if needed
         oss << "\"detections\":[";
         for (size_t i = 0; i < result.detections.size(); ++i) {
             if (i > 0) oss << ",";
@@ -110,7 +110,7 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
         jstring providerPreference,
         jboolean saveDebug,
         jboolean allowSynthetic,
-        jstring visualOverlayPath) { // ✅ NUEVO PARÁMETRO
+        jstring visualOverlayPath) { // ✅ NEW PARAMETER
 
     auto& ctx = get_ctx();
     std::lock_guard<std::mutex> lock(ctx.mtx);
@@ -120,19 +120,19 @@ Java_com_gaiaspa_metrics_1detection_ml_CppPipelineBridge_nativeRunPipeline(
         const std::string reg_p = jstring_to_std(env, regModelPath);
         const std::string vis_p = jstring_to_std(env, visualOverlayPath);
 
-        // 1. Ejecutar Inferencia (Core no cambia)
+        // 1. Run Inference (Core unchanged)
         auto t1 = Clock::now();
         PipelineResult res = run_pipeline(*ctx.seg_sess, *ctx.reg_sess, img_p, (varietyId >= 0 ? VARIETY_CLASSES[varietyId] : ""));
         auto t2 = Clock::now();
 
-        // 2. Generar Artefactos de Debug (BBoxes técnicos)
+        // 2. Generate Debug Artifacts (Technical BBoxes)
         if (saveDebug) {
             grape::SaveDebugArtifacts(BuildPipelineInputs(img_p, res.variety, res.variety_idx, {}, ctx.seg_sess.get(), allowSynthetic), res);
         }
 
-        // 3. ✅ GENERAR OVERLAY VISUAL FINAL (Óvalos sobre la copia del upload)
+        // 3. ✅ GENERATE FINAL VISUAL OVERLAY (Ovals over the upload copy)
         if (!vis_p.empty()) {
-            // Necesitamos los inputs para el escalado (orig_bgr)
+            // We need the inputs for scaling (orig_bgr)
             PipelineInputs inputs = BuildPipelineInputs(img_p, res.variety, res.variety_idx, {}, ctx.seg_sess.get(), allowSynthetic);
             grape::SaveVisualOverlay(vis_p, inputs, res);
         }

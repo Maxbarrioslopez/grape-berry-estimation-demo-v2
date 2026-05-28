@@ -46,6 +46,11 @@ class ProfileRepository private constructor(
     }
 
     suspend fun getProfile(): Profile? {
+        if (BuildConfig.DEMO_MODE) {
+            return withContext(Dispatchers.IO) {
+                profileDao.getProfile()
+            }
+        }
         return if (NetworkUtils.isNetworkAvailable(context)) {
             try {
                 val profileResponse = apiService.getProfile()
@@ -55,55 +60,60 @@ class ProfileRepository private constructor(
                     withContext(Dispatchers.IO) {
                         if (profile != null) {
                             profileDao.insertProfile(profile)
-                        } // Operación de base de datos en hilo de fondo
+                        } // Database operation on background thread
                         if (profile != null) {
                             TokenProvider.saveUserId(profile.userId)
-                        } // Guarda el userId
+                        } // Save the userId
                     }
                     profile
                 } else {
-                    // Manejar excepciones según sea necesario
+                    // Handle exceptions as needed
                     withContext(Dispatchers.IO) {
-                        profileDao.getProfile() // Operación de lectura en hilo de fondo
+                        profileDao.getProfile() // Read operation on background thread
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
 
-                // Manejar excepciones según sea necesario
+                // Handle exceptions as needed
                 withContext(Dispatchers.IO) {
-                    profileDao.getProfile() // Operación de lectura en hilo de fondo
+                    profileDao.getProfile() // Read operation on background thread
                 }
             }
         } else {
             withContext(Dispatchers.IO) {
-                profileDao.getProfile() // Operación de lectura en hilo de fondo
+                profileDao.getProfile() // Read operation on background thread
             }
         }
     }
 
 
     fun logout() {
+        if (BuildConfig.DEMO_MODE) {
+            profileDao.deleteProfile()
+            TokenProvider.logout()
+            return
+        }
         if (NetworkUtils.isNetworkAvailable(context)){
 
         CoroutineScope(Dispatchers.IO).launch {
                 val response = apiService.logout(RefreshTokenRequest(TokenProvider.getRefreshToken()))
                 if (response.isSuccessful) {
-                    // Éxito: el servidor invalidó el refreshToken
+                    // Success: server invalidated the refreshToken
                     profileDao.deleteProfile()
-                    TokenProvider.logout() // Limpiamos tokens localmente
+                    TokenProvider.logout() // Clear tokens locally
                 } else {
-                    // Manejar error de logout en servidor
+                    // Handle server logout error
                     if (BuildConfig.DEBUG) {
-                        Log.e(TAG, "Falló logout: ${response.code()} -> ${response.errorBody()?.string()}")
+                        Log.e(TAG, "Logout failed: ${response.code()} -> ${response.errorBody()?.string()}")
                     } else {
-                        Log.e(TAG, "Falló logout: código ${response.code()}")
+                        Log.e(TAG, "Logout failed: code ${response.code()}")
                     }
             }
         }
         }else{
             profileDao.deleteProfile()
-            TokenProvider.logout() // Limpiamos tokens localmente
+            TokenProvider.logout() // Clear tokens locally
         }
 
     }

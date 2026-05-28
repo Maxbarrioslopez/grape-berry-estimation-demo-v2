@@ -1,0 +1,82 @@
+# Android / Gradle / Build outputs
+.gradle/
+build/
+*/build/
+**/build/
+captures/
+paper_demo_screenshots_*/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# Android generated outputs
+*.apk
+*.aab
+*.ap_
+*.aar
+**/outputs/
+**/intermediates/
+**/generated/
+**/tmp/
+**/kotlin/
+**/incremental/
+
+# Android Studio / IntelliJ
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+nul
+
+# Logs / temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Signing keys / credentials
+keystore.properties
+keystores/
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+
+# Environment and cloud credentials
+.env
+.env.*
+google-services.json
+*service-account*.json
+service-account.json
+firebase-adminsdk*.json
+_not_for_public_repo/
+
+# Private datasets and generated/debug artifacts
+imagenesparatest/
+debug/
+images/
+test_images/
+test-images/
+datasets/
+dataset/
+results/
+resultados/
+runs/
+fused/
+fusion/
+reportes_test/
+reports_test/
+
+# OS / auxiliary environments
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+dist/

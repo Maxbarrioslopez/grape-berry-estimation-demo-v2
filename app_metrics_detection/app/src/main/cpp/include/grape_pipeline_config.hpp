@@ -39,7 +39,7 @@ inline const std::vector<std::string> kDefaultVarietyClasses = {
     "SCARLOTTA", "SUPERIOR", "SWEET GLOBE", "THOMPSON", "TIMCO", "TIMPSON",
 };
 
-// ✅ SINCRONIZADO: Nombres exactos encontrados en assets/weights/modelos
+// ✅ SYNCHRONIZED: Exact names found in assets/weights/modelos
 inline constexpr const char* kOfficialHistModel = "hist_rgbdt_bimodal.onnx";
 inline constexpr const char* kOfficialQtyModel = "qty_model_rgbdt.onnx";
 
@@ -116,11 +116,11 @@ inline std::string ResolveVarietyName(
 }
 
 // ===========================================================================
-// VISUAL-ONLY OVERLAY CONSTANTS (no afectan el pipeline productivo)
+// VISUAL-ONLY OVERLAY CONSTANTS (do not affect the production pipeline)
 // ===========================================================================
 namespace overlay_visual {
 
-// --- Espesores de contorno (dinamicos, basados en ancho de imagen) ---
+// --- Contour thicknesses (dynamic, based on image width) ---
 inline constexpr float kContourWidthFactorBunchGrape = 300.0f;
 inline constexpr float kContourWidthFactorPingpong    = 420.0f;
 inline constexpr int   kContourThickMinBunchGrape = 3;
@@ -128,11 +128,11 @@ inline constexpr int   kContourThickMaxBunchGrape = 5;
 inline constexpr int   kContourThickMinPingpong    = 2;
 inline constexpr int   kContourThickMaxPingpong    = 4;
 
-// --- Alpha de relleno ---
+// --- Fill alpha ---
 inline constexpr double kFillAlphaBunchGrape = 0.10;
 inline constexpr double kFillAlphaPingpong    = 0.25;
 
-// --- Colores (BGR) ---
+// --- Colors (BGR) ---
 inline const cv::Scalar kColorFillBunchGrape(255, 255, 0);
 inline const cv::Scalar kColorContourBunchGrape(255, 255, 0);
 inline const cv::Scalar kColorFillPingpong(0, 220, 255);
@@ -142,7 +142,7 @@ inline const cv::Scalar kColorCentroidPingpong(255, 80, 0);
 inline const cv::Scalar kColorGrapeDot(0, 80, 255);
 inline const cv::Scalar kColorAuxiliaryDot(255, 0, 180);
 
-// --- Radios de centroide (dinamicos) ---
+// --- Centroid radii (dynamic) ---
 inline constexpr float kCentroidRadiusFactorGrape    = 350.0f;
 inline constexpr float kCentroidRadiusFactorPingpong = 320.0f;
 inline constexpr float kCentroidRadiusFactorAux      = 380.0f;
@@ -151,47 +151,47 @@ inline constexpr int   kCentroidRadiusMaxGrape    = 4;
 inline constexpr int   kCentroidRadiusMinPingpong = 3;
 inline constexpr int   kCentroidRadiusMaxPingpong = 5;
 
-// --- Puntos auxiliares: distance transform + maximos locales + NMS ---
+// --- Auxiliary points: distance transform + local maxima + NMS ---
 inline constexpr float kAuxDtMinRadius = 3.0f;
 inline constexpr float kAuxDtMaxRadius = 30.0f;
 
-// Ventana de maximo local (dilate kernel)
+// Local maximum window (dilate kernel)
 inline constexpr int   kAuxWindowMin    = 9;
 inline constexpr int   kAuxWindowMax    = 23;
 inline constexpr float kAuxWindowFactor = 130.0f;
 
-// Umbral de peak (descarta maximos debiles)
+// Peak threshold (discards weak maxima)
 inline constexpr float kAuxPeakMinAbs    = 2.5f;
 inline constexpr float kAuxPeakMinFactor = 520.0f;
 
-// Refinamiento de centro: ventana local para buscar max DT
+// Center refinement: local window to find max DT
 inline constexpr int kAuxRefineHalfWin = 2;
 
-// NMS: distancia minima entre puntos auxiliares
+// NMS: minimum distance between auxiliary points
 inline constexpr int   kAuxNmsDistMin    = 9;
 inline constexpr float kAuxNmsDistFactor = 145.0f;
 
-// Distancia minima a puntos oficiales
+// Minimum distance to official points
 inline constexpr int   kAuxOffDistMin    = 8;
 inline constexpr float kAuxOffDistFactor = 150.0f;
 
-// Limite maximo de puntos auxiliares
+// Maximum limit of auxiliary points
 inline constexpr int   kAuxMaxPointsMin    = 20;
 inline constexpr int   kAuxMaxPointsMax    = 70;
 inline constexpr float kAuxMaxPointsFactor = 45.0f;
 
-// --- Post-procesado de mascara ---
+// --- Mask post-processing ---
 inline constexpr int    kMorphKernelSize         = 3;
 inline constexpr int    kBlurKernelSize          = 3;
 inline constexpr double kBinaryThreshold         = 127.0;
 inline constexpr double kSoftThreshold           = 96.0;
 inline constexpr double kBinaryMaxVal            = 255.0;
 
-// --- Simplificacion de contorno ---
+// --- Contour simplification ---
 inline constexpr double kApproxPolyEpsilonFactor = 0.001;
 
-// --- Separacion diagnostica ---
-inline constexpr int kDiagLogInterval = 0;  // >0  para log cada N imagenes
+// --- Diagnostic separation ---
+inline constexpr int kDiagLogInterval = 0;      // >0 to log every N images
 
 }  // namespace overlay_visual
 

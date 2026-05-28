@@ -5,9 +5,9 @@ import com.gaiaspa.metrics_detection.data.model.Profile
 /**
  * ProfileResponse.kt
  * 
- * Antes: No incluía companyId.
- * Ahora: Incluye companyId para alineación multi-tenant.
- * Motivo: El backend ahora vincula explícitamente al usuario con una empresa.
+ * Before: Did not include companyId.
+ * Now: Includes companyId for multi-tenant alignment.
+ * Reason: The backend now explicitly links the user with a company.
  */
 data class ProfileResponse(
     val email: String,
@@ -16,7 +16,7 @@ data class ProfileResponse(
     val lastname: String,
     val role: String,
     val rut: String,
-    val companyId: String?, // ID de la empresa vinculada
+    val companyId: String?, // Linked company ID
     val isVerified: Boolean,
     val isAvailable: Boolean,
     val createdAt: String,

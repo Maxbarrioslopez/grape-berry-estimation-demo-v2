@@ -78,11 +78,11 @@ data class CalPredictResponse(
     val bins: List<Float> = emptyList(),
 
     @SerializedName("predictedAt")
-    val predictedAt: Long,  // Fecha de creación local, asignada al instanciar
+    val predictedAt: Long,  // Local creation date, assigned on instantiation
 
     @SerializedName("createdAt")
-    val createdAt: Long,  // Fecha de creación local, asignada al instanciar
+    val createdAt: Long,  // Local creation date, assigned on instantiation
 
     @SerializedName("updatedAt")
-    val updatedAt: Long,   // Puede actualizarse posteriormente, tanto localmente como al sincronizar
+    val updatedAt: Long,   // May be updated later, both locally and on sync
 )

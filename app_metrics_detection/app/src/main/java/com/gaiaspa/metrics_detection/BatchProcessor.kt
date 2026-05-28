@@ -147,8 +147,8 @@ class BatchProcessor(
                 val outputJsonFile = File(runRoot, toJsonRelativePath(relativePath))
                 ensureDirectory(outputJsonFile.parentFile)
 
-                // --- ELIMINADO: RESCATE DE EVIDENCIAS VISUALES (SOLO DATOS) ---
-                // No llamamos a rescuFile para imágenes jpg/png
+                // --- REMOVED: VISUAL EVIDENCE RESCUE (DATA ONLY) ---
+                // Not calling rescuFile for jpg/png images
 
                 val fileJson = buildFileJson(
                     runId = runId,
@@ -237,13 +237,13 @@ class BatchProcessor(
         json.put("source", JSONObject().apply {
             put("filename", imageFile.name)
             put("relative_path", relativePath)
-            // Ya no vinculamos nombres de evidencia visual
+            // No longer linking visual evidence filenames
         })
 
         json.put("result", JSONObject().apply {
             put("qty_total", native?.optDouble("count_total", 0.0))
             put("variety_name", native?.optString("variety", "UNK"))
-            // Se añaden mean, mode y std al JSON de salida
+            // Added mean, mode, and std to the output JSON
             put("mean", native?.optDouble("mean", 0.0))
             put("mode", native?.optDouble("mode", 0.0))
             put("std", native?.optDouble("std", 0.0))

@@ -16,7 +16,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- ─── Primera fila: imagen a la izquierda, info a la derecha ───────────────── -->
+        <!-- ─── First row: image left, info right ───────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -24,7 +24,7 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
 
-            <!-- Imagen -->
+            <!-- Image -->
             <ImageView
                 android:id="@+id/ivPhoto"
                 android:layout_width="100dp"
@@ -36,14 +36,14 @@
                 android:layout_width="12dp"
                 android:layout_height="wrap_content" />
 
-            <!-- Info (índice + texto) -->
+            <!-- Info (index + text) -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <!-- Índice -->
+                <!-- Index -->
                 <TextView
                     android:id="@+id/tvIndex"
                     android:layout_width="wrap_content"
@@ -64,14 +64,14 @@
                     android:layout_marginTop="4dp" />
             </LinearLayout>
         </LinearLayout>
-        <!-- ─── Botón + espacio antes del borde inferior ───────────────────────────────── -->
+        <!-- ─── Button + spacing before bottom edge ───────────────────────────────── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
         </LinearLayout>
-        <!-- ─── Histograma debajo de imagen+info ───────────────────────────────────────── -->
+        <!-- ─── Histogram below image+info ───────────────────────────────────────── -->
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/barChart"
             android:layout_width="match_parent"
@@ -79,7 +79,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginBottom="6dp" />
 
-        <!-- ─── ProgressBar superpuesto al histograma (si está procesando) ─────────────── -->
+        <!-- ─── ProgressBar overlaid on histogram (if processing) ─────────────── -->
         <ProgressBar
             android:id="@+id/progressItem"
             style="?android:attr/progressBarStyle"

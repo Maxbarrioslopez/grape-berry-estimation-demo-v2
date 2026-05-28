@@ -134,19 +134,19 @@ object RacimoFusionMapper {
      *   or any racimo is missing a prediction or valid detection.
      */
     fun buildFusedSavePayload(items: List<ImageInput>): SavePayload {
-        require(items.isNotEmpty()) { "Debes agregar al menos un racimo" }
-        require(items.size % 2 == 0) { "Cada racimo debe tener Frente y Reverso" }
+        require(items.isNotEmpty()) { "You must add at least one bunch" }
+        require(items.size % 2 == 0) { "Each bunch must have both Front and Back" }
 
         val pairResults = items.chunked(2).mapIndexed { index, pair ->
-            val itemA = pair.getOrNull(0) ?: throw IllegalArgumentException("Falta el Frente del racimo ${index + 1}")
-            val itemB = pair.getOrNull(1) ?: throw IllegalArgumentException("Falta el Reverso del racimo ${index + 1}")
-            val predA = itemA.prediction ?: throw IllegalArgumentException("El Frente del racimo ${index + 1} no tiene predicción")
-            val predB = itemB.prediction ?: throw IllegalArgumentException("El Reverso del racimo ${index + 1} no tiene predicción")
-            require(predA.status) { predA.error.ifBlank { "El Frente del racimo ${index + 1} tiene error" } }
-            require(predB.status) { predB.error.ifBlank { "El Reverso del racimo ${index + 1} tiene error" } }
+            val itemA = pair.getOrNull(0) ?: throw IllegalArgumentException("Missing Front for bunch ${index + 1}")
+            val itemB = pair.getOrNull(1) ?: throw IllegalArgumentException("Missing Back for bunch ${index + 1}")
+            val predA = itemA.prediction ?: throw IllegalArgumentException("Front of bunch ${index + 1} has no prediction")
+            val predB = itemB.prediction ?: throw IllegalArgumentException("Back of bunch ${index + 1} has no prediction")
+            require(predA.status) { predA.error.ifBlank { "Front of bunch ${index + 1} has an error" } }
+            require(predB.status) { predB.error.ifBlank { "Back of bunch ${index + 1} has an error" } }
 
             val result = FusionEngine.fuse(predA, predB)
-            require(result.fused.qty > 0) { "El racimo ${index + 1} no tiene detección válida" }
+            require(result.fused.qty > 0) { "Bunch ${index + 1} has no valid detection" }
             val selectedRole = chooseRepresentativeRole(predA.qty, predB.qty, result.fused.qty)
             PairResult(
                 racimoIndex = index + 1,

@@ -26,7 +26,7 @@ data class RuntimeVariety(val id: Int, val name: String)
  */
 object RuntimeVarietyCatalog {
 
-    // El orden debe coincidir exactamente con los IDs del modelo.
+    // The order must match exactly the model IDs.
     private val CANONICAL_VARIETIES = listOf(
         "ALLISON",
         "AUTUMN CRISP",

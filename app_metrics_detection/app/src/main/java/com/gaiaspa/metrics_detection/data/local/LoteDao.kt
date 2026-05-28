@@ -8,50 +8,50 @@ import androidx.room.Update
 import com.gaiaspa.metrics_detection.data.model.Lote
 
 /**
- * DAO de Room para la entidad [Lote].
+ * Room DAO for the [Lote] entity.
  *
- * Proporciona operaciones CRUD y consultas de sincronización. Las operaciones
- * de escritura sobre lotes ajenos al usuario actual están protegidas por la
- * cláusula `AND userId = :userId`.
+ * Provides CRUD operations and synchronization queries. Write operations
+ * on lots belonging to other users are protected by the
+ * `AND userId = :userId` clause.
  */
 @Dao
 interface LoteDao {
 
     /**
-     * Inserta un lote en la base de datos local. Si ya existe uno con el mismo
-     * `id` (autogenerado o recibido), lo reemplaza completamente.
+     * Inserts a lot into the local database. If one already exists with the same
+     * `id` (auto-generated or received), it is fully replaced.
      *
-     * @return El `id` autogenerado del lote insertado.
+     * @return The auto-generated `id` of the inserted lot.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertLote(lote: Lote): Long
 
     /**
-     * Actualiza un lote existente buscándolo por su clave primaria.
+     * Updates an existing lot by its primary key.
      *
-     * @return Cantidad de filas afectadas (1 si se actualizó, 0 si no existía).
+     * @return Number of affected rows (1 if updated, 0 if it did not exist).
      */
     @Update
     fun updateLote(lote: Lote): Int
 
     /**
-     * Obtiene todos los lotes del usuario ordenados del más reciente al más antiguo.
+     * Retrieves all lots for the user, ordered from newest to oldest.
      */
     @Query("SELECT * FROM lote WHERE userId = :userId ORDER BY id DESC")
     fun getAllLotes(userId: String): List<Lote>
 
     /**
-     * Obtiene los lotes pendientes de sincronización (marcados con `synced = 0`)
-     * para reintentar el envío al backend.
+     * Retrieves lots pending synchronization (marked with `synced = 0`)
+     * for retry submission to the backend.
      */
     @Query("SELECT * FROM lote WHERE userId = :userId AND synced = 0")
     fun getNotSyncedLotes(userId: String): List<Lote>
 
     /**
-     * Marca un lote como sincronizado exitosamente: actualiza `cloudId`,
-     * `cloudImages`, pone `synced = 1` y limpia `syncError`.
+     * Marks a lot as successfully synchronized: updates `cloudId`,
+     * `cloudImages`, sets `synced = 1`, and clears `syncError`.
      *
-     * @return Cantidad de filas afectadas.
+     * @return Number of affected rows.
      */
     @Query("UPDATE lote SET cloudId = :cloudId, synced = 1, cloudImages = :cloudImages, syncError = NULL WHERE id = :localLoteId AND userId = :userId")
     fun updateCloudIdImagePathsAndSyncStatus(
@@ -62,65 +62,65 @@ interface LoteDao {
     ): Int
 
     /**
-     * Registra un error de sincronización: escribe el mensaje de error,
-     * marca `synced = 0` para que se reintente en el siguiente ciclo.
+     * Records a synchronization error: writes the error message,
+     * marks `synced = 0` so it will be retried on the next cycle.
      *
-     * @return Cantidad de filas afectadas.
+     * @return Number of affected rows.
      */
     @Query("UPDATE lote SET syncError = :error, synced = 0 WHERE id = :localLoteId AND userId = :userId")
     fun updateSyncError(localLoteId: Long, userId: String, error: String?): Int
 
     /**
-     * Busca un lote por su `id` local dentro del contexto del usuario.
+     * Looks up a lot by its local `id` within the user's context.
      *
-     * @return El lote o `null` si no existe.
+     * @return The lot or `null` if it does not exist.
      */
     @Query("SELECT * FROM lote WHERE id = :loteId AND userId = :userId LIMIT 1")
     fun getLoteById(loteId: Long, userId: String): Lote?
 
     /**
-     * Elimina físicamente un lote de la base de datos local.
+     * Physically deletes a lot from the local database.
      *
-     * @return Cantidad de filas eliminadas.
+     * @return Number of deleted rows.
      */
     @Query("DELETE FROM lote WHERE id = :loteId AND userId = :userId")
     fun deleteLote(loteId: Long, userId: String): Int
 
     /**
-     * Marca un lote para eliminación lógica pendiente de sincronización:
-     * `synced = 0` y `toDelete = 1`. El backend lo borrará en el próximo envío.
+     * Marks a lot for logical deletion pending synchronization:
+     * `synced = 0` and `toDelete = 1`. The backend will delete it on the next upload.
      *
-     * @return Cantidad de filas afectadas.
+     * @return Number of affected rows.
      */
     @Query("UPDATE lote SET synced = 0, toDelete = 1 WHERE id = :loteId AND userId = :userId")
     fun markLoteAsNotSyncedAndToDelete(loteId: Long, userId: String): Int
 
     /**
-     * Elimina todos los lotes del usuario (útil para logout o reseteo).
+     * Deletes all lots for the user (useful for logout or reset).
      *
-     * @return Cantidad de filas eliminadas.
+     * @return Number of deleted rows.
      */
     @Query("DELETE FROM lote WHERE userId = :userId")
     fun deleteAllLotes(userId: String): Int
 
     /**
-     * Elimina únicamente los lotes ya sincronizados del usuario, preservando
-     * aquellos pendientes de envío.
+     * Deletes only the user's already synchronized lots, preserving
+     * those pending upload.
      *
-     * @return Cantidad de filas eliminadas.
+     * @return Number of deleted rows.
      */
     @Query("DELETE FROM lote WHERE userId = :userId AND synced = 1")
     fun deleteAllLotesSynced(userId: String): Int
 
     /**
-     * Retorna la cantidad total de lotes del usuario.
+     * Returns the total number of lots for the user.
      */
     @Query("SELECT COUNT(*) FROM lote WHERE userId = :userId")
     fun getLoteCount(userId: String): Int
 
     /**
-     * Verifica si un `cloudId` ya existe en la base de datos local,
-     * útil para evitar duplicados durante la importación desde el backend.
+     * Checks whether a `cloudId` already exists in the local database,
+     * useful for avoiding duplicates during import from the backend.
      */
     @Query("SELECT EXISTS(SELECT 1 FROM lote WHERE cloudId = :cloudId)")
     fun doesLoteExist(cloudId: String): Boolean

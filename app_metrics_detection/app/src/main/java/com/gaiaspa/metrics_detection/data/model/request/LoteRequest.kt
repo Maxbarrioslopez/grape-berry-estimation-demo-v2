@@ -23,5 +23,5 @@ data class BatchLoteGrapeRequest(
     val calPredicts: List<CalPredict>,
 
     @SerializedName("predictedAt")
-    val predictedAt: Long,  // Fecha de creación local, asignada al instanciar
+    val predictedAt: Long,  // Local creation date, assigned on instantiation
 )

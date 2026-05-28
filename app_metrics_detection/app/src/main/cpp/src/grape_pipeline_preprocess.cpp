@@ -63,14 +63,14 @@ LegacySegDecodeResult DecodeLegacySegmentation(
     float conf_threshold) {
     if (outputs.size() < 2) {
         throw std::runtime_error(
-            "El segmentador legacy requiere 2 salidas ONNX: detecciones y protos.");
+            "The legacy segmenter requires 2 ONNX outputs: detections and protos.");
     }
 
     const auto det_shape = outputs[0].GetTensorTypeAndShapeInfo().GetShape();
     const auto proto_shape = outputs[1].GetTensorTypeAndShapeInfo().GetShape();
     if (det_shape.size() < 2 || proto_shape.size() != 4) {
         throw std::runtime_error(
-            "La firma del segmentador no coincide con el contrato legacy esperado.");
+            "The segmenter signature does not match the expected legacy contract.");
     }
 
     int64_t num_rows = 0;
@@ -83,7 +83,7 @@ LegacySegDecodeResult DecodeLegacySegmentation(
         row_size = det_shape[1];
     }
     if (row_size < 7) {
-        throw std::runtime_error("La salida de deteccion del segmentador es demasiado corta.");
+        throw std::runtime_error("The segmenter detection output is too short.");
     }
 
     const float* det_ptr = outputs[0].GetTensorData<float>();
@@ -94,7 +94,7 @@ LegacySegDecodeResult DecodeLegacySegmentation(
     const int proto_w = static_cast<int>(proto_shape[3]);
     if (row_size < 6 + proto_c) {
         throw std::runtime_error(
-            "La salida de deteccion no trae suficientes coeficientes de mascara.");
+            "The detection output does not bring enough mask coefficients.");
     }
 
     LegacySegDecodeResult decoded;
@@ -337,7 +337,7 @@ SegmentationOutput RunSegmentationPipeline(
     float mask_threshold) {
     cv::Mat orig_bgr = cv::imread(image_path, cv::IMREAD_COLOR);
     if (orig_bgr.empty()) {
-        throw std::runtime_error("No se pudo leer la imagen: " + image_path);
+        throw std::runtime_error("Could not read the image: " + image_path);
     }
 
     const LetterboxResult lb = Letterbox(orig_bgr, img_size, img_size);
@@ -356,11 +356,11 @@ SegmentationOutput RunSegmentationPipeline(
 
     const std::vector<std::string> seg_input_names = GetSessionInputNames(segmentation_session);
     if (seg_input_names.empty()) {
-        throw std::runtime_error("El segmentador no expone inputs ONNX.");
+        throw std::runtime_error("The segmenter does not expose ONNX inputs.");
     }
     const std::vector<std::string> output_names = GetSessionOutputNames(segmentation_session);
     if (output_names.empty()) {
-        throw std::runtime_error("El segmentador no expone outputs ONNX.");
+        throw std::runtime_error("The segmenter does not expose ONNX outputs.");
     }
 
     const std::vector<std::string> input_names = {seg_input_names.front()};
@@ -444,7 +444,7 @@ PipelineInputs BuildPipelineInputs(
     bool allow_synthetic_rgbdt) {
     if (contract.input_channels != kOfficialInputChannels) {
         throw std::runtime_error(
-            "El runtime oficial solo soporta RGBDT de 5 canales. Canales detectados=" +
+            "The official runtime only supports 5-channel RGBDT. Channels detected=" +
             std::to_string(contract.input_channels));
     }
 
@@ -467,14 +467,14 @@ PipelineInputs BuildPipelineInputs(
     } else {
         if (!allow_synthetic_rgbdt) {
             throw std::runtime_error(
-                "El modelo requiere segmentacion para construir seg_count_base"
-                " y, en modo RGBDT, tambien los mapas DT. Activa allowSyntheticRgbdt"
-                " solo si aceptas un fallback degradado.");
+                "The model requires segmentation to build seg_count_base"
+                " and, in RGBDT mode, also the DT maps. Enable allowSyntheticRgbdt"
+                " only if you accept a degraded fallback.");
         }
 
         cv::Mat orig_bgr = cv::imread(image_path, cv::IMREAD_COLOR);
         if (orig_bgr.empty()) {
-            throw std::runtime_error("No se pudo leer la imagen: " + image_path);
+            throw std::runtime_error("Could not read the image: " + image_path);
         }
         const LetterboxResult lb = Letterbox(orig_bgr, contract.img_size, contract.img_size);
         cv::cvtColor(lb.image, inputs.rgb_lb, cv::COLOR_BGR2RGB);

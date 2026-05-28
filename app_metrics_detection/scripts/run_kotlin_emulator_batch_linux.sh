@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # =========================================================================
-# run_kotlin_emulator_batch_linux.sh v4.0 — Pipeline robusto con resume
+# run_kotlin_emulator_batch_linux.sh v4.0 — Robust pipeline with resume
 # =========================================================================
 
 # ---- defaults ----
-PROJECT_ROOT="/home/maxi/Escritorio/modelo_nuevo/optimizacion_uvas/app_metrics_detection"
-DATA_ROOT="/home/maxi/Descargas/data-20260517T050615Z-3-001/data"
-CSV="$DATA_ROOT/csv/val_sample_pairs.csv"
-IMAGES_ROOT="$DATA_ROOT/images"
-OUT_ROOT="$DATA_ROOT/resultados_test_uvas"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+DATA_ROOT="${DATA_ROOT:-$PROJECT_ROOT/data}"
+CSV="${CSV:-$DATA_ROOT/csv/val_sample_pairs.csv}"
+IMAGES_ROOT="${IMAGES_ROOT:-$DATA_ROOT/images}"
+OUT_ROOT="${OUT_ROOT:-$DATA_ROOT/resultados_test_uvas}"
 PACKAGE="com.gaiaspa.metrics_detection"
 ACTIVITY=".DebugBatchActivity"
 LIMIT=""
@@ -34,26 +35,26 @@ step()  { echo -e "\n${MAG}═════════════════�
 
 show_help() {
     cat <<EOF
-Uso: $0 [OPCIONES]
+Usage: $0 [OPTIONS]
 
-Pipeline Android batch: push, run, pull, eval.
-Sube todas las imágenes de una vez, DebugBatchActivity las procesa secuencialmente.
+Android batch pipeline: push, run, pull, eval.
+Pushes all images at once, DebugBatchActivity processes them sequentially.
 
-OPCIONES:
-  --project-root DIR  Proyecto Android  (default: $PROJECT_ROOT)
-  --data-root DIR     Raíz del dataset  (default: $DATA_ROOT)
-  --csv FILE          CSV ground truth   (default: $CSV)
-  --images-root DIR   Imágenes           (default: $IMAGES_ROOT)
-  --out-root DIR      Resultados         (default: $OUT_ROOT)
-  --limit N           Limitar imágenes
-  --build true|false  Compilar APK       (default: false)
-  --install true|false Instalar APK      (default: false)
-  --eval true|false   Evaluación forense (default: true)
-  --provider PROVIDER auto|cpu|nnapi     (default: auto)
-  --fused true|false  Fused A/B          (default: true)
+OPTIONS:
+  --project-root DIR  Android project      (default: $PROJECT_ROOT)
+  --data-root DIR     Dataset root         (default: $DATA_ROOT)
+  --csv FILE          Ground truth CSV     (default: $CSV)
+  --images-root DIR   Images               (default: $IMAGES_ROOT)
+  --out-root DIR      Results              (default: $OUT_ROOT)
+  --limit N           Limit images
+  --build true|false  Build APK            (default: false)
+  --install true|false Install APK         (default: false)
+  --eval true|false   Forensic evaluation  (default: true)
+  --provider PROVIDER auto|cpu|nnapi       (default: auto)
+  --fused true|false  Fused A/B            (default: true)
   --pair-policy P     auto|strict|single-view
-  --skip-uninstall    No desinstalar al empezar
-  --help              Esta ayuda
+  --skip-uninstall    Do not uninstall at start
+  --help              This help
 EOF
     exit 0
 }
@@ -74,30 +75,30 @@ while [[ $# -gt 0 ]]; do
         --fused)          FUSED="$2";         shift 2 ;;
         --pair-policy)    PAIR_POLICY="$2";   shift 2 ;;
         --skip-uninstall) SKIP_UNINSTALL="true"; shift ;;
-        *) die "Argumento desconocido: $1" ;;
+        *) die "Unknown argument: $1" ;;
     esac
 done
 
 # =================================================================
-# 1. ADB + DISPOSITIVO
+# 1. ADB + DEVICE
 # =================================================================
-step "[1/8] ADB y dispositivo"
+step "[1/8] ADB and device"
 
 ADB=$(command -v adb || true)
 [[ -z "$ADB" ]] && ADB="$HOME/Android/Sdk/platform-tools/adb"
-[[ -x "$ADB" ]] || die "adb no encontrado. Instala: sudo apt install adb"
+[[ -x "$ADB" ]] || die "adb not found. Install: sudo apt install adb"
 ok "adb: $ADB"
 
-# Esperar dispositivo (hasta 30s)
+# Wait for device (up to 30s)
 $ADB wait-for-device 2>/dev/null || true
 sleep 2
 
 DEVICES=$($ADB devices | awk 'NR>1 && $2=="device" {print $1}')
 if [[ -z "$DEVICES" ]]; then
-    die "Ningún dispositivo conectado. Conectá tu teléfono con depuración USB."
+    die "No device connected. Connect your phone with USB debugging."
 fi
 
-# Preferir real device sobre emulador
+# Prefer real device over emulator
 DEVICE_SERIAL=""
 IS_EMU=0
 for SERIAL in $DEVICES; do
@@ -113,28 +114,28 @@ done
 
 MODEL=$($ADB -s "$DEVICE_SERIAL" shell getprop ro.product.model 2>/dev/null | tr -d '\r' || echo "unknown")
 ARCH=$($ADB -s "$DEVICE_SERIAL" shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r' || echo "unknown")
-ok "Dispositivo: $DEVICE_SERIAL  ($MODEL, $ARCH)"
+ok "Device: $DEVICE_SERIAL  ($MODEL, $ARCH)"
 
 if [[ "$IS_EMU" == "1" ]]; then
-    warn "Usando EMULADOR — los modelos ONNX pueden no funcionar (no hay GPU/NNAPI)."
-    warn "Si falla, conectá el dispositivo real."
+    warn "Using EMULATOR — ONNX models may not work (no GPU/NNAPI)."
+    warn "If it fails, connect the real device."
     PROVIDER="cpu"
 fi
 
 # =================================================================
-# 2. VALIDAR DIRECTORIOS
+# 2. VALIDATE DIRECTORIES
 # =================================================================
-step "[2/8] Directorios locales"
+step "[2/8] Local directories"
 for d in "$PROJECT_ROOT" "$DATA_ROOT" "$IMAGES_ROOT"; do
-    [[ -d "$d" ]] || die "Directorio no existe: $d"
+    [[ -d "$d" ]] || die "Directory does not exist: $d"
 done
-[[ -f "$CSV" ]] || die "CSV no encontrado: $CSV"
-ok "Todo OK"
+[[ -f "$CSV" ]] || die "CSV not found: $CSV"
+ok "All OK"
 
 # =================================================================
-# 3. CREAR ESTRUCTURA DE SALIDA
+# 3. CREATE OUTPUT STRUCTURE
 # =================================================================
-step "[3/8] Creando run"
+step "[3/8] Creating run"
 mkdir -p "$OUT_ROOT"/{runs,por_variedad,fused,informes,logs,unmatched,failed}
 RUN_ID="run_$(date +%Y%m%d_%H%M%S)"
 RUN_DIR="$OUT_ROOT/runs/$RUN_ID"
@@ -142,9 +143,9 @@ mkdir -p "$RUN_DIR"
 ok "Run: $RUN_DIR"
 
 # =================================================================
-# 4. LEER CSV Y RESOLVER IMÁGENES
+# 4. READ CSV AND RESOLVE IMAGES
 # =================================================================
-step "[4/8] Leyendo CSV ($CSV)"
+step "[4/8] Reading CSV ($CSV)"
 
 declare -a IMAGE_FILES=()
 while IFS= read -r line; do
@@ -153,46 +154,46 @@ while IFS= read -r line; do
     if [[ -f "$c1" ]]; then IMAGE_FILES+=("$c1"); continue; fi
     c2="$IMAGES_ROOT/$r"
     if [[ -f "$c2" ]]; then IMAGE_FILES+=("$c2"); continue; fi
-    warn "No encontrada: $r"
+    warn "Not found: $r"
 done < <(python3 -c "
 import csv,sys
 with open('$CSV') as f:
     for row in csv.DictReader(f): print(row['image_path'])
-" 2>/dev/null) || die "Error leyendo CSV."
+" 2>/dev/null) || die "Error reading CSV."
 
 TOTAL=${#IMAGE_FILES[@]}
-[[ $TOTAL -eq 0 ]] && die "Cero imágenes encontradas."
-info "Total: $TOTAL imágenes"
+[[ $TOTAL -eq 0 ]] && die "Zero images found."
+info "Total: $TOTAL images"
 
 if [[ -n "$LIMIT" && $LIMIT -gt 0 ]]; then
     IMAGE_FILES=("${IMAGE_FILES[@]:0:$LIMIT}")
     TOTAL=$LIMIT
-    info "Limitado a $TOTAL"
+    info "Limited to $TOTAL"
 fi
 
 echo "$CSV" > "$RUN_DIR/manifest_input.csv"
 
 # =================================================================
-# 5. PREPARAR DISPOSITIVO
+# 5. PREPARE DEVICE
 # =================================================================
-step "[5/8] Preparando dispositivo"
+step "[5/8] Preparing device"
 
 if [[ "$SKIP_UNINSTALL" != "true" ]]; then
-    info "Desinstalando versión anterior..."
+    info "Uninstalling previous version..."
     $ADB -s "$DEVICE_SERIAL" uninstall "$PACKAGE" > /dev/null 2>&1 || true
     $ADB -s "$DEVICE_SERIAL" uninstall --user 0 "$PACKAGE" > /dev/null 2>&1 || true
-    ok "App desinstalada (si existía)"
+    ok "App uninstalled (if it existed)"
 fi
 
-info "Limpiando directorios en dispositivo..."
+info "Cleaning directories on device..."
 $ADB -s "$DEVICE_SERIAL" shell "rm -rf '$DEVICE_INPUT' '$DEVICE_OUTPUT'; mkdir -p '$DEVICE_INPUT/images' '$DEVICE_OUTPUT'" 2>/dev/null || true
-ok "Directorios listos"
+ok "Directories ready"
 
 # =================================================================
 # 6. BUILD + INSTALL
 # =================================================================
 if [[ "$BUILD" == "true" ]]; then
-    step "[6a/8] Compilando APK debug"
+    step "[6a/8] Building debug APK"
     ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
     export ANDROID_HOME
     pushd "$PROJECT_ROOT" > /dev/null
@@ -202,10 +203,10 @@ if [[ "$BUILD" == "true" ]]; then
 fi
 
 if [[ "$INSTALL" == "true" ]]; then
-    step "[6b/8] Instalando APK"
+    step "[6b/8] Installing APK"
     APK=$(find "$PROJECT_ROOT/app/build/outputs/apk/debug" -name '*.apk' 2>/dev/null | head -1)
     [[ -z "$APK" ]] && APK=$(find "$PROJECT_ROOT" -path '*/outputs/apk/debug/*.apk' 2>/dev/null | head -1)
-    [[ -n "$APK" ]] || die "APK no encontrado. Compilá con --build true."
+    [[ -n "$APK" ]] || die "APK not found. Build with --build true."
 
     INSTALL_OK=0
     if $ADB -s "$DEVICE_SERIAL" install -r -d "$APK" >> "$RUN_DIR/build_log.txt" 2>&1; then
@@ -213,11 +214,11 @@ if [[ "$INSTALL" == "true" ]]; then
     elif $ADB -s "$DEVICE_SERIAL" install -r -d --user 0 "$APK" >> "$RUN_DIR/build_log.txt" 2>&1; then
         INSTALL_OK=1
     else
-        warn "No se pudo instalar. Activá 'Instalar vía USB' en Opciones de desarrollador."
+        warn "Could not install. Enable 'Install via USB' in Developer Options."
     fi
-    [[ $INSTALL_OK -eq 1 ]] && ok "APK instalado"
+    [[ $INSTALL_OK -eq 1 ]] && ok "APK installed"
 
-    info "Limpiando caché de $PACKAGE ..."
+    info "Clearing cache for $PACKAGE ..."
     $ADB -s "$DEVICE_SERIAL" shell "pm clear $PACKAGE" > /dev/null 2>&1 || true
     $ADB -s "$DEVICE_SERIAL" shell "cmd package compile -f $PACKAGE" > /dev/null 2>&1 || true
 fi
@@ -227,10 +228,10 @@ $ADB -s "$DEVICE_SERIAL" shell "appops set $PACKAGE MANAGE_EXTERNAL_STORAGE allo
 # =================================================================
 # 7. PUSH → RUN → WAIT → PULL
 # =================================================================
-step "[7/8] Procesando en dispositivo ($TOTAL imágenes)"
+step "[7/8] Processing on device ($TOTAL images)"
 
-# 7a. Push imágenes en lote (un solo adb push del directorio completo)
-info "Subiendo $TOTAL imágenes al dispositivo..."
+# 7a. Push images in batch (single adb push of the entire directory)
+info "Uploading $TOTAL images to device..."
 TMPDIR=$(mktemp -d)
 python3 -c "
 import csv, shutil, os
@@ -248,19 +249,19 @@ PUSH_RESULT=$($ADB -s "$DEVICE_SERIAL" push "$TMPDIR/." "$DEVICE_INPUT/images/" 
 rm -rf "$TMPDIR"
 PUSHED=$(echo "$PUSH_RESULT" | grep -oP '\d+ files? pushed' | grep -oP '\d+')
 PUSHED=${PUSHED:-$TOTAL}
-ok "Push: $PUSHED archivos subidos"
+ok "Push: $PUSHED files uploaded"
 
-# También subir CSV para matching
+# Also push CSV for matching
 $ADB -s "$DEVICE_SERIAL" push "$CSV" "$DEVICE_INPUT/manifest_subsample.csv" > /dev/null 2>&1 || true
 
-# 7b. Lanzar DebugBatchActivity
-info "Lanzando DebugBatchActivity (provider=$PROVIDER)..."
+# 7b. Launch DebugBatchActivity
+info "Launching DebugBatchActivity (provider=$PROVIDER)..."
 LOGCAT_FILE="$RUN_DIR/logcat.txt"
 
 $ADB -s "$DEVICE_SERIAL" shell "am force-stop $PACKAGE" 2>/dev/null || true
 sleep 1
 
-# Clear logcat antes de empezar
+# Clear logcat before starting
 $ADB -s "$DEVICE_SERIAL" logcat -c 2>/dev/null || true
 
 # Background logcat capture
@@ -275,15 +276,15 @@ LAUNCH_OUTPUT=$($ADB -s "$DEVICE_SERIAL" shell "am start -S -n '$PACKAGE/$ACTIVI
 
 if echo "$LAUNCH_OUTPUT" | grep -qi "not exported\|SecurityException\|Permission Denial"; then
     kill "$LOGCAT_PID" 2>/dev/null || true
-    die "DebugBatchActivity no exported. Compilá con --build true --install true o revisá el AndroidManifest."
+    die "DebugBatchActivity not exported. Build with --build true --install true or check AndroidManifest."
 fi
 
 echo "$LAUNCH_OUTPUT"
-ok "Activity lanzada"
+ok "Activity launched"
 
-# 7c. Monitorear progreso
+# 7c. Monitor progress
 echo ""
-echo -e "${MAG}  ── Progreso ──────────────────────────────────────────${RESET}"
+echo -e "${MAG}  ── Progress ──────────────────────────────────────────${RESET}"
 echo -e "${GRAY}     Timeout: ${WAIT_TIMEOUT_MIN}min | Provider: $PROVIDER${RESET}"
 
 ELAPSED=0
@@ -315,7 +316,7 @@ while [[ $ELAPSED -lt $(( WAIT_TIMEOUT_MIN * 60 )) ]]; do
 
     if [[ -n "$MANIFEST" ]]; then
         echo ""
-        ok "manifest.json detectado! ($(date +%H:%M:%S))"
+        ok "manifest.json detected! ($(date +%H:%M:%S))"
         MANIFEST_DEVICE="$MANIFEST"
         BATCH_DONE=true
         break
@@ -324,7 +325,7 @@ while [[ $ELAPSED -lt $(( WAIT_TIMEOUT_MIN * 60 )) ]]; do
     # Show periodic heartbeat
     if [[ $((ELAPSED % 60)) -eq 0 ]]; then
         if [[ $JSON_COUNT -eq 0 ]]; then
-            echo -e "${YELLOW}  ⏱ ${ELAPSED}s — esperando inicio (carga de modelo ML)...${RESET}"
+            echo -e "${YELLOW}  ⏱ ${ELAPSED}s — waiting for start (ML model loading)...${RESET}"
         else
             echo -e "${GRAY}  ⏱ ${ELAPSED}s — ${JSON_COUNT}/${TOTAL} JSONs${RESET}"
         fi
@@ -334,7 +335,7 @@ while [[ $ELAPSED -lt $(( WAIT_TIMEOUT_MIN * 60 )) ]]; do
     if [[ $NO_PROGRESS -ge 6 ]]; then
         LAST_LOG=$($ADB -s "$DEVICE_SERIAL" logcat -d -t 20 2>/dev/null | grep -iE "exception|error|cannot|onnx|model|fatal" | tail -5 || true)
         if [[ -n "$LAST_LOG" ]]; then
-            echo -e "${RED}  ⚠ Posible error (sin progreso por ${NO_PROGRESS} ciclos):${RESET}"
+            echo -e "${RED}  ⚠ Possible error (no progress for ${NO_PROGRESS} cycles):${RESET}"
             echo "$LAST_LOG" | while IFS= read -r line; do echo -e "${RED}    $line${RESET}"; done
         fi
     fi
@@ -342,8 +343,8 @@ while [[ $ELAPSED -lt $(( WAIT_TIMEOUT_MIN * 60 )) ]]; do
     # If no progress for 30+ cycles (~5min) and no images at all, abort
     if [[ $NO_PROGRESS -ge 30 && $JSON_COUNT -eq 0 ]]; then
         echo ""
-        warn "Sin progreso por 30 ciclos (~5min) y 0 JSONs. Abortando."
-        echo -e "${GRAY}Últimas líneas de logcat:${RESET}"
+        warn "No progress for 30 cycles (~5min) and 0 JSONs. Aborting."
+        echo -e "${GRAY}Last logcat lines:${RESET}"
         $ADB -s "$DEVICE_SERIAL" logcat -d -t 50 2>/dev/null | grep -iE "batch|forense|onnx|model|exception|error|DebugBatch" | tail -10
         break
     fi
@@ -352,26 +353,26 @@ done
 kill "$LOGCAT_PID" 2>/dev/null || true
 
 if [[ "$BATCH_DONE" == "false" ]]; then
-    warn "Timeout o error. Estado final:"
+    warn "Timeout or error. Final state:"
     FINAL_JSONS=$($ADB -s "$DEVICE_SERIAL" shell "find '$DEVICE_OUTPUT' -name '*.json' ! -name 'manifest.json' 2>/dev/null | wc -l" 2>/dev/null | tr -d '\r ' || echo 0)
     FINAL_MF=$($ADB -s "$DEVICE_SERIAL" shell "find '$DEVICE_OUTPUT' -name 'manifest.json' 2>/dev/null" | tr -d '\r' || true)
     info "JSONs: $FINAL_JSONS | Manifest: ${FINAL_MF:-NO}"
 fi
 
-# 7d. Descargar resultados
+# 7d. Download results
 echo ""
-info "Descargando resultados..."
+info "Downloading results..."
 
 if [[ -n "$MANIFEST_DEVICE" ]]; then
     REMOTE_RUN_DIR=$(dirname "$MANIFEST_DEVICE")
-    info "Desde: $REMOTE_RUN_DIR"
+    info "From: $REMOTE_RUN_DIR"
     $ADB -s "$DEVICE_SERIAL" pull "$REMOTE_RUN_DIR/." "$RUN_DIR/" 2>&1 | tail -3
 else
-    # Pull todo lo que haya
+    # Pull everything available
     FINAL_DIRS=$($ADB -s "$DEVICE_SERIAL" shell "ls -1d '$DEVICE_OUTPUT'/run_* 2>/dev/null" | tr -d '\r' || true)
     if [[ -n "$FINAL_DIRS" ]]; then
         for d in $FINAL_DIRS; do
-            info "Descargando $d ..."
+            info "Downloading $d ..."
             $ADB -s "$DEVICE_SERIAL" pull "$d/." "$RUN_DIR/" 2>&1 | tail -1
         done
     fi
@@ -382,34 +383,34 @@ else
     fi
 fi
 
-# 7e. Organizar JSONs
+# 7e. Organize JSONs
 REAL_MANIFEST=$(find "$RUN_DIR" -name 'manifest.json' 2>/dev/null | head -1)
 if [[ -n "$REAL_MANIFEST" ]]; then
     ok "Manifest: $REAL_MANIFEST"
     cp "$REAL_MANIFEST" "$RUN_DIR/manifest.json" 2>/dev/null || true
 fi
 
-# Copiar JSONs a raíz del run
+# Copy JSONs to run root
 find "$RUN_DIR" -name '*.json' -not -name 'manifest_input.csv' -not -name 'manifest.json' -not -name 'resumen_metricas.json' -exec cp {} "$RUN_DIR/" \; 2>/dev/null || true
 JSON_COUNT=$(ls "$RUN_DIR"/*.json 2>/dev/null | grep -v manifest_input.csv | grep -v manifest.json | grep -v resumen_metricas.json | wc -l)
-info "JSONs recolectados: $JSON_COUNT"
+info "JSONs collected: $JSON_COUNT"
 
 # =================================================================
-# 8. LIMPIEZA + EVAL + RESUMEN
+# 8. CLEANUP + EVAL + SUMMARY
 # =================================================================
-step "[8/8] Limpieza, evaluación y resumen"
+step "[8/8] Cleanup, evaluation and summary"
 
-info "Limpiando dispositivo..."
+info "Cleaning device..."
 $ADB -s "$DEVICE_SERIAL" shell "rm -rf '$DEVICE_INPUT' '$DEVICE_OUTPUT'" 2>/dev/null || true
 $ADB -s "$DEVICE_SERIAL" shell "am force-stop $PACKAGE" 2>/dev/null || true
-ok "Dispositivo limpio"
+ok "Device clean"
 
-# Evaluación
+# Evaluation
 if [[ "$EVAL" == "true" && $JSON_COUNT -gt 0 ]]; then
     EVAL_SCRIPT=$(find "$DATA_ROOT" -name 'eval_jni_vs_gt.py' 2>/dev/null | head -1)
     [[ -z "$EVAL_SCRIPT" ]] && EVAL_SCRIPT=$(find "$PROJECT_ROOT" -name 'eval_jni_vs_gt.py' 2>/dev/null | head -1)
     if [[ -n "$EVAL_SCRIPT" ]]; then
-        info "Evaluación forense..."
+        info "Forensic evaluation..."
         python3 "$EVAL_SCRIPT" \
             --root-test-dir "$OUT_ROOT" \
             --gt-csv "$CSV" \
@@ -422,27 +423,27 @@ if [[ "$EVAL" == "true" && $JSON_COUNT -gt 0 ]]; then
             --data-root "$DATA_ROOT" \
             --provider "$PROVIDER" \
             2>&1 | tee "$RUN_DIR/eval_log.txt"
-        ok "Evaluación completada"
+        ok "Evaluation completed"
     else
-        warn "eval_jni_vs_gt.py no encontrado"
+        warn "eval_jni_vs_gt.py not found"
     fi
 else
-    warn "No hay JSONs para evaluar (o EVAL=false)"
+    warn "No JSONs to evaluate (or EVAL=false)"
 fi
 
-# Resumen
+# Summary
 echo ""
 echo "====================================================================="
-echo "  RUN COMPLETADO: $RUN_ID"
+echo "  RUN COMPLETED: $RUN_ID"
 echo "====================================================================="
-echo "  Dispositivo:  $MODEL ($ARCH)"
+echo "  Device:       $MODEL ($ARCH)"
 echo "  CSV:          $CSV"
-echo "  Imágenes:     $TOTAL"
+echo "  Images:       $TOTAL"
 echo "  Push:         $PUSHED"
 echo "  Provider:     $PROVIDER"
 echo "  JSONs:        $JSON_COUNT"
 echo "  Manifest:     ${REAL_MANIFEST:-NO}"
-echo "  Evaluación:   $EVAL"
+echo "  Evaluation:   $EVAL"
 echo "  Run dir:      $RUN_DIR"
 echo "====================================================================="
 echo ""

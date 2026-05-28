@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.*
+import com.gaiaspa.metrics_detection.BuildConfig
 import com.gaiaspa.metrics_detection.FeatureFlags
 import com.gaiaspa.metrics_detection.R
 import com.gaiaspa.metrics_detection.data.model.CalPredict
@@ -394,12 +395,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val time = System.currentTimeMillis()
         val resFile = File(lotesDir, "res_${time}_$index.jpg")
         if (uploadPath.isBlank()) {
-            Log.w("OVERLAY_FLOW", "createOverlayWorkingCopy: uploadPath vacío, no se puede crear copia para overlay")
+            Log.w("OVERLAY_FLOW", "createOverlayWorkingCopy: uploadPath empty, cannot create overlay copy")
             return null
         }
         val src = File(uploadPath)
         if (!src.exists() || src.length() == 0L) {
-            Log.w("OVERLAY_FLOW", "createOverlayWorkingCopy: uploadPath no existe o está vacío: $uploadPath")
+            Log.w("OVERLAY_FLOW", "createOverlayWorkingCopy: uploadPath does not exist or is empty: $uploadPath")
             return null
         }
         return try {
@@ -407,7 +408,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 Log.d("OVERLAY_FLOW", "createOverlayWorkingCopy: ${src.absolutePath} -> ${it.absolutePath} (${it.length()} bytes)")
             }
         } catch (e: Exception) {
-            Log.e("OVERLAY_FLOW", "createOverlayWorkingCopy: error copiando $uploadPath -> ${resFile.absolutePath}: ${e.message}")
+            Log.e("OVERLAY_FLOW", "createOverlayWorkingCopy: error copying $uploadPath -> ${resFile.absolutePath}: ${e.message}")
             null
         }
     }
@@ -430,7 +431,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         // 1. GENERATE UPLOAD (clean 1024px base)
         val uploadPath = ImageUtils.generateUpload512(srcFile.absolutePath, lotesDir) ?: ""
-                Log.d("OVERLAY_FLOW", "uploadPath generado: ${if (uploadPath.isBlank()) "VACÍO" else uploadPath}")
+                Log.d("OVERLAY_FLOW", "uploadPath generated: ${if (uploadPath.isBlank()) "EMPTY" else uploadPath}")
                 
         // 2. PREPARE OVERLAY COPY (independent copy for C++ overlay rendering)
         val resFile = createOverlayWorkingCopy(uploadPath, lotesDir, index)
@@ -455,7 +456,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                                 Log.d("OVERLAY_FLOW", "Pipeline OK. overlay=${overlayBase} (${File(overlayBase).length()} bytes)")
                                 overlayBase
                             } else {
-                                Log.w("OVERLAY_FLOW", "Pipeline OK pero overlay no existe/está vacío. Fallback a uploadPath")
+                                Log.w("OVERLAY_FLOW", "Pipeline OK but overlay does not exist/is empty. Fallback to uploadPath")
                                 uploadPath
                             }
                             val finalPreview = if (overlayPath.isNotEmpty()) {
@@ -475,10 +476,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     onFailure = { err -> updateItemError(index, err) }
                 )
             } catch (e: OutOfMemoryError) {
-                Log.e("HomeVM", "OutOfMemory procesando imagen", e)
+                Log.e("HomeVM", "OutOfMemory processing image", e)
                 updateItemError(index, getApplication<Application>().getString(R.string.image_could_not_be_processed))
             } catch (e: Exception) {
-                Log.e("HomeVM", "Error en processImage: ${e.message}")
+                Log.e("HomeVM", "Error in processImage: ${e.message}")
                 updateItemError(index, e.message ?: getApplication<Application>().getString(R.string.error_unknown))
             }
         }
@@ -524,7 +525,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             callback(false)
             return
         } catch (e: Exception) {
-            Log.e("HomeVM", "Error preparando predicciones: ${e.message}", e)
+            Log.e("HomeVM", "Error preparing predictions: ${e.message}", e)
             saveErrorMessage.value = context.getString(R.string.batch_prepare_error)
             callback(false)
             return
@@ -536,21 +537,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 TokenProvider.init(getApplication())
                 val lote = Lote(
                     userId = repository.getCurrentUserId(),
-                    company = company.value ?: "Sin Empresa",
-                    vessel = vessel.value ?: "Sin Nave",
-                    block = block.value ?: "Sin Cuartel",
+                    company = company.value ?: "No Company",
+                    vessel = vessel.value ?: "No Vessel",
+                    block = block.value ?: "No Block",
                     varietyId = selectedVariety.value?.id ?: -1,
                     varietyName = selectedVariety.value?.name ?: "UNKNOWN",
                     sourceImages = payloadForSave.sourceImages,
                     normalizedImages = payloadForSave.normalizedImages,
                     uploadImages = payloadForSave.uploadImages,
-                    overlayImages = payloadForSave.overlayImages, // ✅ PERSISTIMOS EL RES_ NATIVO O REPRESENTATIVO
+                    overlayImages = payloadForSave.overlayImages, // ✅ PERSIST THE NATIVE RES_ OR REPRESENTATIVE
                     calPredicts = payloadForSave.calPredicts,
                     synced = false
                 )
                 repository.insertLocalLote(lote)
                 
-                com.gaiaspa.metrics_detection.worker.SyncManager.enqueueManualSync(getApplication())
+                if (!BuildConfig.DEMO_MODE) {
+                    com.gaiaspa.metrics_detection.worker.SyncManager.enqueueManualSync(getApplication())
+                }
 
                 viewModelScope.launch(Dispatchers.Main) {
                     isSavingLote.value = false
@@ -559,7 +562,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     callback(true)
                 }
             } catch (e: Exception) {
-                Log.e("HomeVM", "Error guardando lote: ${e.message}", e)
+                Log.e("HomeVM", "Error saving batch: ${e.message}", e)
                 viewModelScope.launch(Dispatchers.Main) {
                     isSavingLote.value = false
                     saveErrorMessage.value = e.message ?: context.getString(R.string.batch_save_error)
@@ -573,7 +576,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val inputs = items.map { it.toFusionInput() }
         if (!FeatureFlags.multiViewFusionEnabled) {
             val predictions = items.mapIndexed { index, item ->
-                item.prediction ?: throw IllegalArgumentException("La foto ${index + 1} no tiene predicción")
+                item.prediction ?: throw IllegalArgumentException("Photo ${index + 1} has no prediction")
             }
             return RacimoFusionMapper.buildLegacySavePayload(inputs).copy(calPredicts = predictions)
         }
@@ -668,10 +671,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 null
             }
         } catch (e: OutOfMemoryError) {
-            Log.e("HomeVM", "OutOfMemory validando imagen", e)
+            Log.e("HomeVM", "OutOfMemory validating image", e)
             getApplication<Application>().getString(R.string.image_could_not_be_processed)
         } catch (e: Exception) {
-            Log.e("HomeVM", "Error validando imagen", e)
+            Log.e("HomeVM", "Error validating image", e)
             getApplication<Application>().getString(R.string.image_could_not_be_processed)
         }
     }
