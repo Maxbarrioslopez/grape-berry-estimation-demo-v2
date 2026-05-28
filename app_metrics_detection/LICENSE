@@ -5,8 +5,8 @@ Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC B
 PROJECT-SPECIFIC PUBLICATION NOTICE
 
 This repository is provided as a source-available academic demonstration
-associated with the research paper "An Android offline-first system for
-operational grape bunch analysis through on-device inference and multi-view A/B fusion".
+associated with the research paper "An Offline-First Android System for Operational
+Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion".
 It is intended for
 review, reproducibility, and non-commercial academic evaluation only.
 
@@ -78,11 +78,11 @@ ADDITIONAL TERMS FOR THIS SPECIFIC WORK:
    If you use this software or the accompanying research in any academic context,
    you must cite the corresponding research paper:
 
-     Soto, M.; Barrios, M.; Ormeno-Arriagada, P.; Vasquez, J.
-     "An Android offline-first system for operational grape bunch analysis
-      through on-device inference and multi-view A/B fusion".
-     ScaleAiLab – Universidad Adolfo Ibanez; Universidad de Vina del Mar;
-     Universidad Tecnologica de Chile INACAP. Draft manuscript, 2026.
+     Soto, M.; Barrios, M.; Ormeño-Arriagada, P.; Vasquez, J.
+     "An Offline-First Android System for Operational Analysis of Grape
+      Bunches via On-Device Inference and Multi-View A/B Fusion".
+     ScaleAiLab — Universidad Adolfo Ibáñez; Universidad de Viña del Mar;
+     Universidad Tecnológica de Chile INACAP. Draft manuscript, 2026.
 
 2. NON-COMMERCIAL USE ONLY
 

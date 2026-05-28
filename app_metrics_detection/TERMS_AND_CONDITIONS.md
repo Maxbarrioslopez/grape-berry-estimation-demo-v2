@@ -60,7 +60,7 @@ The authors retain all intellectual and research rights over the project, includ
 If you use this Software or the accompanying research in an academic context, please cite:
 
 ```
-Soto, M.; Barrios, M.; Ormeno-Arriagada, P.; Vasquez, J. "An Android offline-first system for operational grape bunch analysis through on-device inference and multi-view A/B fusion". ScaleAiLab – Universidad Adolfo Ibanez; Universidad de Vina del Mar; Universidad Tecnologica de Chile INACAP. Draft manuscript, 2026.
+Soto, M.; Barrios, M.; Ormeño-Arriagada, P.; Vasquez, J. "An Offline-First Android System for Operational Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion". ScaleAiLab — Universidad Adolfo Ibáñez; Universidad de Viña del Mar; Universidad Tecnológica de Chile INACAP. Draft manuscript, 2026.
 ```
 
 ## Academic Demonstration Agreement
@@ -70,5 +70,5 @@ Every time the Software is launched in demo mode, a mandatory academic demonstra
 ## Contact
 
 Jorge Vasquez (corresponding author)  
-Facultad de Ingenieria y Ciencias, Universidad Adolfo Ibanez  
+Facultad de Ingeniería y Ciencias, Universidad Adolfo Ibáñez  
 jorge.vasquez.a@uai.cl

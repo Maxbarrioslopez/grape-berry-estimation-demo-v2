@@ -10,8 +10,9 @@ The application processes RGB images of grape bunches, runs ONNX-based segmentat
 
 ## Research Context
 
-An Android offline-first system for operational grape bunch analysis through on-device inference and multi-view A/B fusion  
-ScaleAiLab - Universidad Adolfo Ibanez; Universidad de Vina del Mar; Universidad Tecnologica de Chile INACAP  
+An Offline-First Android System for Operational Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion  
+Soto, M.; Barrios, M.; Ormeño-Arriagada, P.; Vasquez, J.  
+ScaleAiLab — Universidad Adolfo Ibáñez; Universidad de Viña del Mar; Universidad Tecnológica de Chile INACAP  
 2026 (draft manuscript)
 
 This implementation accompanies the draft research manuscript and serves as a reproducibility artifact, reference implementation, and demonstration of the on-device ML pipeline described in the paper.
@@ -61,7 +62,7 @@ The public academic build **preserves the original authentication interface and 
 - No valid credentials are required.
 - No tokens are written to encrypted storage.
 - Registration and password recovery are presented as non-operational UI demonstrations.
-- The original backend architecture remains preserved for future private/production reactivation.
+- The original backend architecture is preserved for future private/production reactivation.
 
 This allows paper reviewers and the academic community to:
 
@@ -89,7 +90,7 @@ The project depends on two native libraries expected under `third_party/`:
 - **ONNX Runtime** — `third_party/onnxruntime/onnxruntime-android-1.24.3/`
 - **OpenCV Android SDK** — `third_party/opencv/OpenCV-android-sdk/`
 
-If these directories are omitted from a slim public artifact due to size or licensing review, download the libraries from their official sources and place them in the expected directories before building.
+If these directories are omitted from a compact public distribution due to size or licensing review, download the libraries from their official sources and place them in the expected directories before building.
 
 ### Build Steps
 
@@ -186,7 +187,7 @@ In summary:
 If you use this code or the accompanying research in an academic context, please cite:
 
 ```
-Soto, M.; Barrios, M.; Ormeno-Arriagada, P.; Vasquez, J. "An Android offline-first system for operational grape bunch analysis through on-device inference and multi-view A/B fusion". Draft manuscript, 2026.
+Soto, M.; Barrios, M.; Ormeño-Arriagada, P.; Vasquez, J. "An Offline-First Android System for Operational Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion". Draft manuscript, 2026.
 ```
 
 ### Commercial Use
@@ -196,8 +197,6 @@ Commercial use requires prior written permission from the authors. Contact jorge
 ### Terms and Conditions
 
 Please review [TERMS_AND_CONDITIONS.md](./TERMS_AND_CONDITIONS.md) before using this software.
-
-This license notice should be reviewed by the project owner or legal advisor before formal publication. Creative Commons licenses are not always ideal for source code.
 
 ---
 
@@ -214,5 +213,5 @@ This license notice should be reviewed by the project owner or legal advisor bef
 ## Contact
 
 Jorge Vasquez (corresponding author)  
-Facultad de Ingenieria y Ciencias, Universidad Adolfo Ibanez  
+Facultad de Ingeniería y Ciencias, Universidad Adolfo Ibáñez  
 jorge.vasquez.a@uai.cl
