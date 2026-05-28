@@ -124,6 +124,24 @@ Removed as legacy/noise:
 
 - old forensic/audit markdown reports
 - editor/machine-specific metadata files
+- unused Gradle dependencies (smile-core, boofcv, ucrop)
+- dev-only scripts and debug batch activity
+- unused assets and duplicate model files
+
+## Legacy Code Preserved (Intentionally Inactive)
+
+The following packages are kept in the repository but **not active at runtime**.
+They are preserved for documentation, future extensibility, and academic transparency.
+
+| Package / File | Status | Reason Preserved |
+|----------------|--------|------------------|
+| `depth_estimation/` (MIDASModel, BitmapUtils, DrawingOverlay, Logger) | Commented out / unreferenced | MiDaS depth estimation pipeline (TensorFlow Lite). Replaced by the current ONNX/C++ path. Preserved as reference for potential future depth-based metrics. |
+| `i18n/LanguagePreferenceManager.kt` | Gated behind `FEATURE_LANGUAGE_SWITCH=false` | Full multi-language support infrastructure. The app is currently English-only, but the i18n layer is fully implemented and can be reactivated by setting the feature flag to `true`. Includes language selector UI logic. |
+| `model/` (legacy Lote, CalPredict, AuthState) | 0 references | Previous non-Room data models. Replaced by `data.model/` Room entities. Kept for historical reference of the data model evolution. |
+| `data/local/delete/` (legacy converters) | 0 references | Previous Room type converters. Replaced by `data.local.Converter.kt`. Kept as reference for conversion strategies. |
+
+**To reactivate i18n:** set `FeatureFlags.FEATURE_LANGUAGE_SWITCH = true` and provide translated `strings.xml` variants.
+**To explore MiDaS:** uncomment `MIDASModel.kt` and add TensorFlow Lite dependencies back to `build.gradle.kts`.
 
 ## License
 

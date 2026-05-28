@@ -85,22 +85,6 @@
         <!-- Main activity -->
         <activity android:name=".MainActivity" />
 
-        <!--
-            Debug/batch activity.
-
-            Kept for compatibility with internal/forensic tools,
-            but protected with exported=false to prevent opening from other apps.
-
-            Do not remove without reviewing:
-            - BatchProcessor
-            - internal test flows
-            - report generation or batch processing
-        -->
-        <activity
-            android:name=".DebugBatchActivity"
-            android:excludeFromRecents="true"
-            android:exported="false" />
-
     </application>
 
 </manifest>

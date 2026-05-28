@@ -28,7 +28,7 @@ app_metrics_detection/app/release/
 *.zip
 
 # =========================================================
-# Android Studio / IntelliJ
+# Android Studio / IntelliJ / Editor
 # =========================================================
 .idea/
 .vscode/
@@ -51,15 +51,13 @@ nul
 Thumbs.db
 
 # =========================================================
-# Test images / datasets / heavy results
+# Test images / datasets / heavy results (not in repo)
 # =========================================================
 images/
 imagenesparatest/
 debug/
-
-app_metrics_detection/images/
-app_metrics_detection/imagenesparatest/
-app_metrics_detection/debug/
+paper_demo_screenshots_*/
+docs/ui_dump_*.xml
 
 **/imagenesparatest/
 **/test_images/
@@ -77,7 +75,7 @@ app_metrics_detection/debug/
 **/reportes_test/
 **/reports_test/
 
-# Ignore loose heavy images outside allowed Android resource/assets
+# Ignore loose heavy images outside allowed directories
 *.jpg
 *.jpeg
 *.png
@@ -101,6 +99,9 @@ app_metrics_detection/debug/
 !app_metrics_detection/app/src/main/assets/**/*.jpeg
 !app_metrics_detection/app/src/main/assets/**/*.webp
 
+# Allow app screenshots (paper evidence)
+!app_screenshots/*.png
+
 # =========================================================
 # ML models needed by the app
 # =========================================================
@@ -121,7 +122,7 @@ app_metrics_detection/app/build/
 app_metrics_detection/third_party/opencv/OpenCV-android-sdk/samples/
 
 # =========================================================
-# SIGNING KEYS / CREDENTIALS — EXCLUDED FROM PUBLIC REPO
+# SIGNING KEYS / CREDENTIALS — EXCLUDED
 # =========================================================
 keystore.properties
 app_metrics_detection/keystore.properties
@@ -145,7 +146,7 @@ _not_for_public_repo/
 capturas_vistas_app/
 
 # =========================================================
-# Node / frontend if present
+# Node / frontend
 # =========================================================
 node_modules/
 dist/

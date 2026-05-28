@@ -171,22 +171,20 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
 
     // CLEANUP: TensorFlow Lite dependencies removed as legacy code.
+    // CLEANUP: smile-core, boofcv, ucrop removed (unused in current pipeline).
 
-    implementation("com.github.haifengl:smile-core:2.6.0")
-    implementation("org.boofcv:boofcv-android:0.40")
-    implementation ("com.google.code.gson:gson:2.9.0")
-    implementation ("androidx.room:room-runtime:2.5.2")
-    kapt ("androidx.room:room-compiler:2.5.2")
-    implementation ("androidx.room:room-ktx:2.5.2")
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation (libs.mpandroidchart)
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
+    implementation("com.google.code.gson:gson:2.9.0")
+    implementation("androidx.room:room-runtime:2.5.2")
+    kapt("androidx.room:room-compiler:2.5.2")
+    implementation("androidx.room:room-ktx:2.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.mpandroidchart)
+    implementation("com.github.bumptech.glide:glide:4.15.1")
     kapt ("com.github.bumptech.glide:compiler:4.15.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("androidx.security:security-crypto-ktx:1.1.0-alpha03")
-    implementation ("com.github.yalantis:ucrop:2.2.8")
     implementation ("androidx.work:work-runtime-ktx:2.7.1")
 }
