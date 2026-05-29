@@ -47,7 +47,6 @@ private fun safeDecode(path: String, reqPx: Int = 300): Bitmap? {
     val opts = BitmapFactory.Options().apply {
         inSampleSize       = calcSample(probe.outWidth, probe.outHeight, reqPx)
         inPreferredConfig  = Bitmap.Config.RGB_565   // 2 B/px
-        inDither           = false
     }
     val bmp = BitmapFactory.decodeFile(cleanPath, opts)
     Log.d(PDF_IMG_TAG, "safeDecode path=$cleanPath result=${bmp != null} (${probe.outWidth}x${probe.outHeight})")

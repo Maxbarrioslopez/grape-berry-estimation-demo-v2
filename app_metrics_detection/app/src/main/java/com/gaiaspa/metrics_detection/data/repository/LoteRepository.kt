@@ -238,6 +238,7 @@ class LoteRepository private constructor(
     ): Response<LoteResponse> = withContext(Dispatchers.IO) {
         if (BuildConfig.DEMO_MODE) {
             Log.d(TAG, "DEMO_MODE: Cloud upload skipped.")
+            @Suppress("DEPRECATION")
             return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
         }
         val calPredictsJson = gson.toJson(loteRequest.calPredicts)
@@ -260,6 +261,7 @@ class LoteRepository private constructor(
     suspend fun getLoteGrapeCloud(): Response<List<LoteResponse>> = withContext(Dispatchers.IO) {
         if (BuildConfig.DEMO_MODE) {
             Log.d(TAG, "DEMO_MODE: Cloud download skipped.")
+            @Suppress("DEPRECATION")
             return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
         }
         apiService.getBatchsDetections()
@@ -273,6 +275,7 @@ class LoteRepository private constructor(
     suspend fun deleteLoteGrapeCloud(cloudID: String): Response<DeleteBatchGrapeResponse> = withContext(Dispatchers.IO) {
         if (BuildConfig.DEMO_MODE) {
             Log.d(TAG, "DEMO_MODE: Cloud delete skipped.")
+            @Suppress("DEPRECATION")
             return@withContext Response.error(503, okhttp3.ResponseBody.create(null, ""))
         }
         apiService.deleteBatchDetection(cloudID)
