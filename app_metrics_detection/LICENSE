@@ -2,13 +2,11 @@ Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC B
 
 =======================================================================
 
-PROJECT-SPECIFIC PUBLICATION NOTICE
-
 This repository is provided as a source-available academic demonstration
-associated with the research paper "An Offline-First Android System for Operational
-Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion".
-It is intended for
-review, reproducibility, and non-commercial academic evaluation only.
+associated with the research paper "An Offline-First Android System for
+Operational Analysis of Grape Bunches via On-Device Inference and Multi-View
+A/B Fusion". It is intended for review, reproducibility, and non-commercial
+academic evaluation only.
 
 The public version is local-only: backend services, cloud synchronization,
 remote storage, user authentication, and credential-based login are disabled.
@@ -18,14 +16,10 @@ Commercial use, production deployment, and commercial redistribution require
 prior written permission from the authors. Academic use should cite the
 associated research paper.
 
-This license notice should be reviewed by the project owner or legal advisor
-before formal publication. Creative Commons licenses are not always ideal for
-source code.
-
 =======================================================================
 
-This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives
-4.0 International License.
+This work is licensed under the Creative Commons Attribution-NonCommercial-
+NoDerivatives 4.0 International License.
 
 To view a copy of this license, visit:
   http://creativecommons.org/licenses/by-nc-nd/4.0/
