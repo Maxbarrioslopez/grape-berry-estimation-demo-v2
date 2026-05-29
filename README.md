@@ -97,39 +97,46 @@ All models are extracted from APK assets to internal storage (`filesDir/weights/
 
 ## Paper Results (Verified From Final Evaluation Run)
 
+### Dataset
+
+The validation partition comprises **1,883 images** (944 unique bunches) across 12 table-grape varieties. From this partition, **548 images** were drawn as a balanced subsample of 25 images per variety (with minor adjustments for varieties with fewer available pairs), forming **274 valid A/B pairs** (front and back views of the same bunch). All evaluation metrics were computed on this subsample.
+
 ### Global Metrics — 548 Images, 274 A/B Pairs
 
 | Metric | Single-Image | Fused A/B | Improvement |
 |--------|:-----------:|:---------:|:-----------:|
 | MAE (berry count) | 5.50 | 4.71 | −14.4% |
+| MAE 95% CI | [4.84, 6.29] | [3.89, 5.81] | — |
 | RMSE | 10.23 | 9.43 | −7.8% |
 | Median Absolute Error | 3.60 | 2.84 | −21.3% |
+| P95 Absolute Error | 16.39 | 12.58 | −23.2% |
+| Max Absolute Error | 127.23 | 114.82 | — |
 | W1 Distance (caliber, mm) | 1.209 | 1.174 | −2.9% |
 
-> Wilcoxon signed-rank test: W = 2184, p = 1.94 × 10⁻²¹ (paired, N = 274)
+> Wilcoxon signed-rank test: W = 2990, p = 2.4 × 10⁻²⁰ (paired, N = 274)
 
-### Latency (on-device, median)
+### Latency (on-device, Xiaomi 13T, ONNX inference only)
 
-| Mode | p50 (ms) | p95 (ms) |
-|------|:--------:|:--------:|
-| Single-image inference | 2893 | 3548 |
-| Fused A/B (2 inferences) | 5786 | 7029 |
+| Mode | Mean (ms) | p50 (ms) | p95 (ms) | Max (ms) |
+|------|:---------:|:--------:|:--------:|:--------:|
+| Single-image inference | 271 | 237 | 503 | 818 |
+| Fused A/B (2 inferences) | 541 | 474 | 972 | 1498 |
 
 ### Per-Variety Breakdown (Fused A/B, 12 varieties)
 
 | Variety | Pairs | MAE | W1 (mm) |
 |---------|:-----:|:---:|:-------:|
-| Magenta | 30 | 3.39 | 0.979 |
-| Red Globe | 30 | 4.65 | 1.042 |
-| Autumn Crisp | 30 | 5.31 | 1.082 |
-| Sweet Globe | 30 | 5.47 | 0.768 |
-| Scarlotta | 24 | 5.77 | 0.623 |
-| Allison | 30 | 5.84 | 0.898 |
+| Sweet Globe | 15 | 2.11 | 1.534 |
+| Ivory | 23 | 2.44 | 0.668 |
+| Autumn Crisp | 30 | 2.63 | 2.805 |
+| Magenta | 30 | 2.97 | 1.003 |
+| Thompson | 7 | 3.82 | 0.784 |
+| Red Globe | 30 | 4.18 | 1.991 |
+| Scarlotta | 18 | 4.34 | 0.817 |
+| Superior | 9 | 4.73 | 0.922 |
 | Timpson | 22 | 5.39 | 0.706 |
+| Allison | 30 | 5.84 | 0.898 |
 | Crimson | 30 | 6.80 | 0.511 |
-| Thompson | 22 | 8.84 | 0.801 |
-| Ivory | 25 | 8.49 | 1.040 |
-| Superior | 25 | 8.56 | 0.913 |
 | Timco | 30 | 8.78 | 0.767 |
 
 > Single-image and per-variety full tables available in the manuscript.
