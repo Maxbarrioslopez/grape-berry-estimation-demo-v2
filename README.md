@@ -21,7 +21,7 @@ cd grape-berry-estimation-demo-v2/app_metrics_detection
 ./gradlew installDebug
 ```
 
-> The debug APK builds with `DEMO_MODE=true` — no backend, no credentials, local-only inference. Launch the app, accept the academic agreement, tap Login, and start analyzing grape bunches.
+> The debug APK builds with `DEMO_MODE=true` — no backend, no credentials, local-only inference. Launch the app, accept the academic agreement, tap the Login button, and start analyzing grape bunches.
 
 ---
 
@@ -32,7 +32,7 @@ This repository contains the source code for an **offline-first Android applicat
 > **An Offline-First Android System for Operational Analysis of Grape Bunches via On-Device Inference and Multi-View A/B Fusion**  
 > Soto, M.; Barrios, M.; Ormeño-Arriagada, P.; Vasquez, J. — Draft manuscript, 2026
 
-The system processes RGB images of grape bunches through a Kotlin / JNI / C++ pipeline, runs ONNX-based segmentation and regression models entirely on-device, and produces structured predictions: berry count, mean diameter, mode, standard deviation, and size distribution histogram.
+The system processes RGB images of grape bunches through a Kotlin/JNI/C++ pipeline, runs ONNX-based segmentation and regression models entirely on-device, and produces structured predictions: berry count, mean diameter, mode, standard deviation, and size distribution histogram.
 
 **Core capabilities without network access:**
 - Image capture (camera) and gallery loading
@@ -91,7 +91,7 @@ The system processes RGB images of grape bunches through a Kotlin / JNI / C++ pi
 | Histogram | `weights/modelos/hist_rgbdt_bimodal.onnx` | 461 KB | Predicts caliber (berry size) distribution |
 | Histogram Weights | `weights/modelos/hist_rgbdt_bimodal.onnx.data` | 4.4 MB | External data weights for histogram model |
 
-All models are extracted from APK assets to internal storage (`filesDir/weights/`) at first launch. Model training and export are described in a companion manuscript currently under review. This repository consumes the exported ONNX artifacts and focuses on their mobile integration.
+All models are extracted from APK assets to internal storage (`filesDir/weights/`) at first launch. Model training and export are described in a companion manuscript currently under review [1]. This repository consumes the exported ONNX artifacts and focuses on their mobile integration.
 
 ---
 
@@ -266,7 +266,7 @@ Universidad Tecnológica de Chile INACAP. Draft manuscript, 2026.
 | Android version | 9.0 (API 28) | 14+ (API 34) |
 | CPU | arm64-v8a | Snapdragon 8-series or equivalent |
 
-Devices tested: Pixel 7 (emulator), Samsung Galaxy S21 (physical).
+Devices tested: Pixel 7 (Android emulator), Xiaomi 13T (physical), Samsung Galaxy S21 (physical).
 
 ### Step 1 — Download native dependencies
 
@@ -314,7 +314,7 @@ pip install -r requirements.txt
 
 - **iOS not supported.** The JNI/C++ pipeline targets Android NDK only.
 - **CPU inference.** ONNX Runtime runs on CPU; no GPU or NNAPI delegate configured.
-- **Lighting sensitivity.** Performance degrades under extreme shadows or direct sunlight.
+- **Lighting sensitivity.** Performance degrades under harsh shadows or direct sunlight.
 - **Occlusion.** Heavily occluded bunches may produce undercounts; the A/B fusion strategy mitigates but does not eliminate this.
 - **Model generalization.** Models were trained on 12 table-grape varieties under Chilean field conditions. Performance on other varieties or environments is not guaranteed.
 - **Single-bunch capture.** The pipeline expects one bunch per image pair. Multi-bunch scenes are not supported.
