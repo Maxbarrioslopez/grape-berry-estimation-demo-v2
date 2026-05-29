@@ -18,6 +18,65 @@ Core capabilities available without network access:
 
 ---
 
+## Repository Structure
+
+```
+├── README.md                          # This file
+├── requirements.txt                   # Optional Python dependencies (analysis only)
+├── .gitignore                         # Unified ignore rules
+├── .gitattributes                     # Git LFS tracking rules
+├── app_screenshots/                   # Paper/demo screenshot evidence (30 images + README)
+│   └── README.md
+│
+└── app_metrics_detection/             # Main Android project (Gradle root)
+    ├── README.md                      # Detailed build instructions and metadata
+    ├── LICENSE                        # CC BY-NC-ND 4.0
+    ├── TERMS_AND_CONDITIONS.md        # Usage terms
+    ├── build.gradle.kts               # Root build configuration
+    ├── settings.gradle.kts
+    ├── gradle.properties
+    ├── gradle/
+    │   ├── libs.versions.toml         # Version catalog
+    │   └── wrapper/
+    ├── scripts/
+    │   ├── prepare_native_deps_linux.sh   # Download ONNX Runtime + OpenCV (Linux)
+    │   └── prepare_native_deps.ps1        # Download ONNX Runtime + OpenCV (Windows)
+    ├── third_party/                   # Native libraries (downloaded by scripts)
+    │   ├── onnxruntime/
+    │   └── opencv/
+    └── app/                           # Android application module
+        ├── build.gradle.kts           # App build config (DEMO_MODE, deps, signing)
+        ├── proguard-rules.pro
+        └── src/
+            ├── main/
+            │   ├── AndroidManifest.xml
+            │   ├── cpp/               # JNI/C++ pipeline (ONNX inference)
+            │   ├── java/.../          # Kotlin source
+            │   └── res/               # Android resources
+            └── test/                  # Unit tests
+```
+
+---
+
+## Key Versions
+
+| Component | Version | Notes |
+|-----------|---------|-------|
+| Android SDK (compile/target) | 34 | — |
+| Android SDK (min) | 28 | — |
+| NDK | 26.x | Required for C++ compilation |
+| CMake | 3.22.1+ | — |
+| JDK | 17 | Recommended for AGP 8.x |
+| Kotlin | 1.9.x | — |
+| ONNX Runtime | 1.24.3 | Prebuilt AAR/JNI from third_party/ |
+| OpenCV Android SDK | 4.x | Prebuilt SDK from third_party/ |
+| Room | 2.5.2 | Local persistence |
+| Retrofit | 2.9.0 | HTTP client (disabled in demo) |
+| OkHttp | 4.9.1 | HTTP engine (disabled in demo) |
+| WorkManager | 2.7.1 | Background sync (disabled in demo) |
+
+---
+
 ## Alignment With The Paper
 
 This README separates two kinds of statements:
@@ -76,30 +135,34 @@ The README inside `app_screenshots/` documents what each image represents.
 - CMake 3.22.1+
 - JDK 17 (recommended for AGP 8.x projects)
 
-### Prepare native dependencies
+### Step 1 — Download native dependencies
 
-From `app_metrics_detection/`:
+The project requires ONNX Runtime and OpenCV native libraries placed under `third_party/`. Run the preparation script for your platform from `app_metrics_detection/`:
 
-Linux:
+**Linux / macOS:**
 
 ```bash
+cd app_metrics_detection
 ./scripts/prepare_native_deps_linux.sh
 ```
 
-Windows PowerShell:
+**Windows (PowerShell):**
 
 ```powershell
+cd app_metrics_detection
 powershell -ExecutionPolicy Bypass -File scripts/prepare_native_deps.ps1
 ```
 
-### Build debug APK
+These scripts download and extract ONNX Runtime for Android (v1.24.3) and the OpenCV Android SDK to the expected `third_party/` paths.
+
+### Step 2 — Build debug APK
 
 ```bash
 cd app_metrics_detection
 ./gradlew assembleDebug
 ```
 
-### Install on device/emulator
+### Step 3 — Install on device/emulator
 
 ```bash
 cd app_metrics_detection
@@ -110,9 +173,19 @@ cd app_metrics_detection
 
 ## Optional Python Tooling
 
-The Android application does not require Python to build or run. Optional Python dependencies for reproducibility and analysis are pinned in:
+The Android application does **not** require Python to build or run. The file `requirements.txt` pins optional dependencies used for offline analysis and reproducibility scripts described in the paper:
 
-- `requirements.txt`
+- **numpy, pandas, scipy** — numerical data manipulation
+- **matplotlib, seaborn** — figure and visualization generation
+- **statsmodels, openpyxl** — statistical tests and Excel data export
+- **tqdm, python-dateutil** — progress reporting and date handling
+- **pytest** — unit testing for analysis scripts
+
+Install with:
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
