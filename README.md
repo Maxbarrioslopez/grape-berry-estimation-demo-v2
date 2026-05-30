@@ -1,6 +1,9 @@
 # Grape Bunch Analysis — Android Offline-First System
 
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+<p align="center">
+  <img src="app_demo_preview.gif" width="270" alt="App Demo Preview"/>
+</p>
 [![Paper Status](https://img.shields.io/badge/Paper-Draft%20Manuscript-informational)](#alignment-with-the-paper)
 [![Android](https://img.shields.io/badge/Android-34-green.svg)]()
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blueviolet.svg)]()
