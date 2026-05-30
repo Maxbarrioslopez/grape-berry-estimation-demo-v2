@@ -1,23 +1,118 @@
-# Optional Python environment for reproducibility/analysis tooling.
+# =============================================================================
+# ANDROID STUDIO SETUP GUIDE (required to build the app)
+# =============================================================================
+#
+# The Android app requires Android Studio, the Android SDK, NDK, CMake, and JDK.
+# Follow the steps below for your operating system.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 1 — Install JDK 17
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   Linux (Ubuntu/Debian):
+#     sudo apt update && sudo apt install openjdk-17-jdk -y
+#     java -version   # verify → should show "openjdk 17.x"
+#
+#   macOS:
+#     brew install openjdk@17
+#     java -version   # verify
+#
+#   Windows:
+#     Download from https://adoptium.net/ (Temurin 17 LTS)
+#     Run installer, check "Add to PATH"
+#     Open new cmd and run: java -version
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 2 — Install Android Studio
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   Download: https://developer.android.com/studio
+#   Run the installer and follow the setup wizard.
+#   During setup, select:
+#     - "Standard" install type (recommended)
+#     - Android SDK 34 (API 34)
+#     - Android SDK Platform-Tools (adb)
+#     - Android Emulator (optional)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 3 — Install NDK & CMake (via SDK Manager)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   Open Android Studio → More Actions → SDK Manager
+#   (or Tools → SDK Manager from an open project)
+#
+#   In the "SDK Tools" tab, check and apply:
+#     ☑ NDK (Side by side)  → version 26.x
+#     ☑ CMake               → version 3.22.1+
+#     ☑ Android SDK Command-line Tools (latest)
+#
+#   Apply → Accept licenses → Wait for download.
+#
+#   Verify:
+#     ls $ANDROID_HOME/ndk/    # should show 26.x
+#     ls $ANDROID_HOME/cmake/  # should show 3.22.x+
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 4 — Set Environment Variables
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   Add to ~/.bashrc (Linux) or ~/.zshrc (macOS):
+#
+#     export ANDROID_HOME=$HOME/Android/Sdk
+#     export PATH=$PATH:$ANDROID_HOME/platform-tools
+#     export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+#
+#   For Windows, add these via System Properties → Environment Variables:
+#     ANDROID_HOME = C:\Users\<User>\AppData\Local\Android\Sdk
+#     %ANDROID_HOME%\platform-tools    → add to PATH
+#     %ANDROID_HOME%\cmdline-tools\latest\bin → add to PATH
+#
+#   Reload shell (Linux/macOS): source ~/.bashrc
+#   Verify: adb --version
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# STEP 5 — Clone & Build
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   git clone https://github.com/Maxbarrioslopez/grape-berry-estimation-demo-v2.git
+#   cd grape-berry-estimation-demo-v2/app_metrics_detection
+#
+#   # Download native deps (ONNX Runtime + OpenCV for Android)
+#   ./scripts/prepare_native_deps_linux.sh          # Linux/macOS
+#   # powershell -ExecutionPolicy Bypass -File scripts/prepare_native_deps.ps1  # Windows
+#
+#   # Build debug APK
+#   ./gradlew assembleDebug
+#
+#   # Install on connected device
+#   ./gradlew installDebug
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# SYSTEM REQUIREMENTS
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   RAM:       4 GB minimum, 8 GB+ recommended
+#   Storage:   ~2 GB free (SDK, NDK, third-party libs)
+#   Android:   9.0 (API 28) minimum, 14+ (API 34) recommended
+#   CPU:       arm64-v8a (tested: Pixel 7, Xiaomi 13T, Samsung Galaxy S21)
+#
+# =============================================================================
+# OPTIONAL PYTHON DEPENDENCIES (for offline analysis and reproducibility only)
 # Not required to build or run the Android app.
 # Recommended Python: 3.11.x
+# =============================================================================
 
-# Core numeric stack
 numpy==1.26.4
 pandas==2.2.2
 scipy==1.13.1
 
-# Visualization and reporting
 matplotlib==3.9.0
 seaborn==0.13.2
 
-# Statistics and data exports
 statsmodels==0.14.2
 openpyxl==3.1.5
 
-# Utilities
 tqdm==4.66.4
 python-dateutil==2.9.0.post0
 
-# Optional testing (for analysis scripts)
 pytest==8.2.2

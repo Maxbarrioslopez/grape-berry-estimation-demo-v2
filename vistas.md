@@ -8,180 +8,196 @@
 ## Table of Contents
 
 1. [Academic Agreement](#1-academic-agreement)
-2. [Demo Login](#2-demo-login)
+2. [Demo Login & Registration](#2-demo-login--registration)
 3. [Batch Creation](#3-batch-creation)
-4. [Image Capture (A/B Pairs)](#4-image-capture-ab-pairs)
-5. [On-Device Inference](#5-on-device-inference)
-6. [Results & Measurement](#6-results--measurement)
-7. [History, Profile & Support](#7-history-profile--support)
+4. [Image Capture & Processing](#4-image-capture--processing)
+5. [Results & Metrics](#5-results--metrics)
+6. [Save & History](#6-save--history)
+7. [Profile & Support](#7-profile--support)
 
 ---
 
 ## 1. Academic Agreement
 
-The app opens with an **academic agreement** screen. This is a mandatory step that informs the user about the research purpose of the application and requires explicit consent.
+The app opens with an **academic agreement** pop-up. This mandatory step informs the user about the research purpose of the application and requires explicit consent before entering the app.
 
-### 1a. Initial Launcher / Agreement
+### 1a. Agreement Pop-up
 
-<img src="app_screenshots/01_launcher_or_agreement.png" width="270" alt="Launcher and agreement screen"/>
+<img src="app_screenshots/01_acuerdo_demostracion.png" width="270" alt="Academic agreement pop-up"/>
 
-**What you see:** The app's splash/launcher transitions into the academic agreement screen. A scrollable text describes the research context, data usage, and offline-only nature of the demo.
+**What you see:** A modal dialog with the academic agreement text — research context, data usage, offline-only nature, and institutional disclaimers.
 
-**User action:** Read the agreement text.
+**User action:** Read the agreement and tap the acceptance checkbox.
 
-**App section:** `AgreementActivity` — this is the first activity shown on every cold start. The agreement is session-only (never persisted), ensuring the user is informed every time.
-
----
-
-### 1b. Agreement Accepted
-
-<img src="app_screenshots/02_agreement_checked.png" width="270" alt="Agreement checkbox checked"/>
-<img src="app_screenshots/02_agreement_checked_fixed.png" width="270" alt="Agreement checked alternate"/>
-<img src="app_screenshots/02_agreement_checked_retry.png" width="270" alt="Retry capture of acceptance"/>
-
-**What you see:** A checkbox below the agreement text. Once checked, the **Continue** button becomes enabled (previously grayed out).
-
-**User action:** Tap the checkbox, then tap **Continue**.
-
-**App section:** `AgreementActivity` — the Continue button is bound to a boolean state that toggles with the checkbox. This is a simple consent gate before entering the app.
+**App section:** `AgreementActivity` — shown on every cold start. The agreement is session-only (never persisted), ensuring the user is informed each time.
 
 ---
 
-### 1c. After Agreement
+### 1b. Terms Accepted
 
-<img src="app_screenshots/03_home_after_agreement.png" width="270" alt="Home after agreement"/>
-<img src="app_screenshots/21_after_agree.png" width="270" alt="After agreement alternate"/>
+<img src="app_screenshots/02_acuerdo_terminos_aceptados.png" width="270" alt="Terms accepted, Continue enabled"/>
 
-**What you see:** The home/batch screen immediately after accepting the agreement. This is the main entry point of the app.
+**What you see:** The checkbox is checked and the **Continue** button is now enabled. The dialog is ready to dismiss.
 
-**App section:** The app navigates from `AgreementActivity` to the main `HomeActivity` / batch creation screen.
+**User action:** Tap **Continue** to proceed.
 
----
-
-## 2. Demo Login
-
-After the agreement, the app shows a **login screen**. However, with `DEMO_MODE=true`, authentication is intercepted locally — no backend call is made.
-
-### 2a. Login Screen
-
-<img src="app_screenshots/04_login_screen.png" width="270" alt="Login screen with email and password fields"/>
-
-**What you see:** Email and password text fields with a **Login** button below. This is a real login UI, preserved for demonstration purposes.
-
-**User action:** Tap the **Login** button (any credentials work in demo mode).
-
-**App section:** `LoginActivity` / `DemoAuthInterceptor` — the login UI is real, but the `AuthInterceptor` checks `DEMO_MODE` and bypasses any server call. A local token is generated instead.
+**App section:** The Continue button is gated on the checkbox state. Once accepted, the app navigates to the login screen.
 
 ---
 
-### 2b. Login Interaction
+## 2. Demo Login & Registration
 
-<img src="app_screenshots/05_login_keyboard_dismissed.png" width="270" alt="Login with keyboard dismissed"/>
-<img src="app_screenshots/05_login_or_main_after_tap.png" width="270" alt="After tapping login"/>
-<img src="app_screenshots/06_login_enter_attempt.png" width="270" alt="Credentials entry"/>
-<img src="app_screenshots/06_login_submitted.png" width="270" alt="Login submitted"/>
-<img src="app_screenshots/07_login_button_bounds_tap.png" width="270" alt="Tap on login button area"/>
+After the agreement, the app shows a **login screen**. With `DEMO_MODE=true`, authentication is intercepted locally — no backend call is made. The registration and password recovery UIs are preserved for demonstration.
 
-**What you see:** Various states of the login interaction — keyboard shown/dismissed, credentials being entered, and the moment the login button is tapped.
+### 2a. Login Screen (Demo Mode)
 
-**User action:** Type any email/password (or leave blank) and tap **Login**.
+<img src="app_screenshots/03_login_modo_demo.png" width="270" alt="Login screen in demo mode"/>
 
-**App section:** `LoginViewModel` + `DemoAuthInterceptor` — the ViewModel calls the auth repository, which detects demo mode and returns a success response with a local demo token immediately.
+**What you see:** Email and password fields with a **Login** button. Below there are links to **Register** and **Forgot Password**.
+
+**User action:** Tap **Login** directly (any credentials work), or explore Register / Forgot Password.
+
+**App section:** `LoginActivity` — the UI is real. The `DemoAuthInterceptor` detects `DEMO_MODE=true` and returns a local success without any server call.
 
 ---
 
-### 2c. Post-Login / Home
+### 2b. Registration — Step 1 (Invitation)
 
-<img src="app_screenshots/08_post_login_state.png" width="270" alt="Post-login state"/>
-<img src="app_screenshots/22_after_login.png" width="270" alt="Home after login"/>
+<img src="app_screenshots/04_registro_etapa_1_invitacion.png" width="270" alt="Registration step 1: email and invitation code"/>
 
-**What you see:** The main home screen after successful demo login. The user is now authenticated locally and can start creating batches.
+**What you see:** Registration form, first step — email field and invitation code field. A **Continue** button at the bottom.
 
-**App section:** `HomeActivity` / `BatchOriginFragment` — the main hub for batch creation. From here the user navigates to the capture flow.
+**User action:** Fill in an email and invitation code (or leave defaults), tap **Continue**.
+
+**App section:** `RegisterActivity` step 1 — the registration flow is split into multiple steps for data collection.
+
+---
+
+### 2c. Registration — Step 2 (Personal Data)
+
+<img src="app_screenshots/05_registro_etapa_2_datos_usuario.png" width="270" alt="Registration step 2: personal data and consent"/>
+
+**What you see:** Second registration step — name, institution, password fields, plus data consent checkbox.
+
+**User action:** Fill in the fields and tap **Register**.
+
+**App section:** `RegisterActivity` step 2 — personal data and consent collection. In demo mode this is stored locally only.
+
+---
+
+### 2d. Return to Login from Registration
+
+<img src="app_screenshots/06_login_retorno_desde_registro.png" width="270" alt="Return to login after registration"/>
+
+**What you see:** The app returns to the login screen after completing (or canceling) the registration flow.
+
+**User action:** Tap **Login** to enter the app, or use the **Forgot Password** link if needed.
+
+---
+
+### 2e. Password Recovery
+
+<img src="app_screenshots/07_recuperacion_contrasena.png" width="270" alt="Password recovery screen"/>
+
+**What you see:** The password recovery screen with an email field. The user can request a password reset link.
+
+**User action:** Enter an email address and tap the recovery button (in demo mode this is a local-only simulation).
+
+**App section:** `RecoveryActivity` — password reset UI preserved for demonstration. The demo interceptor returns a simulated success.
+
+---
+
+### 2f. Login Before Entering
+
+<img src="app_screenshots/08_login_antes_de_entrar.png" width="270" alt="Login before entering the app"/>
+
+**What you see:** The login screen ready to submit — the user has entered credentials and is about to tap **Login**.
+
+**User action:** Tap **Login** to authenticate and enter the main application.
 
 ---
 
 ## 3. Batch Creation
 
-A **batch** represents a single grape bunch analysis session. The user fills in metadata about the batch before capturing images.
+A **batch** represents a single grape bunch analysis session. The user fills in metadata about the bunch before capturing images.
 
-### 3a. Batch Form (Blank)
+### 3a. Empty Batch Form
 
-<img src="app_screenshots/09_home_batch_form_blank.png" width="270" alt="Batch form blank"/>
+<img src="app_screenshots/09_lote_formulario_vacio.png" width="270" alt="Empty batch creation form"/>
 
-**What you see:** A form with fields for batch metadata — variety, field, grower, and other optional details. The **Start Batch** button is disabled until required fields are filled.
+**What you see:** The batch creation form with fields for variety, field, grower, and notes. The action button is disabled until required fields are completed.
 
 **User action:** Tap the variety selector or type in field details.
 
-**App section:** `BatchOriginFragment` — the form is backed by a ViewModel that validates required fields before enabling the start button.
+**App section:** `BatchOriginFragment` — the form is backed by a ViewModel that validates required fields before enabling submission.
 
 ---
 
-### 3b. Variety Selector
+### 3b. Variety Selector Open
 
-<img src="app_screenshots/10_home_batch_form_filled.png" width="270" alt="Batch form filled"/>
-<img src="app_screenshots/11_variety_selector.png" width="270" alt="Variety selector collapsed"/>
-<img src="app_screenshots/12_variety_opened.png" width="270" alt="Variety selector expanded"/>
-<img src="app_screenshots/13_variety_selected.png" width="270" alt="Variety selected"/>
+<img src="app_screenshots/10_lote_selector_variedad.png" width="270" alt="Variety selector dropdown open"/>
 
-**What you see:** The variety selector is a dropdown with a list of table-grape varieties (e.g., Scarlotta, Allison, Autumn Crisp, Thompson, Crimson, etc.). The form can also accept free-text input for field and grower.
+**What you see:** The variety dropdown is expanded, showing a list of table-grape varieties (e.g., Scarlotta, Allison, Autumn Crisp, Crimson, Timco, etc.).
 
-**User action:** Select a variety from the dropdown, optionally fill other fields, then tap **Start Batch**.
+**User action:** Scroll and tap a variety to select it.
 
-**App section:** `BatchOriginFragment` + variety list from the app's data layer. The 12 supported varieties mirror those in the research paper's evaluation dataset.
+**App section:** The variety list is populated from the app's data layer. The 12 supported varieties match those in the research paper's evaluation dataset.
 
 ---
 
-### 3c. Batch Started
+### 3c. Complete Batch Form
 
-<img src="app_screenshots/14_start_batch_tapped.png" width="270" alt="Start batch tapped"/>
-<img src="app_screenshots/15_after_launch.png" width="270" alt="After launch"/>
-<img src="app_screenshots/15_test.png" width="270" alt="Test capture"/>
-<img src="app_screenshots/16_start_batch.png" width="270" alt="Batch confirmed"/>
+<img src="app_screenshots/11_lote_formulario_completo.png" width="270" alt="Complete batch form ready to start"/>
 
-**What you see:** The batch is created and the app transitions to the **capture screen**. A confirmation may appear indicating the batch is ready.
+**What you see:** The batch form is fully filled — variety selected, field and grower entered. The **Start Batch** button is now enabled.
 
-**App section:** The `CaptureActivity` or equivalent fragment is launched. A new batch record is inserted into the local Room (SQLite) database with status `IN_PROGRESS`.
+**User action:** Review the metadata and tap **Start Batch** to begin the capture process.
 
 ---
 
-## 4. Image Capture (A/B Pairs)
+## 4. Image Capture & Processing
 
-The core of the app's data collection: capture **two images per bunch** (Side A / Side B) for multi-view fusion.
+The core of the app's data pipeline: capture or select images for on-device inference.
 
-### 4a. First Capture (Side A)
+### 4a. Process Screen — No Photos Yet
 
-<img src="app_screenshots/17_after_capture1.png" width="270" alt="After first capture (Side A)"/>
+<img src="app_screenshots/12_proceso_lote_sin_fotos.png" width="270" alt="Process screen with no photos loaded"/>
 
-**What you see:** The camera/gallery interface after capturing the **first image** (Side A / Front view). A thumbnail preview is shown.
+**What you see:** The processing screen for a batch before any images are loaded. Placeholder areas indicate where photos (Side A / Side B) will appear.
 
-**User action:** Capture or select the first image using the device camera or gallery picker.
+**User action:** Tap the **Camera** or **Gallery** button to add the first image (Side A / Front view).
 
-**App section:** `CaptureFragment` — supports both camera (via CameraX or similar) and gallery selection. The image is stored temporarily for the pair.
-
----
-
-### 4b. Second Capture (Side B)
-
-<img src="app_screenshots/18_after_capture2.png" width="270" alt="After second capture (Side B)"/>
-
-**What you see:** After capturing the **second image** (Side B / Back view). Both thumbnails are now visible, indicating a complete A/B pair ready for processing.
-
-**User action:** Capture or select the second image. Once both sides are captured, the **Process** button becomes available.
-
-**App section:** `CaptureFragment` — the pair state is tracked in the ViewModel. When both images are loaded, the UI enables the inference trigger.
+**App section:** `CaptureFragment` — supports both camera (via CameraX) and gallery selection.
 
 ---
 
-## 5. On-Device Inference
+### 4b. Select Photo Source
 
-The captured images are processed entirely on-device using ONNX Runtime and OpenCV via JNI/C++.
+<img src="app_screenshots/13_proceso_seleccionar_origen_foto_frente.png" width="270" alt="Photo source selector dialog"/>
 
-### Processing / Inference Running
+**What you see:** A dialog asking the user to choose between **Camera** and **Gallery** for the front view image.
 
-<img src="app_screenshots/19_processing.png" width="270" alt="Processing indicator"/>
+**User action:** Tap **Gallery** (or **Camera** if using the device camera).
 
-**What you see:** A loading/progress indicator while the app runs the inference pipeline. The user waits for results.
+**App section:** Android `Intent` chooser — the app delegates image capture to the system camera or a gallery picker.
+
+---
+
+### 4c. Gallery with Image Selected
+
+<img src="app_screenshots/14_galeria_seleccionar_foto_frente.png" width="270" alt="Gallery with front view image selected"/>
+
+**What you see:** The emulator's gallery app with a test grape bunch image selected and ready to return to the app.
+
+**User action:** Confirm the selection to return the image to the app.
+
+---
+
+### 4d. Result — Complete Bunch
+
+<img src="app_screenshots/15_proceso_resultado_racimo_completo.png" width="270" alt="Processed result showing the complete bunch"/>
+
+**What you see:** The inference result with the grape bunch image displayed. Predicted berry count, mean diameter, and other metrics are shown on-screen.
 
 **What happens under the hood:**
 
@@ -191,68 +207,103 @@ Kotlin (MetricsPipeline)
 C++ (nativeRunPipeline)
     ↓ OpenCV preprocess (resize, normalize, RGBDT)
     ↓ ONNX Runtime inference (seg_best → qty_rgbdt → hist_rgbdt_bimodal)
-    ↓ Postprocess (quantity, statistics, histogram)
+    ↓ Postprocess (quantity, statistics, histogram, overlay)
     ↓ JNI return
 Kotlin (result handling)
 ```
 
-**App section:** `MetricsPipeline` (Kotlin) → JNI → `nativeRunPipeline` (C++) → ONNX Runtime. Models are memory-mapped from internal storage (`filesDir/weights/`). No GPU delegate — inference runs on CPU.
-
-**Duration:** ~271 ms per single image, ~541 ms per fused A/B pair (measured on Xiaomi 13T).
+**App section:** `MetricsPipeline` (Kotlin) → JNI → `nativeRunPipeline` (C++) → ONNX Runtime. Models run on CPU only — no GPU delegate required.
 
 ---
 
-## 6. Results & Measurement
+## 5. Results & Metrics
 
-### Result Detail Screen
+### 5a. Detailed Metrics
 
-<img src="app_screenshots/20_result.png" width="270" alt="Result detail screen"/>
+<img src="app_screenshots/16_proceso_detalle_metricas_racimo.png" width="270" alt="Detailed metrics screen"/>
 
-**What you see:** The inference result with predicted metrics:
-- **Berry count** (from quantity regression model)
-- **Mean diameter** (from histogram model)
-- **Standard deviation**, **mode**, and **size distribution**
-- A histogram visualization of caliber distribution
+**What you see:** A scrollable detail view with the full inference output:
+- **Estimated berry count**
+- **Mean diameter** (mm)
+- **Standard deviation**
+- **Mode** (most frequent caliber)
+- **Caliber distribution histogram**
 
-**User action:** Review the results, then choose to **Save** the batch or discard.
+**User action:** Review the metrics. The **Save** button persists the batch to the local database.
 
 **App section:** `ResultFragment` / `DetailActivity` — displays the output of the fusion pipeline. The result is a `Predict` object persisted via Room if saved.
 
-**A/B fusion:** When both A and B images are processed, `FusionEngine` averages quantities, statistics, and histograms. A disagreement metric is computed per pair as a quality indicator.
+---
+
+### 5b. Confirm Save
+
+<img src="app_screenshots/17_proceso_confirmar_guardado.png" width="270" alt="Save confirmation dialog"/>
+
+**What you see:** A confirmation dialog asking whether to save the batch with its results.
+
+**User action:** Tap **Save** to persist the batch, or **Discard** to abandon it.
+
+**App section:** The save action inserts the batch (`Lote`) and prediction (`Predict`) records into the local Room (SQLite) database.
 
 ---
 
-## 7. History, Profile & Support
+## 6. Save & History
 
-### 7a. History Screen
+### 6a. Batch Saved — Form Reset
 
-<img src="app_screenshots/23_history.png" width="270" alt="History screen (empty state)"/>
+<img src="app_screenshots/18_lote_guardado_formulario_reiniciado.png" width="270" alt="Batch saved, form reset"/>
 
-**What you see:** A list of previously saved batches. In this capture, the history is **empty** (no batches saved yet).
+**What you see:** After saving, the batch form is reset to its empty state, ready for a new batch. The app is prepared for the next analysis session.
 
-**User action:** Tap a saved batch to view its details or export a PDF report.
+**User action:** Start a new batch or navigate to the history screen.
 
-**App section:** `HistoryFragment` + `LoteDao` (Room) — queries saved batches from the local SQLite database. Supports viewing past results and generating PDF reports via Android's print/sharing framework.
+**App section:** The ViewModel clears the previous batch state and resets the form.
 
 ---
 
-### 7b. Profile Screen
+### 6b. History — Saved Batches List
 
-<img src="app_screenshots/24_profile.png" width="270" alt="Profile screen"/>
+<img src="app_screenshots/19_historial_lotes.png" width="270" alt="History screen with saved batch"/>
 
-**What you see:** User profile and local settings — researcher name, institution, and app preferences.
+**What you see:** The history screen showing a list of previously saved batches. Each entry displays the date, variety, and measured berry count.
+
+**User action:** Tap a batch to view its full details and metrics.
+
+**App section:** `HistoryFragment` + `LoteDao` (Room) — queries saved batches from the local SQLite database, ordered by date.
+
+---
+
+### 6c. History — Batch Detail
+
+<img src="app_screenshots/20_historial_detalle_lote.png" width="270" alt="History batch detail screen"/>
+
+**What you see:** The full detail view of a saved batch — all metrics, images, and metadata from the original analysis.
+
+**User action:** Review past results, compare across batches, or generate a PDF report.
+
+**App section:** `DetailActivity` — reads the saved `Lote` and `Predict` records from Room and displays them.
+
+---
+
+## 7. Profile & Support
+
+### 7a. Demo User Profile
+
+<img src="app_screenshots/21_perfil_usuario_demo.png" width="270" alt="Demo user profile screen"/>
+
+**What you see:** The user profile screen with local settings — researcher name, institution, email, and app preferences.
 
 **User action:** View or update profile information (local only, not synced in demo mode).
 
-**App section:** `ProfileFragment` — manages local user metadata. In production mode this would sync with the backend; in `DEMO_MODE` it is purely local.
+**App section:** `ProfileFragment` — manages local user metadata. In production mode, this would sync with the backend.
 
 ---
 
-### 7c. Support Screen
+### 7b. Support Center
 
-<img src="app_screenshots/25_support.png" width="270" alt="Support screen"/>
+<img src="app_screenshots/22_soporte_contacto.png" width="270" alt="Support and contact screen"/>
 
-**What you see:** Contact information, FAQ, and links to the research documentation.
+**What you see:** The support screen with contact information, FAQ links, and institutional references.
 
 **User action:** Read support information or contact the research team.
 
@@ -267,8 +318,8 @@ Kotlin (result handling)
 │                         USER FLOW (visual walkthrough)                      │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  AGREEMENT ──→ LOGIN ──→ BATCH FORM ──→ CAPTURE A ──→ CAPTURE B ──→       │
-│   (01-03)      (04-08)     (09-13)        (17)          (18)               │
+│  AGREEMENT ──→ LOGIN ──→ BATCH FORM ──→ CAPTURE ──→ INFERENCE ──→         │
+│   (01-02)      (03-08)     (09-11)        (12-14)     (15-16)             │
 │                                                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                     ON-DEVICE INFERENCE                              │   │
@@ -277,7 +328,7 @@ Kotlin (result handling)
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │  RESULTS ──→ SAVE ──→ HISTORY ──→ PDF EXPORT                               │
-│   (20)              (23)                                                    │
+│   (15-17)      (18)      (19-20)                                            │
 │                                                                             │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -288,15 +339,15 @@ Kotlin (result handling)
 
 | Screen | What it does | Tech |
 |--------|-------------|------|
-| **Agreement** | Academic consent gate | `AgreementActivity` |
-| **Login** | Demo authentication bypass | `DemoAuthInterceptor` |
-| **Batch Form** | Metadata capture (variety, etc.) | `BatchOriginFragment` + Room |
-| **A/B Capture** | Two-image pair for fusion | `CaptureFragment` |
-| **Inference** | ONNX Runtime via JNI/C++ | `MetricsPipeline` + ONNX Runtime + OpenCV |
-| **Results** | Berry count, diameter, histogram | `FusionEngine` |
-| **History** | Saved batches from local DB | `LoteDao` (Room) |
-| **Profile** | Local user settings | `ProfileFragment` |
-| **Support** | FAQ and contact | `SupportFragment` |
+| **Agreement** (01-02) | Academic consent gate | `AgreementActivity` |
+| **Login/Register** (03-08) | Demo auth (all routes preserved) | `LoginActivity`, `DemoAuthInterceptor`, `RegisterActivity`, `RecoveryActivity` |
+| **Batch Form** (09-11) | Metadata capture (variety, field, grower) | `BatchOriginFragment` + Room |
+| **Capture** (12-14) | Image selection (camera or gallery) | `CaptureFragment` |
+| **Inference** (15-16) | ONNX Runtime via JNI/C++ | `MetricsPipeline` + ONNX Runtime + OpenCV |
+| **Results** (15-17) | Berry count, diameter, histogram | `FusionEngine` |
+| **History** (19-20) | Saved batches from local DB | `LoteDao` (Room) |
+| **Profile** (21) | Local user settings | `ProfileFragment` |
+| **Support** (22) | FAQ and contact | `SupportFragment` |
 
 ---
 

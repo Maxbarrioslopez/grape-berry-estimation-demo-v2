@@ -5,6 +5,7 @@
 [![Android](https://img.shields.io/badge/Android-34-green.svg)]()
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blueviolet.svg)]()
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.24.3-orange.svg)]()
+[![App Walkthrough](https://img.shields.io/badge/App_Walkthrough-View_Guide-success.svg)](vistas.md)
 
 ## Quick Start
 
@@ -179,8 +180,9 @@ Universidad Tecnológica de Chile INACAP. Draft manuscript, 2026.
 ├── requirements.txt                   # Optional Python deps (analysis only)
 ├── .gitignore                         # Unified ignore rules
 ├── .gitattributes                     # Git LFS tracking rules
-├── app_screenshots/                   # 30 screenshots + README
+├── app_screenshots/                   # 22 screenshots + README
 │   └── README.md
+├── vistas.md                          # Visual app walkthrough
 │
 └── app_metrics_detection/             # Android project (Gradle root)
     ├── README.md                      # Build instructions + metadata
